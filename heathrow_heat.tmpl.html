@@ -184,6 +184,15 @@
     <div class="ranks-grid" id="ranks"></div>
   </section>
 
+  <section class="ranks">
+    <div class="sec-head">
+      <p class="eyebrow">Longest streaks</p>
+      <h2 class="sec-title">Longest unbroken runs</h2>
+      <p class="sec-lede">The longest run of <em>consecutive</em> days or nights meeting each threshold, ranked across every year. Respects the toggle — full-year or the same Jan 1–__YTD__ window. <b>__CURYEAR__</b> (✷) is highlighted wherever it lands.</p>
+    </div>
+    <div class="ranks-grid" id="streaks"></div>
+  </section>
+
   <section class="season">
     <div class="sec-head">
       <p class="eyebrow">Within the year</p>
@@ -476,10 +485,32 @@ function renderRanks(){
   host.innerHTML=out;
 }
 renderRanks();
+
+// ---- longest streaks ----
+function renderStreaks(){
+  const cur=DATA.partial, host=document.getElementById("streaks");
+  let out="";
+  for(const m of METRICS){
+    const vals = HISTMODE==="ytd" ? DATA[m.key+"sy"] : DATA[m.key+"s"];
+    const rows=DATA.years.map((y,i)=>({y,v:vals[i]})).sort((a,b)=>b.v-a.v||a.y-b.y);
+    const rankOf=v=>1+rows.filter(r=>r.v>v).length;
+    const top=rows.slice(0,10);
+    const inTop=top.some(r=>r.y===cur);
+    let body="";
+    top.forEach(r=>{ body+=`<tr class="${r.y===cur?'me':''}"><td class="rk">${rankOf(r.v)}</td><td class="ry">${r.y}${r.y===cur?' \u2737':''}</td><td class="rv">${r.v}</td></tr>`; });
+    if(!inTop){ const cr=rows.find(r=>r.y===cur);
+      body+=`<tr class="gap"><td colspan="3">\u22ef</td></tr>`;
+      body+=`<tr class="me"><td class="rk">${rankOf(cr.v)}</td><td class="ry">${cr.y} \u2737</td><td class="rv">${cr.v}</td></tr>`; }
+    out+=`<div class="rcard"><div class="cap"><div class="cap-l"><span class="dot" style="background:${m.color}"></span><div><h2>${m.label}</h2><span class="sub">longest run \u00b7 ${m.sub}</span></div></div></div><table class="rtbl">${body}</table></div>`;
+  }
+  host.innerHTML=out;
+}
+renderStreaks();
+
 document.querySelectorAll(".hmode-btn").forEach(b=>b.addEventListener("click",()=>{
   HISTMODE=b.dataset.hmode;
   document.querySelectorAll(".hmode-btn").forEach(x=>x.classList.toggle("active",x===b));
-  renderCharts(); renderRanks();
+  renderCharts(); renderRanks(); renderStreaks();
 }));
 
 // theme toggle

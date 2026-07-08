@@ -144,6 +144,25 @@ def main():
     HIST["d25y"]=ytd_counts(tx,25); HIST["d30y"]=ytd_counts(tx,30)
     HIST["n15y"]=ytd_counts(tn,15); HIST["n20y"]=ytd_counts(tn,20)
     HIST["ytd"]=fmt_short(metar_last)
+    # longest consecutive-day streak per year (full-year and year-to-date)
+    by_year=defaultdict(list)
+    for k in set(tx)|set(tn): by_year[int(k[:4])].append(k)
+    def streak(vals,thr,cut=None):
+        out={y:0 for y in all_years}
+        for y in all_years:
+            best=run=0; prevmeet=None
+            for k in sorted(k for k in by_year[y] if k in vals and (cut is None or k[4:8]<=cut)):
+                d=date(*_ymd(k))
+                if vals[k]>=thr:
+                    run=run+1 if (prevmeet and (d-prevmeet).days==1) else 1
+                    prevmeet=d; best=max(best,run)
+                else:
+                    run=0; prevmeet=None
+            out[y]=best
+        return [out[y] for y in all_years]
+    for key,vals,thr in [("d25",tx,25),("d30",tx,30),("n15",tn,15),("n20",tn,20)]:
+        HIST[key+"s"]=streak(vals,thr)
+        HIST[key+"sy"]=streak(vals,thr,cut_md)
 
     # decade weekly profiles + averages (complete years only, exclude current partial year)
     cov=defaultdict(int)
