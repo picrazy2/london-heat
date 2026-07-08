@@ -1,0 +1,330 @@
+<title>Heathrow — a year in temperature</title>
+<style>
+  :root {
+    --surface:#faf8f5; --panel:#ffffff; --ink:#1a1714; --ink-2:#5c554d; --muted:#948b7f;
+    --grid:#ece7dd; --axis:#cfc8bb; --ring:rgba(26,23,20,0.09);
+    --band:#c9c2b4; --warm:#e0631f; --hot:#c62f2f; --cool:#8aa0b5;
+    --shadow:0 1px 2px rgba(26,23,20,.05),0 10px 30px rgba(26,23,20,.07);
+  }
+  @media (prefers-color-scheme: dark){ :root{
+    --surface:#16130f; --panel:#201c17; --ink:#f7f3ec; --ink-2:#c3bbad; --muted:#8f867a;
+    --grid:#2b2620; --axis:#3d362b; --ring:rgba(247,243,236,0.10);
+    --band:#4a443a; --warm:#f2824a; --hot:#ec6a6a; --cool:#6f8598;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 34px rgba(0,0,0,.4);
+  }}
+  :root[data-theme="light"]{ --surface:#faf8f5;--panel:#ffffff;--ink:#1a1714;--ink-2:#5c554d;--muted:#948b7f;--grid:#ece7dd;--axis:#cfc8bb;--ring:rgba(26,23,20,0.09);--band:#c9c2b4;--warm:#e0631f;--hot:#c62f2f;--cool:#8aa0b5;--shadow:0 1px 2px rgba(26,23,20,.05),0 10px 30px rgba(26,23,20,.07); }
+  :root[data-theme="dark"]{ --surface:#16130f;--panel:#201c17;--ink:#f7f3ec;--ink-2:#c3bbad;--muted:#8f867a;--grid:#2b2620;--axis:#3d362b;--ring:rgba(247,243,236,0.10);--band:#4a443a;--warm:#f2824a;--hot:#ec6a6a;--cool:#6f8598;--shadow:0 1px 2px rgba(0,0,0,.3),0 12px 34px rgba(0,0,0,.4); }
+
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--surface);color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5;}
+  .wrap{max-width:1080px;margin:0 auto;padding:clamp(24px,5vw,56px) clamp(18px,4vw,44px) 64px;}
+  .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 12px;}
+  .head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:20px;}
+  h1{font-size:clamp(30px,5vw,46px);line-height:1.05;letter-spacing:-0.02em;margin:0;font-weight:690;}
+  h1 .yr{color:var(--warm);font-variant-numeric:tabular-nums;}
+
+  .picker{display:flex;align-items:center;gap:8px;}
+  .step{background:var(--panel);border:1px solid var(--ring);border-radius:9px;width:38px;height:40px;
+    font-size:18px;color:var(--ink-2);cursor:pointer;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;}
+  .step:hover:not(:disabled){color:var(--ink);} .step:disabled{opacity:.35;cursor:default;}
+  select{appearance:none;background:var(--panel);border:1px solid var(--ring);border-radius:10px;
+    padding:9px 38px 9px 16px;font:inherit;font-size:17px;font-weight:640;color:var(--ink);cursor:pointer;
+    box-shadow:var(--shadow);font-variant-numeric:tabular-nums;
+    background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+    background-position:calc(100% - 18px) 18px,calc(100% - 13px) 18px;background-size:5px 5px,5px 5px;background-repeat:no-repeat;}
+
+  .summary{font-size:clamp(15px,2vw,17px);color:var(--ink-2);margin:18px 0 0;max-width:66ch;}
+  .summary b{color:var(--ink);font-weight:640;}
+
+  .stats{display:flex;flex-wrap:wrap;gap:12px;margin:22px 0 4px;}
+  .stat{background:var(--panel);border:1px solid var(--ring);border-radius:12px;padding:13px 17px;box-shadow:var(--shadow);min-width:104px;flex:1 1 104px;}
+  .stat .v{font-size:24px;font-weight:700;letter-spacing:-0.02em;line-height:1;font-variant-numeric:tabular-nums;}
+  .stat .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:6px;}
+  .stat.w .v{color:var(--warm);} .stat.h .v{color:var(--hot);} .stat.c .v{color:var(--cool);}
+
+  figure{margin:22px 0 0;background:var(--panel);border:1px solid var(--ring);border-radius:16px;padding:22px 22px 16px;box-shadow:var(--shadow);}
+  svg{display:block;width:100%;height:auto;overflow:visible;}
+  .g{stroke:var(--grid);stroke-width:1;}
+  .thr{stroke-width:1.4;stroke-dasharray:5 4;}
+  .thr-lab{font-size:11px;font-weight:640;font-variant-numeric:tabular-nums;}
+  .ax{fill:var(--muted);font-size:11px;} .axn{fill:var(--muted);font-size:10.5px;font-variant-numeric:tabular-nums;}
+  .endmark{stroke:var(--muted);stroke-width:1.3;stroke-dasharray:3 3;}
+  .end-lab{fill:var(--muted);font-size:10.5px;font-weight:600;}
+  .leg{display:flex;flex-wrap:wrap;gap:14px 20px;margin-top:14px;font-size:12.5px;color:var(--ink-2);align-items:center;}
+  .leg .it{display:flex;align-items:center;gap:8px;}
+  .sw{width:22px;height:3px;border-radius:2px;} .swb{width:14px;height:11px;border-radius:3px;}
+  .dash{width:22px;height:0;border-top:2px dashed currentColor;}
+  .tip{position:fixed;pointer-events:none;opacity:0;transition:opacity .09s;background:var(--ink);color:var(--surface);
+    padding:8px 11px;border-radius:9px;font-size:12px;line-height:1.4;white-space:nowrap;z-index:5;
+    transform:translate(-50%,-100%);box-shadow:0 6px 18px rgba(0,0,0,.28);}
+  .tip b{font-variant-numeric:tabular-nums;}
+  .hair{stroke:var(--muted);stroke-width:1;opacity:0;}
+  .note{font-size:12.5px;color:var(--muted);margin:16px 2px 0;}
+  .modes{display:inline-flex;background:var(--panel);border:1px solid var(--ring);border-radius:11px;padding:4px;gap:4px;margin:0 0 22px;box-shadow:var(--shadow);}
+  .mode-btn{border:none;background:transparent;color:var(--ink-2);font:inherit;font-size:13.5px;font-weight:600;
+    padding:8px 16px;border-radius:8px;cursor:pointer;}
+  .mode-btn.active{background:var(--warm);color:#fff;}
+  .declegend{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px 18px;margin-top:16px;}
+  .drow{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--ink-2);font-variant-numeric:tabular-nums;}
+  .drow .sw{width:20px;height:3px;border-radius:2px;flex:none;}
+  .drow b{color:var(--ink);font-weight:640;min-width:44px;}
+  .drow .c{color:var(--muted);}
+  .toggle{position:fixed;top:16px;right:16px;z-index:10;background:var(--panel);color:var(--ink-2);
+    border:1px solid var(--ring);border-radius:999px;padding:7px 13px;font:inherit;font-size:12.5px;cursor:pointer;box-shadow:var(--shadow);}
+  .toggle:hover{color:var(--ink);}
+  :focus-visible{outline:2px solid var(--warm);outline-offset:2px;border-radius:4px;}
+</style>
+
+<button class="toggle" id="themeBtn" aria-label="Toggle colour theme">◐ Theme</button>
+
+<div class="wrap">
+  <p class="eyebrow">London Heathrow · daily maximum & minimum · ECA&amp;D + METAR</p>
+
+  <div class="modes" role="tablist">
+    <button class="mode-btn active" data-mode="year" role="tab">Single year</button>
+    <button class="mode-btn" data-mode="decade" role="tab">Decade averages</button>
+  </div>
+
+  <div id="yearView">
+  <div class="head">
+    <h1>Heathrow <span class="yr" id="hYear">2025</span></h1>
+    <div class="picker">
+      <button class="step" id="prev" aria-label="Previous year">‹</button>
+      <select id="yearSel" aria-label="Select year"></select>
+      <button class="step" id="next" aria-label="Next year">›</button>
+    </div>
+  </div>
+  <p class="summary" id="summary"></p>
+
+  <div class="stats" id="stats"></div>
+
+  <figure>
+    <div class="chart" id="chart"></div>
+    <div class="leg">
+      <span class="it"><span class="sw" style="background:var(--warm)"></span> daily high</span>
+      <span class="it"><span class="swb" style="background:var(--band);opacity:.55"></span> low → high range</span>
+      <span class="it" style="color:var(--warm)"><span class="dash"></span> 25 °C</span>
+      <span class="it" style="color:var(--hot)"><span class="dash"></span> 30 °C</span>
+      <span class="it"><span class="swb" style="background:var(--hot);border-radius:2px;width:6px;height:12px"></span> ≥30 °C day</span>
+    </div>
+    <p class="note">Hover the chart for any day's high and low. Data: ECA&amp;D official daily series; __CURYEAR__ tops up from Heathrow METAR to __LASTDATE__.</p>
+  </figure>
+  </div><!-- /yearView -->
+
+  <div id="decadeView" hidden>
+    <div class="head"><h1>Heathrow <span class="yr">by decade</span></h1></div>
+    <p class="summary" id="decSummary"></p>
+    <figure>
+      <div class="chart" id="decChart"></div>
+      <div class="declegend" id="decLegend"></div>
+      <p class="note">Each line is a decade's <b>average daily high</b> by week of the year (complete years only, 1960–__LASTCOMPLETE__), which smooths out single-day outliers. The summer hump lifts and broadens decade on decade. Hover for every decade's value in a given week.</p>
+    </figure>
+  </div>
+</div>
+
+<div class="tip" id="tip"></div>
+
+<script>
+const ALL = __ALL__;
+const DEC = __DEC__;
+const YEARS = Object.keys(ALL).sort();
+const MABBR=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const MSTART=[1,32,60,91,121,152,182,213,244,274,305,335,366];
+const NS="http://www.w3.org/2000/svg";
+function el(n,a){const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);return e;}
+function fmtDay(dn){let m=0;while(m<11&&MSTART[m+1]<=dn)m++;return (dn-MSTART[m]+1)+" "+MABBR[m];}
+
+const W=1040,H=520,M={t:20,r:16,b:30,l:34};
+const pw=W-M.l-M.r, ph=H-M.t-M.b;
+let YMIN=-8, YMAX=38;
+const x=dn=>M.l+(dn-1)/364*pw;
+const y=v=>M.t+ph-(v-YMIN)/(YMAX-YMIN)*ph;
+function yGrid(svg,step){
+  for(let v=Math.ceil(YMIN/step)*step; v<=YMAX; v+=step){
+    svg.appendChild(el("line",{class:"g",x1:M.l,x2:M.l+pw,y1:y(v),y2:y(v)}));
+    const t=el("text",{class:"axn",x:M.l-7,y:y(v)+3,"text-anchor":"end"});t.textContent=v+"°";svg.appendChild(t);
+  }
+}
+
+let curMax={}, curMin={};
+
+function render(yr){
+  document.getElementById("hYear").textContent=yr;
+  const D=ALL[yr], s=D.s;
+  const pts=[]; curMax={}; curMin={};
+  for(let i=0;i<D.x.length;i++){ const hi=D.x[i]; if(hi==null) continue; const lo=D.n[i]; const dn=s+i; pts.push([dn,hi,lo]); curMax[dn]=hi; curMin[dn]=lo; }
+  // stats
+  let d25=0,d30=0,n15=0,n20=0,peak=[0,-99],cold=[0,99];
+  for(const[dn,hi,lo]of pts){ if(hi>=25)d25++; if(hi>=30)d30++; if(lo!=null){if(lo>=15)n15++; if(lo>=20)n20++; if(lo<cold[1])cold=[dn,lo];} if(hi>peak[1])peak=[dn,hi]; }
+  const lastDoy=pts.length?pts[pts.length-1][0]:365;
+  const partial=lastDoy<360;
+
+  // summary
+  const partTxt = partial ? ` <b>(to ${fmtDay(lastDoy)} — year in progress)</b>` : "";
+  document.getElementById("summary").innerHTML =
+    `<b>${d25}</b> days reached 25 °C and <b>${d30}</b> reached 30 °C. Hottest day <b>${peak[1].toFixed(1)}°</b> on ${fmtDay(peak[0])}; coldest night <b>${cold[1].toFixed(1)}°</b> on ${fmtDay(cold[0])}.${partTxt}`;
+
+  // stat cards
+  document.getElementById("stats").innerHTML = `
+    <div class="stat w"><div class="v">${d25}</div><div class="l">days ≥ 25 °C</div></div>
+    <div class="stat h"><div class="v">${d30}</div><div class="l">days ≥ 30 °C</div></div>
+    <div class="stat"><div class="v">${n20}</div><div class="l">tropical nights ≥20°</div></div>
+    <div class="stat h"><div class="v">${peak[1].toFixed(1)}°</div><div class="l">hottest · ${fmtDay(peak[0])}</div></div>
+    <div class="stat c"><div class="v">${cold[1].toFixed(1)}°</div><div class="l">coldest night · ${fmtDay(cold[0])}</div></div>`;
+
+  // ---- chart ----
+  YMIN=-8; YMAX=38;
+  const svg=el("svg",{viewBox:`0 0 ${W} ${H}`,role:"img","aria-label":`Heathrow daily temperature for ${yr}`});
+  yGrid(svg,5);
+  for(let m=0;m<12;m++){
+    const gx=x(MSTART[m]);
+    if(m>0) svg.appendChild(el("line",{class:"g",x1:gx,x2:gx,y1:M.t,y2:M.t+ph,"stroke-opacity":"0.6"}));
+    const mid=(MSTART[m]+MSTART[m+1])/2;
+    const t=el("text",{class:"ax",x:x(mid),y:H-9,"text-anchor":"middle"});t.textContent=MABBR[m];svg.appendChild(t);
+  }
+  // range band
+  if(pts.length){
+    let top=`M ${x(pts[0][0])} ${y(pts[0][1])}`;
+    for(const[dn,hi]of pts) top+=` L ${x(dn).toFixed(1)} ${y(hi).toFixed(1)}`;
+    let bot="";
+    for(let i=pts.length-1;i>=0;i--){ const[dn,,lo]=pts[i]; bot+=` L ${x(dn).toFixed(1)} ${y(lo==null?pts[i][1]:lo).toFixed(1)}`; }
+    svg.appendChild(el("path",{d:top+bot+" Z",fill:"var(--band)","fill-opacity":"0.45"}));
+    // >=30 stems
+    for(const[dn,hi]of pts){ if(hi>=30) svg.appendChild(el("line",{x1:x(dn),x2:x(dn),y1:y(hi),y2:y(25),stroke:"var(--hot)","stroke-width":2.2,"stroke-opacity":"0.5"})); }
+    // max line
+    svg.appendChild(el("path",{d:top,fill:"none",stroke:"var(--warm)","stroke-width":2,"stroke-linejoin":"round"}));
+  }
+  // thresholds
+  svg.appendChild(el("line",{class:"thr",x1:M.l,x2:M.l+pw,y1:y(25),y2:y(25),stroke:"var(--warm)"}));
+  svg.appendChild(el("line",{class:"thr",x1:M.l,x2:M.l+pw,y1:y(30),y2:y(30),stroke:"var(--hot)"}));
+  let l1=el("text",{class:"thr-lab",x:M.l+4,y:y(25)-5,fill:"var(--warm)"});l1.textContent="25°";svg.appendChild(l1);
+  let l2=el("text",{class:"thr-lab",x:M.l+4,y:y(30)-5,fill:"var(--hot)"});l2.textContent="30°";svg.appendChild(l2);
+  // partial end marker
+  if(partial){
+    svg.appendChild(el("line",{class:"endmark",x1:x(lastDoy),x2:x(lastDoy),y1:M.t,y2:M.t+ph}));
+    const t=el("text",{class:"end-lab",x:x(lastDoy)+5,y:M.t+12});t.textContent="to "+fmtDay(lastDoy);svg.appendChild(t);
+  }
+  // hover
+  const hair=el("line",{class:"hair",y1:M.t,y2:M.t+ph});svg.appendChild(hair);
+  const dotH=el("circle",{r:4,fill:"var(--warm)",opacity:0});svg.appendChild(dotH);
+  const dotL=el("circle",{r:3.5,fill:"var(--cool)",opacity:0});svg.appendChild(dotL);
+  const over=el("rect",{x:M.l,y:M.t,width:pw,height:ph,fill:"transparent",style:"cursor:crosshair"});svg.appendChild(over);
+  const tip=document.getElementById("tip");
+  over.addEventListener("mousemove",ev=>{
+    const r=svg.getBoundingClientRect();
+    const px=(ev.clientX-r.left)/r.width*W;
+    let dn=Math.round((px-M.l)/pw*364+1);
+    // snap to nearest available day
+    if(curMax[dn]==null){ let best=null,bd=999; for(const k in curMax){const kk=+k;const d=Math.abs(kk-dn);if(d<bd){bd=d;best=kk;}} if(best==null)return; dn=best; }
+    const hi=curMax[dn], lo=curMin[dn];
+    hair.setAttribute("x1",x(dn));hair.setAttribute("x2",x(dn));hair.style.opacity=.5;
+    dotH.setAttribute("cx",x(dn));dotH.setAttribute("cy",y(hi));dotH.style.opacity=1;
+    if(lo!=null){dotL.setAttribute("cx",x(dn));dotL.setAttribute("cy",y(lo));dotL.style.opacity=1;} else dotL.style.opacity=0;
+    const hot = hi>=30?" · ≥30°":(hi>=25?" · ≥25°":"");
+    tip.innerHTML=`<b>${fmtDay(dn)} ${yr}</b>${hot}<br>high <b>${hi.toFixed(1)}°</b>${lo!=null?` · low <b>${lo.toFixed(1)}°</b>`:""}`;
+    tip.style.opacity=1;tip.style.left=ev.clientX+"px";tip.style.top=(ev.clientY-14)+"px";
+  });
+  over.addEventListener("mouseleave",()=>{tip.style.opacity=0;hair.style.opacity=0;dotH.style.opacity=0;dotL.style.opacity=0;});
+
+  const host=document.getElementById("chart"); host.innerHTML=""; host.appendChild(svg);
+  // sync controls
+  document.getElementById("prev").disabled = YEARS.indexOf(yr)===0;
+  document.getElementById("next").disabled = YEARS.indexOf(yr)===YEARS.length-1;
+}
+
+// build dropdown
+const sel=document.getElementById("yearSel");
+for(const y of YEARS.slice().reverse()){ const o=document.createElement("option");o.value=y;o.textContent=y;sel.appendChild(o); }
+const DEFAULT = YEARS.includes("2025")?"2025":YEARS[YEARS.length-1];
+sel.value=DEFAULT;
+sel.addEventListener("change",()=>render(sel.value));
+document.getElementById("prev").addEventListener("click",()=>{const i=YEARS.indexOf(sel.value);if(i>0){sel.value=YEARS[i-1];render(sel.value);}});
+document.getElementById("next").addEventListener("click",()=>{const i=YEARS.indexOf(sel.value);if(i<YEARS.length-1){sel.value=YEARS[i+1];render(sel.value);}});
+render(DEFAULT);
+
+// ---------- decade mode ----------
+// distinct cool→warm hues, one per decade (1960s → 2020s)
+const RAMP_LIGHT=['#2a78d6','#12a594','#4a9e2a','#d99400','#e0631f','#d1332f','#a11f63'];
+const RAMP_DARK =['#4f97ec','#20c3a6','#5cc23f','#f0b429','#f2824a','#ec5a56','#e05a92'];
+function effTheme(){const a=document.documentElement.getAttribute("data-theme");return a?a:(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");}
+function ramp(){return effTheme()==="dark"?RAMP_DARK:RAMP_LIGHT;}
+
+function renderDecades(){
+  const decs=DEC.decades, R=ramp();
+  const a20=DEC.avg["2020"], a60=DEC.avg["1960"];
+  document.getElementById("decSummary").innerHTML=
+    `Each decade's average daily high, folded onto one year. The 2020s average <b>${a20.d25} days ≥25 °C</b> and <b>${a20.d30} ≥30 °C</b> a year — up from <b>${a60.d25}</b> and <b>${a60.d30}</b> in the 1960s. Warming shows up most in the summer peak, which climbs and widens.`;
+  // fit y-axis tightly to the decade means so the curves fill the panel
+  let lo=99,hi=-99;
+  decs.forEach(dec=>DEC.weekmax[dec].forEach(v=>{if(v!=null){if(v<lo)lo=v;if(v>hi)hi=v;}}));
+  YMIN=Math.floor((lo-1)/2)*2; YMAX=Math.ceil((hi+1)/2)*2;
+  const svg=el("svg",{viewBox:`0 0 ${W} ${H}`,role:"img","aria-label":"Average daily high by decade"});
+  yGrid(svg,2);
+  for(let m=0;m<12;m++){
+    const gx=x(MSTART[m]);
+    if(m>0) svg.appendChild(el("line",{class:"g",x1:gx,x2:gx,y1:M.t,y2:M.t+ph,"stroke-opacity":"0.6"}));
+    const mid=(MSTART[m]+MSTART[m+1])/2;
+    const t=el("text",{class:"ax",x:x(mid),y:H-9,"text-anchor":"middle"});t.textContent=MABBR[m];svg.appendChild(t);
+  }
+  if(YMAX>=25){
+    svg.appendChild(el("line",{class:"thr",x1:M.l,x2:M.l+pw,y1:y(25),y2:y(25),stroke:"var(--warm)","stroke-opacity":"0.55"}));
+    let l1=el("text",{class:"thr-lab",x:M.l+4,y:y(25)-5,fill:"var(--warm)"});l1.textContent="25° avg high";svg.appendChild(l1);
+  }
+  // decade lines (weekly averages)
+  const CEN=DEC.weeks;
+  decs.forEach((dec,i)=>{
+    const prof=DEC.weekmax[dec]; let d="",started=false;
+    for(let k=0;k<prof.length;k++){ const v=prof[k]; if(v==null){started=false;continue;} const cmd=started?"L":"M"; d+=`${cmd} ${x(CEN[k]).toFixed(1)} ${y(v).toFixed(1)} `; started=true; }
+    svg.appendChild(el("path",{d,fill:"none",stroke:R[i],"stroke-width":i===decs.length-1?2.8:1.8,"stroke-linejoin":"round","stroke-opacity":i===decs.length-1?1:0.9}));
+  });
+  // hover
+  const hair=el("line",{class:"hair",y1:M.t,y2:M.t+ph});svg.appendChild(hair);
+  const dots=decs.map((_,i)=>{const c=el("circle",{r:3,fill:ramp()[i],opacity:0});svg.appendChild(c);return c;});
+  const over=el("rect",{x:M.l,y:M.t,width:pw,height:ph,fill:"transparent",style:"cursor:crosshair"});svg.appendChild(over);
+  const tip=document.getElementById("tip");
+  over.addEventListener("mousemove",ev=>{
+    const r=svg.getBoundingClientRect();
+    let dn=Math.round(((ev.clientX-r.left)/r.width*W-M.l)/pw*364+1); dn=Math.max(1,Math.min(365,dn));
+    const w=Math.min(51,Math.floor((dn-1)/7)), cx=x(CEN[w]);
+    hair.setAttribute("x1",cx);hair.setAttribute("x2",cx);hair.style.opacity=.5;
+    let rows="";const R2=ramp();
+    for(let i=decs.length-1;i>=0;i--){ const v=DEC.weekmax[decs[i]][w];
+      if(v==null){dots[i].style.opacity=0;continue;}
+      dots[i].setAttribute("cx",cx);dots[i].setAttribute("cy",y(v));dots[i].style.opacity=1;dots[i].setAttribute("fill",R2[i]);
+      rows+=`<div style="display:flex;gap:7px;align-items:center"><span style="width:10px;height:3px;border-radius:2px;background:${R2[i]};display:inline-block"></span>${decs[i]}s <b>${v.toFixed(1)}°</b></div>`;
+    }
+    const wkStart=w*7+1, wkEnd=Math.min(365,w*7+7);
+    tip.innerHTML=`<b>${fmtDay(wkStart)} – ${fmtDay(wkEnd)}</b>${rows}`;
+    tip.style.opacity=1;tip.style.left=ev.clientX+"px";tip.style.top=(ev.clientY-14)+"px";
+  });
+  over.addEventListener("mouseleave",()=>{tip.style.opacity=0;hair.style.opacity=0;dots.forEach(d=>d.style.opacity=0);});
+  const host=document.getElementById("decChart");host.innerHTML="";host.appendChild(svg);
+  // legend
+  const R3=ramp();
+  document.getElementById("decLegend").innerHTML=decs.map((dec,i)=>{
+    const a=DEC.avg[dec];
+    return `<div class="drow"><span class="sw" style="background:${R3[i]}"></span><b>${dec}s</b><span class="c">${a.d25} d ≥25° · ${a.d30} d ≥30°</span></div>`;
+  }).join("");
+}
+
+// ---------- mode switching ----------
+let mode="year";
+function setMode(m){
+  mode=m;
+  document.querySelectorAll(".mode-btn").forEach(b=>b.classList.toggle("active",b.dataset.mode===m));
+  document.getElementById("yearView").hidden = m!=="year";
+  document.getElementById("decadeView").hidden = m!=="decade";
+  if(m==="decade") renderDecades(); else render(sel.value);
+}
+document.querySelectorAll(".mode-btn").forEach(b=>b.addEventListener("click",()=>setMode(b.dataset.mode)));
+
+const btn=document.getElementById("themeBtn");
+btn.addEventListener("click",()=>{
+  const cur=document.documentElement.getAttribute("data-theme");
+  const sysDark=window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const now=cur?cur:(sysDark?"dark":"light");
+  document.documentElement.setAttribute("data-theme",now==="dark"?"light":"dark");
+  if(mode==="decade") renderDecades();
+});
+</script>
