@@ -245,8 +245,8 @@ render(DEFAULT);
 
 // ---------- decade mode ----------
 // distinct cool→warm hues, one per decade (1960s → 2020s)
-const RAMP_LIGHT=['#2a78d6','#12a594','#4a9e2a','#d99400','#e0631f','#d1332f','#a11f63'];
-const RAMP_DARK =['#4f97ec','#20c3a6','#5cc23f','#f0b429','#f2824a','#ec5a56','#e05a92'];
+const RAMP_LIGHT=['#2a78d6','#12a594','#4a9e2a','#d99400','#e0631f','#d1332f','#a11f63','#6a2f9e','#3f2a80'];
+const RAMP_DARK =['#4f97ec','#20c3a6','#5cc23f','#f0b429','#f2824a','#ec5a56','#e05a92','#c07ad8','#9a86e0'];
 function effTheme(){const a=document.documentElement.getAttribute("data-theme");return a?a:(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");}
 function ramp(){return effTheme()==="dark"?RAMP_DARK:RAMP_LIGHT;}
 

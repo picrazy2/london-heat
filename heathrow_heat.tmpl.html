@@ -9,7 +9,7 @@
     --muted:        #948b7f;
     --grid:         #e7e2d8;
     --axis:         #cfc8bb;
-    --ring:         rgba(26,23,20,0.08);
+    --ring:         rgba(26,23,20,0.08); --hl: rgba(224,99,31,0.14);
     --hot25:        #e0631f;
     --hot30:        #c62f2f;
     --night15:      #2a78d6;
@@ -26,7 +26,7 @@
       --muted:    #8f867a;
       --grid:     #2e2820;
       --axis:     #3d362b;
-      --ring:     rgba(247,243,236,0.10);
+      --ring:     rgba(247,243,236,0.10); --hl: rgba(242,130,74,0.22);
       --hot25:    #f2824a;
       --hot30:    #ec6a6a;
       --night15:  #4f97ec;
@@ -36,13 +36,13 @@
   }
   :root[data-theme="light"] {
     --surface:#faf8f5;--panel:#ffffff;--plane:#f2efe9;--ink:#1a1714;--ink-2:#5c554d;
-    --muted:#948b7f;--grid:#e7e2d8;--axis:#cfc8bb;--ring:rgba(26,23,20,0.08);
+    --muted:#948b7f;--grid:#e7e2d8;--axis:#cfc8bb;--ring:rgba(26,23,20,0.08); --hl: rgba(224,99,31,0.14);
     --hot25:#e0631f;--hot30:#c62f2f;--night15:#2a78d6;--night20:#5442b0;
     --shadow:0 1px 2px rgba(26,23,20,.05),0 8px 24px rgba(26,23,20,.06);
   }
   :root[data-theme="dark"] {
     --surface:#16130f;--panel:#201c17;--plane:#0e0c09;--ink:#f7f3ec;--ink-2:#c3bbad;
-    --muted:#8f867a;--grid:#2e2820;--axis:#3d362b;--ring:rgba(247,243,236,0.10);
+    --muted:#8f867a;--grid:#2e2820;--axis:#3d362b;--ring:rgba(247,243,236,0.10); --hl: rgba(242,130,74,0.22);
     --hot25:#f2824a;--hot30:#ec6a6a;--night15:#4f97ec;--night20:#9b8cf0;
     --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
   }
@@ -107,6 +107,19 @@
   .tip b { font-variant-numeric: tabular-nums; }
   .tip .yr { color: var(--surface); opacity: .65; font-size: 10.5px; letter-spacing: .04em; }
 
+  .ranks { margin-top: 60px; }
+  .ranks-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  @media (max-width: 900px) { .ranks-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 520px) { .ranks-grid { grid-template-columns: 1fr; } }
+  .rcard { background: var(--panel); border: 1px solid var(--ring); border-radius: 14px; padding: 18px 18px 14px; box-shadow: var(--shadow); }
+  .rtbl { width: 100%; border-collapse: collapse; margin-top: 12px; font-variant-numeric: tabular-nums; }
+  .rtbl td { padding: 4px 6px; font-size: 13px; border: none; text-align: left; }
+  .rtbl .rk { color: var(--muted); width: 24px; text-align: right; padding-right: 10px; }
+  .rtbl .rv { text-align: right; font-weight: 640; }
+  .rtbl tr.me td { background: var(--hl); font-weight: 680; }
+  .rtbl tr.me td:first-child { border-radius: 7px 0 0 7px; }
+  .rtbl tr.me td:last-child { border-radius: 0 7px 7px 0; }
+  .rtbl tr.gap td { text-align: center; color: var(--muted); padding: 1px; letter-spacing: 2px; }
   .season { margin-top: 60px; }
   .sec-head { max-width: 700px; margin-bottom: 24px; }
   .sec-title { font-size: clamp(22px, 3.4vw, 32px); font-weight: 660; letter-spacing: -0.02em; margin: 8px 0 12px; text-wrap: balance; }
@@ -153,6 +166,15 @@
   </header>
 
   <div class="grid" id="grid"></div>
+
+  <section class="ranks">
+    <div class="sec-head">
+      <p class="eyebrow">All-time rankings</p>
+      <h2 class="sec-title">Where each year ranks</h2>
+      <p class="sec-lede">The ten highest years for each measure across the full record. <b>__CURYEAR__</b> (✷) is highlighted wherever it lands — shown with its rank even when it falls outside the top ten.</p>
+    </div>
+    <div class="ranks-grid" id="ranks"></div>
+  </section>
 
   <section class="season">
     <div class="sec-head">
@@ -416,6 +438,28 @@ for(const m of METRICS){
   fig.querySelector(".chart").appendChild(renderSeasonArea(m));
   sGrid.appendChild(fig);
 }
+
+// ---- all-time rankings ----
+(function(){
+  const cur=DATA.partial, host=document.getElementById("ranks");
+  let out="";
+  for(const m of METRICS){
+    const vals=DATA[m.key];
+    const rows=DATA.years.map((y,i)=>({y,v:vals[i]})).sort((a,b)=>b.v-a.v||a.y-b.y);
+    const rankOf=v=>1+rows.filter(r=>r.v>v).length;
+    const top=rows.slice(0,10);
+    const inTop=top.some(r=>r.y===cur);
+    let body="";
+    top.forEach(r=>{ body+=`<tr class="${r.y===cur?'me':''}"><td class="rk">${rankOf(r.v)}</td><td class="ry">${r.y}${r.y===cur?' \u2737':''}</td><td class="rv">${r.v}</td></tr>`; });
+    if(!inTop){
+      const cr=rows.find(r=>r.y===cur);
+      body+=`<tr class="gap"><td colspan="3">\u22ef</td></tr>`;
+      body+=`<tr class="me"><td class="rk">${rankOf(cr.v)}</td><td class="ry">${cr.y} \u2737</td><td class="rv">${cr.v}</td></tr>`;
+    }
+    out+=`<div class="rcard"><div class="cap"><div class="cap-l"><span class="dot" style="background:${m.color}"></span><div><h2>${m.label}</h2><span class="sub">${m.sub}</span></div></div></div><table class="rtbl">${body}</table></div>`;
+  }
+  host.innerHTML=out;
+})();
 
 // theme toggle
 const btn = document.getElementById("themeBtn");
