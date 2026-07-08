@@ -107,6 +107,9 @@
   .tip b { font-variant-numeric: tabular-nums; }
   .tip .yr { color: var(--surface); opacity: .65; font-size: 10.5px; letter-spacing: .04em; }
 
+  .hmodes { display:inline-flex; background:var(--panel); border:1px solid var(--ring); border-radius:11px; padding:4px; gap:4px; margin:0 0 22px; box-shadow:var(--shadow); }
+  .hmode-btn { border:none; background:transparent; color:var(--ink-2); font:inherit; font-size:13px; font-weight:600; padding:7px 14px; border-radius:8px; cursor:pointer; }
+  .hmode-btn.active { background:var(--ink); color:var(--surface); }
   .ranks { margin-top: 60px; }
   .ranks-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
   @media (max-width: 900px) { .ranks-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -165,13 +168,18 @@
     <p class="source">Source: <b>ECA&amp;D</b> official daily series (to 31 May 2026), topped up with <b>Heathrow METAR</b> observations to 8 Jul 2026. 2026 is a part-year (hatched).</p>
   </header>
 
+  <div class="hmodes" role="tablist">
+    <button class="hmode-btn active" data-hmode="full" role="tab">Full year</button>
+    <button class="hmode-btn" data-hmode="ytd" role="tab">Year-to-date · to 8 Jul</button>
+  </div>
+
   <div class="grid" id="grid"></div>
 
   <section class="ranks">
     <div class="sec-head">
       <p class="eyebrow">All-time rankings</p>
       <h2 class="sec-title">Where each year ranks</h2>
-      <p class="sec-lede">The ten highest years for each measure across the full record. <b>2026</b> (✷) is highlighted wherever it lands — shown with its rank even when it falls outside the top ten.</p>
+      <p class="sec-lede">The ten highest years for each measure. Use the toggle above to rank on full-year totals or the same Jan 1–8 Jul window (which judges the part-year 2026 fairly). <b>2026</b> (✷) is highlighted wherever it lands, with its rank even outside the top ten.</p>
     </div>
     <div class="ranks-grid" id="ranks"></div>
   </section>
@@ -210,7 +218,7 @@
 <div class="tip" id="tip"></div>
 
 <script>
-const DATA = {"years":[1960,1961,1962,1963,1964,1965,1966,1967,1968,1969,1970,1971,1972,1973,1974,1975,1976,1977,1978,1979,1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025,2026],"d25":[10,18,2,13,20,2,10,12,6,26,24,10,8,28,4,34,55,10,12,16,10,15,30,45,35,16,19,16,9,59,44,27,26,18,36,53,32,38,16,37,19,32,21,47,28,36,45,7,19,24,34,27,26,36,30,23,34,30,64,37,51,24,50,43,30,58,32],"d30":[0,3,0,0,1,0,0,1,1,2,2,0,0,3,0,6,20,0,0,0,0,0,0,9,4,0,3,0,0,7,12,0,1,0,8,17,7,3,1,4,3,8,2,10,3,6,15,0,0,3,2,4,3,6,1,5,6,7,19,9,12,6,11,10,5,14,14],"n15":[14,16,7,7,22,5,11,15,5,25,16,17,6,20,9,32,30,9,5,15,16,12,25,39,19,10,18,20,8,33,30,23,27,13,32,41,20,42,25,28,25,36,27,45,38,30,53,13,28,23,28,21,21,34,30,21,42,33,54,37,39,40,49,47,31,48,29],"n20":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,2,0,1,0,0,0,0,0,3,1,0,0,0,0,0,0,0,0,1,0,1,1,0,0,1,3,0,3,0,0,1,5],"partial":2026};
+const DATA = {"years":[1960,1961,1962,1963,1964,1965,1966,1967,1968,1969,1970,1971,1972,1973,1974,1975,1976,1977,1978,1979,1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025,2026],"d25":[10,18,2,13,20,2,10,12,6,26,24,10,8,28,4,34,55,10,12,16,10,15,30,45,35,16,19,16,9,59,44,27,26,18,36,53,32,38,16,37,19,32,21,47,28,36,45,7,19,24,34,27,26,36,30,23,34,30,64,37,51,24,50,43,30,58,32],"d30":[0,3,0,0,1,0,0,1,1,2,2,0,0,3,0,6,20,0,0,0,0,0,0,9,4,0,3,0,0,7,12,0,1,0,8,17,7,3,1,4,3,8,2,10,3,6,15,0,0,3,2,4,3,6,1,5,6,7,19,9,12,6,11,10,5,14,14],"n15":[14,16,7,7,22,5,11,15,5,25,16,17,6,20,9,32,30,9,5,15,16,12,25,39,19,10,18,20,8,33,30,23,27,13,32,41,20,42,25,28,25,36,27,45,38,30,53,13,28,23,28,21,21,34,30,21,42,33,54,37,39,40,49,47,31,48,29],"n20":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,2,0,1,0,0,0,0,0,3,1,0,0,0,0,0,0,0,0,1,0,1,1,0,0,1,3,0,3,0,0,1,5],"partial":2026,"d25y":[10,6,2,7,2,1,6,1,3,7,13,4,0,10,3,9,29,6,6,6,4,3,11,10,11,5,14,6,2,24,8,4,18,13,9,16,9,9,4,10,7,13,4,12,7,12,18,3,8,14,21,13,10,7,7,11,4,21,29,8,18,8,11,19,8,30,32],"d30y":[0,2,0,0,0,0,0,0,1,0,2,0,0,0,0,0,18,0,0,0,0,0,0,0,2,0,3,0,0,3,0,0,1,0,0,3,3,0,0,0,3,2,0,0,1,3,4,0,0,3,2,2,0,0,0,3,0,7,7,1,4,0,1,3,1,7,14],"n15y":[7,2,1,0,2,0,5,0,2,3,8,3,0,3,1,1,17,2,0,0,1,1,6,5,4,1,8,5,1,10,5,5,8,4,5,2,2,4,4,5,9,13,2,9,3,11,14,2,5,7,6,3,7,4,3,5,5,12,13,4,6,10,4,13,4,17,29],"n20y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,5],"ytd":"8 Jul"};
 
 const METRICS = [
   {key:"d25", label:"Hot days", sub:"≥ 25 °C", color:"var(--hot25)", unit:"days",
@@ -240,15 +248,14 @@ function ticks(max){
 const NS = "http://www.w3.org/2000/svg";
 function el(n, a){ const e=document.createElementNS(NS,n); for(const k in a) e.setAttribute(k,a[k]); return e; }
 
-function build(metric){
-  const vals = DATA[metric.key];
+function build(metric, vals, partialYr){
   const max = niceMax(Math.max(...vals));
   // 1961-1990 normal
   const idx0 = yrs.indexOf(1961), idx1 = yrs.indexOf(1990);
   let s=0; for(let i=idx0;i<=idx1;i++) s+=vals[i];
   const normal = s/(idx1-idx0+1);
-  const recVal = Math.max(...vals.filter((v,i)=>yrs[i]!==PARTIAL));
-  const recIdx = vals.findIndex((v,i)=>v===recVal && yrs[i]!==PARTIAL);
+  const recVal = Math.max(...vals.filter((v,i)=>yrs[i]!==partialYr));
+  const recIdx = vals.findIndex((v,i)=>v===recVal && yrs[i]!==partialYr);
 
   const svg = el("svg",{viewBox:`0 0 ${W} ${H}`, role:"img",
     "aria-label":`${metric.label} ${metric.sub} per year, 1960 to 2026`});
@@ -271,7 +278,7 @@ function build(metric){
 
   // bars
   vals.forEach((v,i)=>{
-    const part = yrs[i]===PARTIAL;
+    const part = yrs[i]===partialYr;
     const h = y(0)-y(v);
     const r = el("rect",{class:"bar", x:x(i)-bw/2, y:y(v), width:bw, height:Math.max(0,h),
       rx:Math.min(2,bw/2), fill: part? `url(#hatch-${metric.key})` : metric.color});
@@ -317,21 +324,29 @@ function moveTip(ev){
 function hideTip(){ tip.style.opacity = 0; }
 
 // render panels
+let HISTMODE = "full";
 const grid = document.getElementById("grid");
-for(const m of METRICS){
-  const fig = document.createElement("figure");
-  const nowVal = DATA[m.key][N-1];
-  fig.innerHTML = `
+function valsFor(m){ return HISTMODE==="ytd" ? DATA[m.key+"y"] : DATA[m.key]; }
+function renderCharts(){
+  grid.innerHTML = "";
+  const partialYr = HISTMODE==="full" ? PARTIAL : null;
+  for(const m of METRICS){
+    const vals = valsFor(m);
+    const fig = document.createElement("figure");
+    const nowVal = vals[N-1];
+    fig.innerHTML = `
     <div class="cap">
       <div class="cap-l"><span class="dot" style="background:${m.color}"></span>
         <div><h2>${m.label}</h2><span class="sub">${m.sub}</span></div></div>
-      <div class="now"><div class="v" style="color:${m.color}">${nowVal}</div><div class="l">2026 so far</div></div>
+      <div class="now"><div class="v" style="color:${m.color}">${nowVal}</div><div class="l">2026 ${HISTMODE==="ytd"?"to 8 Jul":"so far"}</div></div>
     </div>
     <div class="chart"></div>
     <p class="insight">${m.insight}</p>`;
-  fig.querySelector(".chart").appendChild(build(m));
-  grid.appendChild(fig);
+    fig.querySelector(".chart").appendChild(build(m, vals, partialYr));
+    grid.appendChild(fig);
+  }
 }
+renderCharts();
 
 // data table
 const tbl = document.getElementById("tbl");
@@ -440,11 +455,11 @@ for(const m of METRICS){
 }
 
 // ---- all-time rankings ----
-(function(){
+function renderRanks(){
   const cur=DATA.partial, host=document.getElementById("ranks");
   let out="";
   for(const m of METRICS){
-    const vals=DATA[m.key];
+    const vals=valsFor(m);
     const rows=DATA.years.map((y,i)=>({y,v:vals[i]})).sort((a,b)=>b.v-a.v||a.y-b.y);
     const rankOf=v=>1+rows.filter(r=>r.v>v).length;
     const top=rows.slice(0,10);
@@ -459,7 +474,13 @@ for(const m of METRICS){
     out+=`<div class="rcard"><div class="cap"><div class="cap-l"><span class="dot" style="background:${m.color}"></span><div><h2>${m.label}</h2><span class="sub">${m.sub}</span></div></div></div><table class="rtbl">${body}</table></div>`;
   }
   host.innerHTML=out;
-})();
+}
+renderRanks();
+document.querySelectorAll(".hmode-btn").forEach(b=>b.addEventListener("click",()=>{
+  HISTMODE=b.dataset.hmode;
+  document.querySelectorAll(".hmode-btn").forEach(x=>x.classList.toggle("active",x===b));
+  renderCharts(); renderRanks();
+}));
 
 // theme toggle
 const btn = document.getElementById("themeBtn");

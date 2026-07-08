@@ -133,6 +133,17 @@ def main():
         return [c[y] for y in all_years]
     HIST={"years":all_years,"d25":year_counts(tx,25),"d30":year_counts(tx,30),
           "n15":year_counts(tn,15),"n20":year_counts(tn,20),"partial":cur_year}
+    # year-to-date counts: every year cut at the same calendar date as the latest data
+    cut_md=metar_last[4:8]
+    def ytd_counts(vals,thr):
+        c={y:0 for y in all_years}
+        for k,v in vals.items():
+            y=int(k[:4])
+            if y in c and k[4:8]<=cut_md and v>=thr: c[y]+=1
+        return [c[y] for y in all_years]
+    HIST["d25y"]=ytd_counts(tx,25); HIST["d30y"]=ytd_counts(tx,30)
+    HIST["n15y"]=ytd_counts(tn,15); HIST["n20y"]=ytd_counts(tn,20)
+    HIST["ytd"]=fmt_short(metar_last)
 
     # decade weekly profiles + averages (complete years only, exclude current partial year)
     cov=defaultdict(int)
@@ -204,7 +215,7 @@ def main():
     g=open(P("heathrow_heat.tmpl.html")).read()
     g=(g.replace("__HIST__",j(HIST)).replace("__SEASON__",j(SEASON))
         .replace("__ECALAST__",fmt_long(eca_last)).replace("__METARLAST__",fmt_long(metar_last))
-        .replace("__METARSHORT__",fmt_short(metar_last))
+        .replace("__METARSHORT__",fmt_short(metar_last)).replace("__YTD__",fmt_short(metar_last))
         .replace("__CURYEAR__",str(cur_year)).replace("__NYEARS__",str(cur_year-first_year))
         .replace("__N20_INSIGHT__",n20_txt))
     open(P("heathrow_heat.html"),"w").write(g)
