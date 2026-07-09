@@ -630,13 +630,13 @@ def main():
     # render year_explorer
     t=open(P("year_explorer.tmpl.html")).read()
     t=(t.replace("__ALL__",j(ALL)).replace("__DEC__",j(DEC))
-        .replace("__LASTDATE__",fmt_short(metar_last))
+        .replace("__SEASON__",j(SEASON)).replace("__LASTDATE__",fmt_short(metar_last))
         .replace("__CURYEAR__",str(cur_year)).replace("__LASTCOMPLETE__",str(cur_year-1)))
     emit("year_explorer.html",t,here="/year_explorer",stamp=metar_last)
 
     # render heathrow_heat as the site's front page
     g=open(P("heathrow_heat.tmpl.html")).read()
-    g=(g.replace("__HIST__",j(HIST)).replace("__SEASON__",j(SEASON))
+    g=(g.replace("__HIST__",j(HIST))
         .replace("__ECALAST__",fmt_long(eca_last)).replace("__METARLAST__",fmt_long(metar_last))
         .replace("__METARSHORT__",fmt_short(metar_last)).replace("__YTD__",fmt_short(metar_last))
         .replace("__CURYEAR__",str(cur_year)).replace("__NYEARS__",str(cur_year-first_year))

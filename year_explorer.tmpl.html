@@ -30,6 +30,20 @@
   .thr-lab{font-size:11px;font-weight:640;font-variant-numeric:tabular-nums;}
   .ax{fill:var(--muted);font-size:11px;} .axn{fill:var(--muted);font-size:10.5px;font-variant-numeric:tabular-nums;}
   .endmark{stroke:var(--muted);stroke-width:1.3;stroke-dasharray:3 3;}
+  .season{margin-top:64px;}
+  .window-fig{margin-bottom:20px;}
+  .wtick{fill:var(--muted);font-size:10.5px;}
+  .wgrid{stroke:var(--grid);stroke-width:1;}
+  .wlabel{fill:var(--ink);font-size:12.5px;font-weight:620;}
+  .wrange{fill:var(--muted);font-size:11px;font-variant-numeric:tabular-nums;}
+  .peak-lab{fill:var(--ink);font-size:10px;font-weight:660;font-variant-numeric:tabular-nums;}
+  .sgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;}
+  @media (max-width:720px){ .sgrid{grid-template-columns:1fr;} }
+  .now{text-align:right;font-variant-numeric:tabular-nums;}
+  .now .v{font-size:21px;font-weight:680;letter-spacing:-0.02em;line-height:1;}
+  .now .l{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}
+  .hit{fill:transparent;cursor:crosshair;}
+  .wrow:hover .wband{fill-opacity:.55;}
   .end-lab{fill:var(--muted);font-size:10.5px;font-weight:600;}
   .leg{display:flex;flex-wrap:wrap;gap:14px 20px;margin-top:14px;font-size:12.5px;color:var(--ink-2);align-items:center;}
   .leg .it{display:flex;align-items:center;gap:8px;}
@@ -86,7 +100,11 @@
       <span class="it"><span class="swb" style="background:var(--band);opacity:.55"></span> low → high range</span>
       <span class="it" style="color:var(--warm)"><span class="dash"></span> 25 °C</span>
       <span class="it" style="color:var(--hot)"><span class="dash"></span> 30 °C</span>
+      <span class="it"><span class="sw" style="background:var(--night15)"></span> daily low</span>
+      <span class="it" style="color:var(--night15)"><span class="dash"></span> 15 °C night</span>
+      <span class="it" style="color:var(--night20)"><span class="dash"></span> 20 °C night</span>
       <span class="it"><span class="swb" style="background:var(--hot);border-radius:2px;width:6px;height:12px"></span> ≥30 °C day</span>
+      <span class="it"><span class="swb" style="background:var(--night20);border-radius:2px;width:6px;height:12px"></span> tropical night</span>
     </div>
     <p class="note">Hover the chart for any day's high and low. Data: ECA&amp;D official daily series; __CURYEAR__ tops up from Heathrow METAR to __LASTDATE__.</p>
   </figure>
@@ -101,6 +119,24 @@
       <p class="note">Each line is a decade's <b>average daily high</b> by week of the year (complete years only, 1960–__LASTCOMPLETE__), which smooths out single-day outliers. The summer hump lifts and broadens decade on decade. Hover for every decade's value in a given week.</p>
     </figure>
   </div>
+
+  <section class="season">
+    <div class="sec-head">
+      <p class="eyebrow">Within the year</p>
+      <h2 class="sec-title">When in the year the heat lands</h2>
+      <p class="sec-lede">Every qualifying day from every <em>complete</em> year since 1960, folded onto one calendar. Hot days spread across a broad summer, but ≥30 °C days and tropical nights compress into a narrow mid-July-to-August window — they need a run of settled heat, not just a warm spell. Hover any curve for a given day’s tally. The part-year __CURYEAR__ is left out: it can supply days up to __LASTDATE__ but none after, which would tug every distribution earlier.</p>
+    </div>
+
+    <figure class="window-fig">
+      <div class="cap"><div class="cap-l"><div>
+        <h2>The season window</h2>
+        <span class="sub">bar = middle 80% of all occurrences · ◆ = peak of the distribution · dashed = today</span>
+      </div></div></div>
+      <div class="chart" id="windowChart"></div>
+    </figure>
+
+    <div class="sgrid" id="seasonGrid"></div>
+  </section>
 </div>
 
 <div class="tip" id="tip"></div>
@@ -173,14 +209,27 @@ function render(yr){
     svg.appendChild(el("path",{d:top+bot+" Z",fill:"var(--band)","fill-opacity":"0.45"}));
     // >=30 stems
     for(const[dn,hi]of pts){ if(hi>=30) svg.appendChild(el("line",{x1:x(dn),x2:x(dn),y1:y(hi),y2:y(25),stroke:"var(--hot)","stroke-width":2.2,"stroke-opacity":"0.5"})); }
+    // tropical-night stems, mirroring the >=30 stems on the low side
+    for(const[dn,,lo]of pts){ if(lo!=null&&lo>=20) svg.appendChild(el("line",{x1:x(dn),x2:x(dn),y1:y(lo),y2:y(15),stroke:"var(--night20)","stroke-width":2.2,"stroke-opacity":"0.5"})); }
+    // the low was only ever the band's bottom edge; draw it as its own series
+    let lowD="", pen=false;
+    for(const[dn,,lo]of pts){
+      if(lo==null){ pen=false; continue; }
+      lowD += `${pen?" L":" M"} ${x(dn).toFixed(1)} ${y(lo).toFixed(1)}`; pen=true;
+    }
+    if(lowD) svg.appendChild(el("path",{d:lowD.trim(),fill:"none",stroke:"var(--night15)","stroke-width":2,"stroke-linejoin":"round"}));
     // max line
     svg.appendChild(el("path",{d:top,fill:"none",stroke:"var(--warm)","stroke-width":2,"stroke-linejoin":"round"}));
   }
-  // thresholds
+  // thresholds: the two that define a hot day, and the two that define a warm night
   svg.appendChild(el("line",{class:"thr",x1:M.l,x2:M.l+pw,y1:y(25),y2:y(25),stroke:"var(--warm)"}));
   svg.appendChild(el("line",{class:"thr",x1:M.l,x2:M.l+pw,y1:y(30),y2:y(30),stroke:"var(--hot)"}));
+  svg.appendChild(el("line",{class:"thr",x1:M.l,x2:M.l+pw,y1:y(20),y2:y(20),stroke:"var(--night20)"}));
+  svg.appendChild(el("line",{class:"thr",x1:M.l,x2:M.l+pw,y1:y(15),y2:y(15),stroke:"var(--night15)"}));
   let l1=el("text",{class:"thr-lab",x:M.l+4,y:y(25)-5,fill:"var(--warm)"});l1.textContent="25°";svg.appendChild(l1);
   let l2=el("text",{class:"thr-lab",x:M.l+4,y:y(30)-5,fill:"var(--hot)"});l2.textContent="30°";svg.appendChild(l2);
+  let l3=el("text",{class:"thr-lab",x:M.l+4,y:y(20)-5,fill:"var(--night20)"});l3.textContent="20° night";svg.appendChild(l3);
+  let l4=el("text",{class:"thr-lab",x:M.l+4,y:y(15)-5,fill:"var(--night15)"});l4.textContent="15° night";svg.appendChild(l4);
   // partial end marker
   if(partial){
     svg.appendChild(el("line",{class:"endmark",x1:x(lastDoy),x2:x(lastDoy),y1:M.t,y2:M.t+ph}));
@@ -208,17 +257,8 @@ function render(yr){
   });
   over.addEventListener("mouseleave",()=>{tip.style.opacity=0;hair.style.opacity=0;dotH.style.opacity=0;dotL.style.opacity=0;});
 
-  // A "today" rule only means something on the year we are actually living in.
-  if(String(yr)===String(CURYEAR)){
-    const n=new Date();
-    const dn=Math.floor((Date.UTC(n.getFullYear(),n.getMonth(),n.getDate())
-                        -Date.UTC(n.getFullYear(),0,1))/86400000)+1;
-    if(dn>=1 && dn<=365){
-      svg.appendChild(el("line",{class:"today",x1:x(dn),x2:x(dn),y1:M.t,y2:M.t+ph}));
-      const t=el("text",{class:"today-lab",x:x(dn),y:M.t-6,"text-anchor":"middle"});
-      t.textContent="today"; svg.appendChild(t);
-    }
-  }
+  // No "today" rule here: the endmark above already stands one day away, at the
+  // last day with data, and says so. Two dashed rules a pixel apart is noise.
 
   const host=document.getElementById("chart"); host.innerHTML=""; host.appendChild(svg);
   // sync controls
@@ -313,6 +353,136 @@ function setMode(m){
 }
 document.querySelectorAll(".mode-btn").forEach(b=>b.addEventListener("click",()=>setMode(b.dataset.mode)));
 
+
+// ---------- seasonal timing ----------
+// Lives here rather than on the record page: it answers a within-the-year
+// question, which is what this page is for.
+const SEASON = __SEASON__;
+const SEASON_METRICS = [
+  {key:"d25", label:"Hot days",        sub:"≥ 25 °C",     color:"var(--hot25)",   unit:"days"},
+  {key:"d30", label:"Very hot days",   sub:"≥ 30 °C",     color:"var(--hot30)",   unit:"days"},
+  {key:"n15", label:"Mild nights",     sub:"min ≥ 15 °C", color:"var(--night15)", unit:"nights"},
+  {key:"n20", label:"Tropical nights", sub:"min ≥ 20 °C", color:"var(--night20)", unit:"nights"},
+];
+const DSTART = 91, DEND = 305;   // Apr 1 – Nov 1 crop
+const stip = document.getElementById("tip");
+
+function sSmooth(a,w){ const n=a.length,o=new Array(n);
+  for(let i=0;i<n;i++){ let s=0,c=0; for(let j=-w;j<=w;j++){ const k=i+j; if(k>=0&&k<n){s+=a[k];c++;} } o[i]=s/c; }
+  return o; }
+function todayDoy(){ const n=new Date();
+  return Math.floor((Date.UTC(n.getFullYear(),n.getMonth(),n.getDate())-Date.UTC(n.getFullYear(),0,1))/86400000)+1; }
+function markToday(svg,xs,yTop,yBot,label){
+  const dn=todayDoy(); if(dn<DSTART||dn>DEND) return;      // silent all winter
+  const gx=xs(dn);
+  svg.appendChild(el("line",{class:"today",x1:gx,x2:gx,y1:yTop,y2:yBot}));
+  if(label){ const t=el("text",{class:"today-lab",x:gx,y:yTop-3,"text-anchor":"middle"}); t.textContent="today"; svg.appendChild(t); }
+}
+function sShow(ev,html){ stip.innerHTML=html; stip.style.opacity=1;
+  stip.style.left=ev.clientX+"px"; stip.style.top=(ev.clientY-12)+"px"; }
+function sHide(){ stip.style.opacity=0; }
+
+function pctlDays(S){
+  const tot=S.tot; let cum=0,p10=DSTART,p90=DEND,seen10=false;
+  for(let d=1;d<=365;d++){ cum+=S.doy[d-1];
+    if(!seen10 && cum>=0.1*tot){ p10=d; seen10=true; }
+    if(cum>=0.9*tot){ p90=d; break; } }
+  return [p10,p90];
+}
+
+function renderWindow(){
+  const rows=SEASON_METRICS, WW=1040, mg={t:8,r:150,b:26,l:132};
+  const rowH=40, HH=mg.t+mg.b+rows.length*rowH, pwv=WW-mg.l-mg.r;
+  const xs=dn=>mg.l+(dn-DSTART)/(DEND-DSTART)*pwv;
+  const svg=el("svg",{viewBox:`0 0 ${WW} ${HH}`,role:"img","aria-label":"Season window for each metric across the calendar"});
+  for(let m=3;m<=10;m++){ const gx=xs(MSTART[m]); if(gx<mg.l||gx>WW-mg.r) continue;
+    svg.appendChild(el("line",{class:"wgrid",x1:gx,x2:gx,y1:mg.t,y2:mg.t+rows.length*rowH})); }
+  for(let m=3;m<=10;m++){ const midDay=(MSTART[m]+(m<10?MSTART[m+1]:DEND))/2;
+    if(midDay<DSTART||midDay>DEND) continue;
+    const t=el("text",{class:"wtick",x:xs(midDay),y:HH-8,"text-anchor":"middle"}); t.textContent=MABBR[m]; svg.appendChild(t); }
+  rows.forEach((m,i)=>{
+    const S=SEASON[m.key], cy=mg.t+i*rowH+rowH/2;
+    const [p10,p90]=pctlDays(S);
+    const g=el("g",{class:"wrow"});
+    g.appendChild(el("rect",{class:"wband",x:xs(p10),y:cy-8,width:xs(p90)-xs(p10),height:16,rx:8,fill:m.color,"fill-opacity":"0.35"}));
+    const px=xs(S.pk);
+    g.appendChild(el("path",{d:`M ${px} ${cy-7} L ${px+6} ${cy} L ${px} ${cy+7} L ${px-6} ${cy} Z`,fill:m.color}));
+    const ll=el("text",{class:"wlabel",x:mg.l-12,y:cy+4,"text-anchor":"end"}); ll.textContent=m.label; g.appendChild(ll);
+    const sl=el("text",{class:"wtick",x:mg.l-12,y:cy+17,"text-anchor":"end"}); sl.textContent=m.sub; g.appendChild(sl);
+    const rt=el("text",{class:"wrange",x:WW-mg.r+12,y:cy+4}); rt.textContent=`${fmtDay(p10)} – ${fmtDay(p90)}`; g.appendChild(rt);
+    const hit=el("rect",{class:"hit",x:mg.l,y:cy-rowH/2,width:pwv,height:rowH});
+    hit.addEventListener("mousemove",ev=>sShow(ev,
+      `<span class="yr">${m.label} · ${m.sub}</span><br><b>${S.tot}</b> ${m.unit} across ${S.ny} complete years<br>` +
+      `<span style="opacity:.75">middle 80%: ${fmtDay(p10)} – ${fmtDay(p90)} · peak ${fmtDay(S.pk)}</span>`));
+    hit.addEventListener("mouseleave",sHide);
+    g.appendChild(hit);
+    svg.appendChild(g);
+  });
+  markToday(svg,xs,mg.t,mg.t+rows.length*rowH,true);
+  document.getElementById("windowChart").appendChild(svg);
+}
+renderWindow();
+
+function renderSeasonArea(m){
+  const S=SEASON[m.key], raw=S.doy, s=sSmooth(raw,4);
+  const W2=520,H2=150,mg={t:16,r:12,b:24,l:12};
+  const pwv=W2-mg.l-mg.r, ph2=H2-mg.t-mg.b;
+  let max=0; for(let d=DSTART;d<=DEND;d++) max=Math.max(max,s[d-1]); max=max||1;
+  const xs=dn=>mg.l+(dn-DSTART)/(DEND-DSTART)*pwv;
+  const ys=v=>mg.t+ph2-(v/max)*ph2;
+  const svg=el("svg",{viewBox:`0 0 ${W2} ${H2}`,role:"img","aria-label":`${m.label} distribution across the calendar`});
+  for(let mo=4;mo<=10;mo++){ const gx=xs(MSTART[mo]); if(gx<mg.l||gx>W2-mg.r) continue;
+    svg.appendChild(el("line",{class:"wgrid",x1:gx,x2:gx,y1:mg.t,y2:mg.t+ph2})); }
+  for(let mo=3;mo<=10;mo++){ const midDay=(MSTART[mo]+MSTART[mo+1])/2;
+    if(midDay<DSTART||midDay>DEND) continue;
+    const t=el("text",{class:"wtick",x:xs(midDay),y:H2-8,"text-anchor":"middle"}); t.textContent=MABBR[mo]; svg.appendChild(t); }
+  svg.appendChild(el("line",{x1:mg.l,x2:mg.l+pwv,y1:ys(0),y2:ys(0),stroke:"var(--axis)","stroke-width":1}));
+  let d=`M ${xs(DSTART)} ${ys(0)}`;
+  for(let dn=DSTART;dn<=DEND;dn++) d+=` L ${xs(dn).toFixed(1)} ${ys(s[dn-1]).toFixed(1)}`;
+  d+=` L ${xs(DEND)} ${ys(0)} Z`;
+  svg.appendChild(el("path",{d,fill:m.color,"fill-opacity":"0.18"}));
+  let dl=`M ${xs(DSTART)} ${ys(s[DSTART-1]).toFixed(1)}`;
+  for(let dn=DSTART;dn<=DEND;dn++) dl+=` L ${xs(dn).toFixed(1)} ${ys(s[dn-1]).toFixed(1)}`;
+  svg.appendChild(el("path",{d:dl,fill:"none",stroke:m.color,"stroke-width":2}));
+  const pk=S.pk;   // peak of the smoothed curve, computed in the build
+  svg.appendChild(el("line",{x1:xs(pk),x2:xs(pk),y1:ys(s[pk-1]),y2:ys(0),stroke:m.color,"stroke-width":1,"stroke-dasharray":"2 2","stroke-opacity":"0.6"}));
+  svg.appendChild(el("circle",{cx:xs(pk),cy:ys(s[pk-1]),r:3.5,fill:m.color}));
+  const pl=el("text",{class:"peak-lab",x:xs(pk),y:ys(s[pk-1])-7,"text-anchor":"middle"}); pl.textContent="peak "+fmtDay(pk); svg.appendChild(pl);
+  markToday(svg,xs,mg.t,mg.t+ph2,false);
+
+  // hover: crosshair, marker, and the raw tally for that calendar day
+  const hair=el("line",{class:"hair",y1:mg.t,y2:mg.t+ph2}); svg.appendChild(hair);
+  const dot=el("circle",{r:3.5,fill:m.color,stroke:"var(--panel)","stroke-width":1.5,opacity:0}); svg.appendChild(dot);
+  const hit=el("rect",{class:"hit",x:mg.l,y:mg.t,width:pwv,height:ph2});
+  hit.addEventListener("mousemove",ev=>{
+    const r=hit.getBoundingClientRect();
+    const frac=(ev.clientX-r.left)/r.width;
+    const dn=Math.max(DSTART,Math.min(DEND,Math.round(DSTART+frac*(DEND-DSTART))));
+    hair.setAttribute("x1",xs(dn)); hair.setAttribute("x2",xs(dn)); hair.style.opacity=1;
+    dot.setAttribute("cx",xs(dn)); dot.setAttribute("cy",ys(s[dn-1])); dot.style.opacity=1;
+    const n=raw[dn-1];
+    const rate = n===0 ? "never on this date"
+      : n===S.ny ? "every year on record"
+      : `about one year in ${Math.round(S.ny/n)}`;
+    sShow(ev,`<span class="yr">${fmtDay(dn)}</span><br><b>${n}</b> ${m.unit} in ${S.ny} years<br><span style="opacity:.75">${rate}</span>`);
+  });
+  hit.addEventListener("mouseleave",()=>{ sHide(); hair.style.opacity=0; dot.style.opacity=0; });
+  svg.appendChild(hit);
+  return svg;
+}
+const sGrid=document.getElementById("seasonGrid");
+for(const m of SEASON_METRICS){
+  const fig=document.createElement("figure");
+  fig.innerHTML=`
+    <div class="cap"><div class="cap-l"><span class="dot" style="background:${m.color}"></span>
+      <div><h2>${m.label}</h2><span class="sub">${m.sub} · when they occur</span></div></div>
+      <div class="now"><div class="v" style="color:${m.color}">${fmtDay(SEASON[m.key].pk)}</div><div class="l">peak date</div></div></div>
+    <div class="chart"></div>`;
+  fig.querySelector(".chart").appendChild(renderSeasonArea(m));
+  sGrid.appendChild(fig);
+}
+
+// theme toggle
 const btn=document.getElementById("themeBtn");
 btn.addEventListener("click",()=>{
   const cur=document.documentElement.getAttribute("data-theme");
