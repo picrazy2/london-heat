@@ -21,7 +21,99 @@ SITE = os.path.join(BASE, "public")          # what Cloudflare Pages serves
 O = lambda f: os.path.join(SITE, f)
 MABBR = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
+SITE_URL  = "https://weather.akguo.com"
+SITE_NAME = "London Heat"
+
 PAGES = [("/", "The warming record"), ("/year_explorer", "A year in temperature")]
+
+META = {
+    "/": ("London Heat — Heathrow's warming record",
+          "Hot days and tropical nights at London Heathrow since 1960, counted from "
+          "the airport's own thermometer. Updated daily."),
+    "/year_explorer": ("London Heat — a year in temperature",
+          "Every day of any year at London Heathrow, against its decade's typical "
+          "shape. Daily maxima and minima since 1960."),
+}
+
+# A rising ramp, cool to hot: the chart's argument, at 16 pixels.
+FAVICON = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="13" fill="#16130f"/>
+  <rect x="12" y="38" width="11" height="15" rx="2.5" fill="#4f97ec"/>
+  <rect x="26.5" y="27" width="11" height="26" rx="2.5" fill="#f2824a"/>
+  <rect x="41" y="14" width="11" height="39" rx="2.5" fill="#ec6a6a"/>
+</svg>
+"""
+
+# ---------------- tiny PNG writer (zlib/struct are already imported) ----------------
+def _chunk(tag, data):
+    return (struct.pack(">I", len(data)) + tag + data
+            + struct.pack(">I", zlib.crc32(tag + data) & 0xffffffff))
+
+def write_png(path, w, h, buf):
+    raw = b"".join(b"\x00" + bytes(buf[y*w*3:(y+1)*w*3]) for y in range(h))
+    hdr = struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0)
+    with open(path, "wb") as f:
+        f.write(b"\x89PNG\r\n\x1a\n" + _chunk(b"IHDR", hdr)
+                + _chunk(b"IDAT", zlib.compress(raw, 9)) + _chunk(b"IEND", b""))
+
+def _rgb(h): h=h.lstrip("#"); return tuple(int(h[i:i+2],16) for i in (0,2,4))
+def _lerp(a, b, t): return tuple(round(a[i] + (b[i]-a[i])*t) for i in range(3))
+
+def canvas(w, h, hexcol):
+    return bytearray(bytes(_rgb(hexcol)) * (w*h))
+
+def fill(buf, w, h, x0, y0, x1, y1, rgb):
+    x0,y0 = max(0,int(x0)), max(0,int(y0)); x1,y1 = min(w,int(x1)), min(h,int(y1))
+    px = bytes(rgb)
+    for y in range(y0, y1):
+        buf[(y*w+x0)*3:(y*w+x1)*3] = px * (x1-x0)
+
+def vbar(buf, W, H, x0, x1, y0, y1, rgb, r=4, round_top=True):
+    """Bar with a rounded data-end; the baseline end stays square."""
+    x0,x1,y0,y1 = int(x0),int(x1),int(y0),int(y1)
+    if y1<=y0: return
+    r = min(r, (x1-x0)//2, y1-y0)
+    for y in range(y0, y1):
+        d = (y - y0) if round_top else (y1 - 1 - y)
+        if d < r:
+            inset = r - int((r*r - (r-1-d)**2) ** 0.5)
+        else:
+            inset = 0
+        fill(buf, W, H, x0+inset, y, x1-inset, y+1, rgb)
+
+def social_card(path, years, vals, partial_year):
+    """1200x630 preview: hot days per year as a deviation from the 1961-90 normal.
+
+    Plotting the deviation rather than the count lets colour carry the *sign* —
+    a diverging encoding — instead of restating the bar's own length, which is
+    what colouring by magnitude would do.
+    """
+    W,H = 1200,630
+    buf = canvas(W, H, "#16130f")
+    L,R,T,B = 80, 80, 80, 80
+    pw, ph = W-L-R, H-T-B
+    surface = _rgb("#16130f")
+    cool, warm, neutral = _rgb("#4f97ec"), _rgb("#e0504f"), _rgb("#8f867a")
+
+    i0, i1 = years.index(1961), years.index(1990)
+    normal = sum(vals[i0:i1+1])/(i1-i0+1)
+    dev = [v - normal for v in vals]
+    up, dn = max(max(dev), 0.1), min(min(dev), -0.1)
+    span = up - dn
+    zero = T + (up/span)*ph               # y of the baseline
+
+    n = len(vals); bw = pw/n
+    for i, d in enumerate(dev):
+        x0, x1 = L + i*bw + 1, L + (i+1)*bw - 1   # 2px surface gap between bars
+        c = warm if d >= 0 else cool
+        if years[i] == partial_year:               # part-year: hold it back
+            c = _lerp(c, surface, 0.45)
+        h = abs(d)/span * ph
+        if d >= 0: vbar(buf, W, H, x0, x1, zero-h, zero, c, round_top=True)
+        else:      vbar(buf, W, H, x0, x1, zero, zero+h, c, round_top=False)
+    # the 1961-90 normal, drawn over the bars
+    fill(buf, W, H, L-14, zero-1, L+pw+14, zero+1, neutral)
+    write_png(path, W, H, buf)
 
 NAV_CSS = """
   .sitenav { display:flex; gap:6px; margin:0 0 28px; flex-wrap:wrap; }
@@ -42,7 +134,38 @@ def nav_html(here):
         for href, label in PAGES)
     return f'\n  <nav class="sitenav" aria-label="Pages">\n{links}  </nav>\n'
 
-def wrap(frag, here=None):
+def esc(s): return (s.replace("&","&amp;").replace('"',"&quot;")
+                     .replace("<","&lt;").replace(">","&gt;"))
+
+ICONS = ('<link rel="icon" href="/favicon.svg" type="image/svg+xml">\n'
+         '<link rel="apple-touch-icon" href="/apple-touch-icon.png">\n'
+         '<meta name="theme-color" content="#faf8f5" media="(prefers-color-scheme: light)">\n'
+         '<meta name="theme-color" content="#16130f" media="(prefers-color-scheme: dark)">\n')
+
+def social_meta(here, stamp):
+    title, desc = META[here]
+    url = SITE_URL + ("" if here=="/" else here)
+    img = f"{SITE_URL}/social.png?v={stamp}"   # ?v= busts scrapers' image caches
+    t = [f'<meta name="description" content="{esc(desc)}">',
+         f'<link rel="canonical" href="{esc(url)}">',
+         '<meta property="og:type" content="website">',
+         f'<meta property="og:site_name" content="{esc(SITE_NAME)}">',
+         f'<meta property="og:title" content="{esc(title)}">',
+         f'<meta property="og:description" content="{esc(desc)}">',
+         f'<meta property="og:url" content="{esc(url)}">',
+         f'<meta property="og:image" content="{esc(img)}">',
+         '<meta property="og:image:width" content="1200">',
+         '<meta property="og:image:height" content="630">',
+         '<meta property="og:image:alt" content="Hot days per year at Heathrow, 1960 to '
+         'today, as a deviation from the 1961-90 average: mostly below it early on, '
+         'almost entirely above it since the 1990s">',
+         '<meta name="twitter:card" content="summary_large_image">',
+         f'<meta name="twitter:title" content="{esc(title)}">',
+         f'<meta name="twitter:description" content="{esc(desc)}">',
+         f'<meta name="twitter:image" content="{esc(img)}">']
+    return "\n".join(t) + "\n"
+
+def wrap(frag, here=None, stamp=""):
     """Templates are bare fragments (a <title>, a <style>, then content) because they
     began life as Claude artifacts, which supplied the document skeleton. Served as
     real files they need one: without a charset the °C signs mojibake, and without a
@@ -50,17 +173,18 @@ def wrap(frag, here=None):
     i = frag.find("</style>")
     if i == -1: head, body = "", frag
     else:       head, body = frag[:i] + NAV_CSS + "</style>", frag[i+8:]
+    social = social_meta(here, stamp) if here in META else ""
     if here:
         marker = '<div class="wrap">'
         body = body.replace(marker, marker + nav_html(here), 1)
     return ('<!doctype html>\n<html lang="en">\n<head>\n'
             '<meta charset="utf-8">\n'
             '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
-            f'{head}\n</head>\n<body>{body}</body>\n</html>\n')
+            f'{ICONS}{social}{head}\n</head>\n<body>{body}</body>\n</html>\n')
 
-def emit(name, text, here=None):
+def emit(name, text, here=None, stamp=""):
     with open(O(name), "w", encoding="utf-8") as f:
-        f.write(wrap(text, here))
+        f.write(wrap(text, here, stamp))
 
 def doy(y,m,d): return (date(y,m,d) - date(y,1,1)).days + 1
 def fmt_short(dstr):  # 'YYYY-MM-DD' or 'YYYYMMDD' -> '7 Jul'
@@ -278,12 +402,20 @@ def main():
 
     os.makedirs(SITE, exist_ok=True)
 
+    # icons + social card. metar_last stamps the card URL so scrapers re-fetch it.
+    open(O("favicon.svg"),"w").write(FAVICON)
+    ic=canvas(180,180,"#16130f")
+    for x0,y0,c in [(34,107,"#4f97ec"),(75,76,"#f2824a"),(115,39,"#ec6a6a")]:
+        fill(ic,180,180,x0,y0,x0+31,149,_rgb(c))
+    write_png(O("apple-touch-icon.png"),180,180,ic)
+    social_card(O("social.png"), all_years, HIST["d25"], cur_year)
+
     # render year_explorer
     t=open(P("year_explorer.tmpl.html")).read()
     t=(t.replace("__ALL__",j(ALL)).replace("__DEC__",j(DEC))
         .replace("__LASTDATE__",fmt_short(metar_last))
         .replace("__CURYEAR__",str(cur_year)).replace("__LASTCOMPLETE__",str(cur_year-1)))
-    emit("year_explorer.html",t,here="/year_explorer")
+    emit("year_explorer.html",t,here="/year_explorer",stamp=metar_last)
 
     # render heathrow_heat as the site's front page
     g=open(P("heathrow_heat.tmpl.html")).read()
@@ -292,7 +424,7 @@ def main():
         .replace("__METARSHORT__",fmt_short(metar_last)).replace("__YTD__",fmt_short(metar_last))
         .replace("__CURYEAR__",str(cur_year)).replace("__NYEARS__",str(cur_year-first_year))
         .replace("__N20_INSIGHT__",n20_txt))
-    emit("index.html",g,here="/")
+    emit("index.html",g,here="/",stamp=metar_last)
 
     # without this Pages answers every unknown path with index.html and a 200
     emit("404.html",open(P("404.tmpl.html")).read())
@@ -303,7 +435,7 @@ def main():
     print(f"ECA&D official through {fmt_long(eca_last)}; METAR through {fmt_long(metar_last)}")
     print(f"{cur_year} YTD: {HIST['d25'][i]} d≥25°, {HIST['d30'][i]} d≥30°, "
           f"{HIST['n15'][i]} nights≥15°, {HIST['n20'][i]} tropical nights≥20°")
-    print("wrote public/index.html (the record), public/year_explorer.html, public/404.html")
+    print("wrote public/: index.html (the record), year_explorer.html, 404.html, favicon.svg, apple-touch-icon.png, social.png")
 
 if __name__=="__main__":
     main()
