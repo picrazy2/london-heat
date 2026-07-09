@@ -395,10 +395,45 @@ def main():
         MONTHLY["lo"][str(m)]=[mavg(mdays_n,y,m) for y in all_years]
         MONTHLY["avg"][str(m)]=[mavg(mdays_b,y,m) for y in all_years]
 
-    # season profiles (all qualifying days, all years)
+    # The most recent month that has actually finished, as a (year, month) pair.
+    # It anchors the carousel, and it decides which year each card highlights: a
+    # December card viewed in February 2027 must point at December 2026.
+    ly,lm,ld = _ymd(metar_last)
+    if ld == calendar.monthrange(ly,lm)[1]: ay,am = ly,lm
+    elif lm > 1:                            ay,am = ly,lm-1
+    else:                                   ay,am = ly-1,12
+    MONTHLY["ay"], MONTHLY["am"] = ay, am
+
+    # The month still running, if any: its means so far, and how many days they
+    # rest on. The page shows it provisionally, and only once it has some weight.
+    MONTHLY["part"]=None
+    if (ly,lm) != (ay,am):
+        days=len(mdays_b.get((ly,lm),[]))
+        if days:
+            mean=lambda s: round(sum(s[(ly,lm)])/len(s[(ly,lm)]),1) if s.get((ly,lm)) else None
+            MONTHLY["part"]={"y":ly,"m":lm,"days":days,"through":fmt_short(metar_last),
+                             "avg":mean(mdays_b),"hi":mean(mdays_x),"lo":mean(mdays_n)}
+
+    # whole-year averages for the data table; a year needs near-full coverage
+    ydays_x=defaultdict(list); ydays_n=defaultdict(list); ydays_b=defaultdict(list)
+    for k,v in tx.items(): ydays_x[int(k[:4])].append(v)
+    for k,v in tn.items(): ydays_n[int(k[:4])].append(v)
+    for k in set(tx)&set(tn): ydays_b[int(k[:4])].append((tx[k]+tn[k])/2)
+    def yavg(store,y):
+        v=store.get(y)
+        if not v or len(v)<350: return None
+        return round(sum(v)/len(v),1)
+    MONTHLY["ann"]={"hi":[yavg(ydays_x,y) for y in all_years],
+                    "lo":[yavg(ydays_n,y) for y in all_years],
+                    "avg":[yavg(ydays_b,y) for y in all_years]}
+
+    # Season profiles, over complete years only. The part-year can contribute days
+    # up to today but none after it, so pooling it in tilts every distribution
+    # earlier — worst for tropical nights, where 67 years hold only ~25 of them.
     def season(vals,thr):
         bd=[0]*366; bm=[0]*13
         for k,v in vals.items():
+            if int(k[:4]) not in good: continue
             if v>=thr:
                 dn=doy(*_ymd(k)); bd[dn]+=1; bm[int(k[4:6])]+=1
         peak=max(range(1,366),key=lambda i:bd[i])

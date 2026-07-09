@@ -60,6 +60,8 @@
     transform:translate(-50%,-100%);box-shadow:0 6px 18px rgba(0,0,0,.28);}
   .tip b{font-variant-numeric:tabular-nums;}
   .hair{stroke:var(--muted);stroke-width:1;opacity:0;}
+  .today{stroke:var(--ink-2);stroke-width:1.25;stroke-dasharray:3 3;stroke-opacity:.75;}
+  .today-lab{fill:var(--ink-2);font-size:9.5px;font-weight:620;letter-spacing:.04em;}
   .note{font-size:12.5px;color:var(--muted);margin:16px 2px 0;}
   .modes{display:inline-flex;background:var(--panel);border:1px solid var(--ring);border-radius:11px;padding:4px;gap:4px;margin:0 0 22px;box-shadow:var(--shadow);}
   .mode-btn{border:none;background:transparent;color:var(--ink-2);font:inherit;font-size:13.5px;font-weight:600;
@@ -128,6 +130,7 @@
 <script>
 const ALL = __ALL__;
 const DEC = __DEC__;
+const CURYEAR = __CURYEAR__;
 const YEARS = Object.keys(ALL).sort();
 const MABBR=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const MSTART=[1,32,60,91,121,152,182,213,244,274,305,335,366];
@@ -226,6 +229,18 @@ function render(yr){
     tip.style.opacity=1;tip.style.left=ev.clientX+"px";tip.style.top=(ev.clientY-14)+"px";
   });
   over.addEventListener("mouseleave",()=>{tip.style.opacity=0;hair.style.opacity=0;dotH.style.opacity=0;dotL.style.opacity=0;});
+
+  // A "today" rule only means something on the year we are actually living in.
+  if(String(yr)===String(CURYEAR)){
+    const n=new Date();
+    const dn=Math.floor((Date.UTC(n.getFullYear(),n.getMonth(),n.getDate())
+                        -Date.UTC(n.getFullYear(),0,1))/86400000)+1;
+    if(dn>=1 && dn<=365){
+      svg.appendChild(el("line",{class:"today",x1:x(dn),x2:x(dn),y1:M.t,y2:M.t+ph}));
+      const t=el("text",{class:"today-lab",x:x(dn),y:M.t-6,"text-anchor":"middle"});
+      t.textContent="today"; svg.appendChild(t);
+    }
+  }
 
   const host=document.getElementById("chart"); host.innerHTML=""; host.appendChild(svg);
   // sync controls

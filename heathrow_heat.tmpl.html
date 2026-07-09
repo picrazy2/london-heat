@@ -123,15 +123,26 @@
   .rtbl tr.me td:first-child { border-radius: 7px 0 0 7px; }
   .rtbl tr.me td:last-child { border-radius: 0 7px 7px 0; }
   .rtbl tr.gap td { text-align: center; color: var(--muted); padding: 1px; letter-spacing: 2px; }
-  .rtbl tr.none td { color: var(--muted); font-size: 12px; padding-top: 8px; }
+  .rtbl tr.none td { color: var(--muted); font-size: 11.5px; line-height: 1.35; padding: 2px 6px 0; text-wrap: pretty; }
+  /* the running month: dashed, cooler ink, never mistaken for a ranked row */
+  .rtbl tr.prov td { color: var(--ink-2); border-top: 1px dashed var(--axis); padding-top: 9px; }
+  .rtbl tr.prov .rv { font-weight: 640; }
+  .rtbl tr.prov .rk { color: var(--axis); }
+  .pflag { font-size: 10px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
+    color: var(--muted); border: 1px solid var(--ring); border-radius: 5px; padding: 1px 5px; margin-left: 6px; }
 
-  .mnav { display: flex; align-items: center; gap: 2px; }
+  .mbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin: 0 0 22px; }
+  .mbar .hmodes { margin: 0; }
+  .mcar { display: inline-flex; align-items: center; gap: 2px; background: var(--panel);
+    border: 1px solid var(--ring); border-radius: 11px; padding: 4px; box-shadow: var(--shadow); }
   .marrow {
-    border: none; background: transparent; color: var(--muted); cursor: pointer;
-    font: inherit; font-size: 15px; line-height: 1; padding: 3px 6px; border-radius: 6px;
+    border: none; background: transparent; color: var(--ink-2); cursor: pointer;
+    font: inherit; font-size: 16px; line-height: 1; padding: 6px 11px; border-radius: 8px;
   }
   .marrow:hover { color: var(--ink); background: var(--plane); }
-  .mname { font-size: 15.5px; font-weight: 640; letter-spacing: -0.01em; min-width: 3.6em; text-align: center; }
+  .mrange { font-size: 13px; font-weight: 600; color: var(--ink); min-width: 10.5em;
+    text-align: center; font-variant-numeric: tabular-nums; }
+  .mname { font-size: 15.5px; font-weight: 640; letter-spacing: -0.01em; }
   .season { margin-top: 60px; }
   .sec-head { max-width: 700px; margin-bottom: 24px; }
   .sec-title { font-size: clamp(22px, 3.4vw, 32px); font-weight: 660; letter-spacing: -0.02em; margin: 8px 0 12px; text-wrap: balance; }
@@ -142,6 +153,8 @@
   .wlabel { fill: var(--ink); font-size: 12.5px; font-weight: 620; }
   .wrange { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
   .peak-lab { fill: var(--ink); font-size: 10px; font-weight: 660; font-variant-numeric: tabular-nums; }
+  .today { stroke: var(--ink-2); stroke-width: 1.25; stroke-dasharray: 3 3; stroke-opacity: .75; }
+  .today-lab { fill: var(--ink-2); font-size: 9.5px; font-weight: 620; letter-spacing: .04em; }
 
   .foot { margin-top: 34px; display: flex; flex-wrap: wrap; gap: 20px 40px; align-items: flex-start; }
   .key { font-size: 12.5px; color: var(--ink-2); }
@@ -149,13 +162,31 @@
   .key .sw { width: 22px; height: 8px; border-radius: 2px; }
   .key .hatch-sw { width: 22px; height: 8px; border-radius: 2px; background: var(--muted);
     background-image: repeating-linear-gradient(45deg, transparent 0 2px, var(--panel) 2px 3px); opacity:.7; }
-  details { font-size: 13px; color: var(--ink-2); }
-  summary { cursor: pointer; color: var(--ink); font-weight: 600; margin-bottom: 10px; }
   table { border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 12px; }
   th, td { padding: 3px 10px 3px 0; text-align: right; }
   th:first-child, td:first-child { text-align: left; }
   th { color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--axis); }
-  .tbl-wrap { overflow-x: auto; max-height: 320px; overflow-y: auto; margin-top: 6px; }
+
+  .dwrap { background: var(--panel); border: 1px solid var(--ring); border-radius: 14px;
+    box-shadow: var(--shadow); overflow: auto; max-height: 70vh; }
+  .dtbl { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+  .dtbl th, .dtbl td { padding: 9px 14px; text-align: right; white-space: nowrap; }
+  .dtbl th:first-child, .dtbl td:first-child { text-align: left; position: sticky; left: 0; background: var(--panel); }
+  .dtbl thead th {
+    position: sticky; top: 0; z-index: 2; background: var(--panel); cursor: pointer;
+    border-bottom: 1px solid var(--axis); font-size: 12px; font-weight: 620; color: var(--ink-2);
+    user-select: none;
+  }
+  .dtbl thead th:first-child { z-index: 3; }
+  .dtbl thead th:hover { color: var(--ink); }
+  .dtbl thead th .ar { color: var(--muted); font-size: 10px; margin-left: 4px; }
+  .dtbl tbody tr:hover td { background: var(--plane); }
+  .dtbl tbody tr:hover td:first-child { background: var(--plane); }
+  .dtbl tbody td { border-bottom: 1px solid var(--grid); }
+  .dtbl tr.me td { background: var(--hl); font-weight: 660; }
+  .dtbl tr.me td:first-child { background: var(--hl); }
+  .dtbl .na { color: var(--muted); }
+  .dnote { font-size: 12.5px; color: var(--muted); margin-top: 12px; }
 
   .toggle {
     position: fixed; top: 16px; right: 16px; z-index: 10;
@@ -184,6 +215,14 @@
 
   <div class="grid" id="grid"></div>
 
+  <div class="foot">
+    <div class="key">
+      <div class="row"><span class="sw" style="background:var(--axis)"></span> completed year</div>
+      <div class="row"><span class="hatch-sw"></span> __CURYEAR__, partial (to __METARSHORT__)</div>
+      <div class="row"><span class="sw" style="background:none;border-top:1.5px dashed var(--muted);height:0;width:22px"></span> 1961–90 average</div>
+    </div>
+  </div>
+
   <section class="ranks">
     <div class="sec-head">
       <p class="eyebrow">All-time rankings</p>
@@ -206,12 +245,19 @@
     <div class="sec-head">
       <p class="eyebrow">Monthly averages</p>
       <h2 class="sec-title">The warmest months on record</h2>
-      <p class="sec-lede">Each month's average temperature, ranked across every year since 1960. Step any card through the calendar with the arrows, and switch between the daily mean, the average daytime high, and the average overnight low. <b>__CURYEAR__</b> (✷) is highlighted wherever it lands. A month only appears once it is complete, so __CURYEAR__ is absent from months still running.</p>
+      <p class="sec-lede">Each month's average temperature, ranked across every year since 1960. The arrows slide the four-month window through the calendar, and the toggle switches between the daily mean, the average daytime high, and the average overnight low. <b>__CURYEAR__</b> (✷) is highlighted wherever it lands. A month only appears once it is complete, so __CURYEAR__ is absent from months still running.</p>
     </div>
-    <div class="mmodes hmodes" role="tablist" id="mmodes">
-      <button class="hmode-btn active" data-mmode="avg" role="tab">Daily mean</button>
-      <button class="hmode-btn" data-mmode="hi" role="tab">Average high</button>
-      <button class="hmode-btn" data-mmode="lo" role="tab">Average low</button>
+    <div class="mbar">
+      <div class="hmodes" role="tablist" id="mmodes">
+        <button class="hmode-btn active" data-mmode="avg" role="tab">Daily mean</button>
+        <button class="hmode-btn" data-mmode="hi" role="tab">Average high</button>
+        <button class="hmode-btn" data-mmode="lo" role="tab">Average low</button>
+      </div>
+      <div class="mcar">
+        <button class="marrow" data-step="-1" aria-label="Earlier months">‹</button>
+        <span class="mrange" id="mrange" aria-live="polite"></span>
+        <button class="marrow" data-step="1" aria-label="Later months">›</button>
+      </div>
     </div>
     <div class="ranks-grid" id="months"></div>
   </section>
@@ -220,13 +266,13 @@
     <div class="sec-head">
       <p class="eyebrow">Within the year</p>
       <h2 class="sec-title">When in the year the heat lands</h2>
-      <p class="sec-lede">Every qualifying day since 1960, folded onto one calendar. Hot days spread across a broad summer, but ≥30 °C days and tropical nights compress into a narrow mid-July-to-August window — they need a run of settled heat, not just a warm spell.</p>
+      <p class="sec-lede">Every qualifying day from every <em>complete</em> year, folded onto one calendar. Hot days spread across a broad summer, but ≥30 °C days and tropical nights compress into a narrow mid-July-to-August window — they need a run of settled heat, not just a warm spell. The part-year __CURYEAR__ is left out: it can supply days up to __METARSHORT__ but none after, which would tug every distribution earlier.</p>
     </div>
 
     <figure class="window-fig">
       <div class="cap"><div class="cap-l"><div>
         <h2>The season window</h2>
-        <span class="sub">bar = middle 80% of all occurrences · ◆ = single busiest day of the year</span>
+        <span class="sub">bar = middle 80% of all occurrences · ◆ = single busiest day of the year · dashed = today</span>
       </div></div></div>
       <div class="chart" id="windowChart"></div>
     </figure>
@@ -234,17 +280,14 @@
     <div class="grid" id="seasonGrid"></div>
   </section>
 
-  <div class="foot">
-    <div class="key">
-      <div class="row"><span class="sw" style="background:var(--axis)"></span> completed year</div>
-      <div class="row"><span class="hatch-sw"></span> __CURYEAR__, partial (to __METARSHORT__)</div>
-      <div class="row"><span class="sw" style="background:none;border-top:1.5px dashed var(--muted);height:0;width:22px"></span> 1961–90 average</div>
+  <section class="ranks">
+    <div class="sec-head">
+      <p class="eyebrow">Every year</p>
+      <h2 class="sec-title">The whole record, year by year</h2>
+      <p class="sec-lede">Every metric on this page, one row per year. Click any column to sort by it. <b>__CURYEAR__</b> (✷) is a part-year, so its counts run only to __YTD__ and its averages are withheld until the year is complete.</p>
     </div>
-    <details>
-      <summary>View the data table</summary>
-      <div class="tbl-wrap"><table id="tbl"></table></div>
-    </details>
-  </div>
+    <div class="dwrap"><table class="dtbl" id="tbl"></table></div>
+  </section>
 </div>
 
 <div class="tip" id="tip"></div>
@@ -380,15 +423,55 @@ function renderCharts(){
 }
 renderCharts();
 
-// data table
-const tbl = document.getElementById("tbl");
-let head = "<tr><th>Year</th><th>≥25°C</th><th>≥30°C</th><th>≥15°C n</th><th>≥20°C n</th></tr>";
-let rows = "";
-for(let i=N-1;i>=0;i--){
-  const p = yrs[i]===PARTIAL ? " *" : "";
-  rows += `<tr><td>${yrs[i]}${p}</td><td>${DATA.d25[i]}</td><td>${DATA.d30[i]}</td><td>${DATA.n15[i]}</td><td>${DATA.n20[i]}</td></tr>`;
+// ---- full data table (rendered after MONTHLY is defined, at the foot of the script) ----
+function renderTable(){
+  const tbl = document.getElementById("tbl");
+  const A = MONTHLY.ann;
+  const COLS = [
+    {k:"year", t:"Year",             get:i=>yrs[i]},
+    {k:"d25",  t:"Hot days ≥25 °C",  get:i=>DATA.d25[i]},
+    {k:"d30",  t:"Very hot ≥30 °C",  get:i=>DATA.d30[i]},
+    {k:"n15",  t:"Mild nights ≥15 °C", get:i=>DATA.n15[i]},
+    {k:"n20",  t:"Tropical nights ≥20 °C", get:i=>DATA.n20[i]},
+    {k:"d25s", t:"Longest ≥25 °C run", get:i=>DATA.d25s[i]},
+    {k:"d30s", t:"Longest ≥30 °C run", get:i=>DATA.d30s[i]},
+    {k:"avg",  t:"Mean °C",          get:i=>A.avg[i], dec:1},
+    {k:"hi",   t:"Avg high °C",      get:i=>A.hi[i],  dec:1},
+    {k:"lo",   t:"Avg low °C",       get:i=>A.lo[i],  dec:1},
+  ];
+  let sortKey="year", sortDir=-1;   // newest first
+
+  function draw(){
+    const idx = yrs.map((_,i)=>i).sort((a,b)=>{
+      const c=COLS.find(c=>c.k===sortKey);
+      const va=c.get(a), vb=c.get(b);
+      if(va===null && vb===null) return yrs[b]-yrs[a];
+      if(va===null) return 1;          // missing values sink, whichever way we sort
+      if(vb===null) return -1;
+      return (va-vb)*sortDir || yrs[b]-yrs[a];
+    });
+    const head = "<thead><tr>" + COLS.map(c=>
+      `<th data-k="${c.k}">${c.t}${c.k===sortKey?`<span class="ar">${sortDir<0?"▼":"▲"}</span>`:""}</th>`
+    ).join("") + "</tr></thead>";
+    const body = "<tbody>" + idx.map(i=>{
+      const me = yrs[i]===PARTIAL;
+      return `<tr class="${me?'me':''}">` + COLS.map(c=>{
+        const v=c.get(i);
+        if(v===null||v===undefined) return `<td class="na" title="year not complete">—</td>`;
+        const txt = c.k==="year" ? `${v}${me?' ✷':''}` : (c.dec?v.toFixed(c.dec):v);
+        return `<td>${txt}</td>`;
+      }).join("") + "</tr>";
+    }).join("") + "</tbody>";
+    tbl.innerHTML = head + body;
+    tbl.querySelectorAll("thead th").forEach(th=>th.addEventListener("click",()=>{
+      const k=th.dataset.k;
+      if(k===sortKey) sortDir=-sortDir;
+      else { sortKey=k; sortDir=-1; }     // a new column starts descending
+      draw();
+    }));
+  }
+  draw();
 }
-tbl.innerHTML = head + rows;
 
 // ---------- seasonal timing ----------
 const SEASON = __SEASON__;
@@ -396,6 +479,27 @@ const SEASON = __SEASON__;
 const MABBR = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const MSTART = [1,32,60,91,121,152,182,213,244,274,305,335,366];
 const DSTART = 91, DEND = 305;  // Apr 1 – Nov 1 crop
+
+// Read the clock in the browser, not at build time: the page is regenerated once
+// a day, so a baked-in day number would be stale for anyone loading it before the
+// next run.
+function todayDoy(){
+  const n = new Date();
+  return Math.floor((Date.UTC(n.getFullYear(), n.getMonth(), n.getDate())
+                   - Date.UTC(n.getFullYear(), 0, 1)) / 86400000) + 1;
+}
+// A dashed rule at today, plus a label. Silently does nothing when today falls
+// outside the chart's cropped window (i.e. all winter).
+function markToday(svg, xs, yTop, yBot, label){
+  const dn = todayDoy();
+  if(dn < DSTART || dn > DEND) return;
+  const gx = xs(dn);
+  svg.appendChild(el("line",{class:"today", x1:gx, x2:gx, y1:yTop, y2:yBot}));
+  if(label){
+    const t = el("text",{class:"today-lab", x:gx, y:yTop-3, "text-anchor":"middle"});
+    t.textContent = "today"; svg.appendChild(t);
+  }
+}
 function fmtDay(dn){ let m=0; while(m<11 && MSTART[m+1]<=dn) m++; return (dn-MSTART[m]+1)+" "+MABBR[m]; }
 function smooth(a,w){ const n=a.length,o=new Array(n); for(let i=0;i<n;i++){let s=0,c=0;for(let j=-w;j<=w;j++){const k=i+j;if(k>=0&&k<n){s+=a[k];c++;}}o[i]=s/c;} return o; }
 function pctDay(doy,p){ const tot=doy.reduce((a,b)=>a+b,0); let acc=0; for(let i=0;i<doy.length;i++){acc+=doy[i]; if(acc>=tot*p) return i+1;} return doy.length; }
@@ -433,6 +537,7 @@ function renderWindow(){
     // right range text
     const rt=el("text",{class:"wrange", x:WW-mg.r+12, y:cy+4}); rt.textContent=`${fmtDay(p10)} – ${fmtDay(p90)}`; svg.appendChild(rt);
   });
+  markToday(svg, xs, mg.t, mg.t+rows.length*rowH, true);
   document.getElementById("windowChart").appendChild(svg);
 }
 renderWindow();
@@ -471,6 +576,7 @@ function renderSeasonArea(m){
   svg.appendChild(el("line",{x1:xs(pk), x2:xs(pk), y1:ys(s[pk-1]), y2:ys(0), stroke:m.color, "stroke-width":1, "stroke-dasharray":"2 2", "stroke-opacity":"0.6"}));
   svg.appendChild(el("circle",{cx:xs(pk), cy:ys(s[pk-1]), r:3.5, fill:m.color}));
   const pl=el("text",{class:"peak-lab", x:xs(pk), y:ys(s[pk-1])-7, "text-anchor":"middle"}); pl.textContent="peak "+fmtDay(pk); svg.appendChild(pl);
+  markToday(svg, xs, mg.t, mg.t+ph, false);   // no label: four small charts, one legend
   return svg;
 }
 const sGrid=document.getElementById("seasonGrid");
@@ -540,13 +646,28 @@ const MMODES = {
   lo:  {label:"average low",   color:"var(--night15)"},
 };
 let MMODE = "avg";
-let MSEL = [5,6,7,8];              // May–August, the months the heat lives in
+const MSPAN = 4;
+const MIN_PART_DAYS = 5;      // below this a running month is too thin to mean anything
+const wrap12 = m => ((m-1)%12+12)%12+1;
+// Open on the four months ending at the last one that finished, so every card
+// carries a highlighted year instead of the trailing ones reading "incomplete".
+let MWIN = wrap12(MONTHLY.am - (MSPAN-1));
+const window4 = () => Array.from({length:MSPAN}, (_,i)=>wrap12(MWIN+i));
+
+// The latest year in which `mon` has completed. Seen from February 2027, January's
+// answer is 2027 but December's is 2026 — the calendar has turned over since.
+const latestYearOf = mon => mon <= MONTHLY.am ? MONTHLY.ay : MONTHLY.ay - 1;
 
 function renderMonths(){
-  const cur=MONTHLY.cur, host=document.getElementById("months");
+  const host=document.getElementById("months");
   const mode=MMODES[MMODE];
+  const months=window4();
+  const part=MONTHLY.part;
+  document.getElementById("mrange").textContent =
+    `${MONTH_NAMES[months[0]-1]} – ${MONTH_NAMES[months[MSPAN-1]-1]}`;
   let out="";
-  MSEL.forEach((mon,slot)=>{
+  months.forEach(mon=>{
+    const me=latestYearOf(mon);                        // the row we highlight
     const vals=MONTHLY[MMODE][String(mon)];
     // a year only ranks once its month is complete
     const rows=MONTHLY.years.map((y,i)=>({y,v:vals[i]}))
@@ -554,36 +675,37 @@ function renderMonths(){
                             .sort((a,b)=>b.v-a.v||a.y-b.y);
     const rankOf=v=>1+rows.filter(r=>r.v>v).length;   // ties share a rank
     const top=rows.slice(0,10);
-    const curRow=rows.find(r=>r.y===cur);
-    const inTop=top.some(r=>r.y===cur);
+    const meRow=rows.find(r=>r.y===me);
+    const inTop=top.some(r=>r.y===me);
     let body="";
-    top.forEach(r=>{ body+=`<tr class="${r.y===cur?'me':''}"><td class="rk">${rankOf(r.v)}</td><td class="ry">${r.y}${r.y===cur?' ✷':''}</td><td class="rv">${r.v.toFixed(1)}&#8202;°C</td></tr>`; });
-    if(curRow && !inTop){
+    top.forEach(r=>{ body+=`<tr class="${r.y===me?'me':''}"><td class="rk">${rankOf(r.v)}</td><td class="ry">${r.y}${r.y===me?' ✷':''}</td><td class="rv">${r.v.toFixed(1)}&#8202;°C</td></tr>`; });
+    if(meRow && !inTop){
       body+=`<tr class="gap"><td colspan="3">⋯</td></tr>`;
-      body+=`<tr class="me"><td class="rk">${rankOf(curRow.v)}</td><td class="ry">${cur} ✷</td><td class="rv">${curRow.v.toFixed(1)}&#8202;°C</td></tr>`;
-    } else if(!curRow){
-      body+=`<tr class="none"><td colspan="3">${cur} not complete</td></tr>`;
+      body+=`<tr class="me"><td class="rk">${rankOf(meRow.v)}</td><td class="ry">${me} ✷</td><td class="rv">${meRow.v.toFixed(1)}&#8202;°C</td></tr>`;
+    }
+    // the month still running: shown apart from the ranking, never inside it
+    let foot="";
+    if(part && part.m===mon && part.days>=MIN_PART_DAYS && part[MMODE]!==null){
+      foot=`<tr class="prov"><td class="rk">—</td><td class="ry">${part.y}<span class="pflag">so far</span></td>`
+         + `<td class="rv">${part[MMODE].toFixed(1)}&#8202;°C</td></tr>`
+         + `<tr class="none"><td colspan="3">${part.days} of ${new Date(part.y,part.m,0).getDate()} days, to ${part.through} — provisional, and biased by however the month has run so far</td></tr>`;
     }
     out+=`<div class="rcard">
       <div class="cap">
         <div class="cap-l"><span class="dot" style="background:${mode.color}"></span>
-          <div><div class="mnav">
-            <button class="marrow" data-slot="${slot}" data-step="-1" aria-label="Previous month">‹</button>
-            <span class="mname">${MONTH_NAMES[mon-1].slice(0,3)}</span>
-            <button class="marrow" data-slot="${slot}" data-step="1" aria-label="Next month">›</button>
-          </div><span class="sub">${mode.label}</span></div>
+          <div><h2 class="mname">${MONTH_NAMES[mon-1]}</h2><span class="sub">${mode.label}</span></div>
         </div>
       </div>
-      <table class="rtbl">${body}</table></div>`;
+      <table class="rtbl">${body}${foot}</table></div>`;
   });
   host.innerHTML=out;
-  host.querySelectorAll(".marrow").forEach(b=>b.addEventListener("click",()=>{
-    const s=+b.dataset.slot;
-    MSEL[s]=((MSEL[s]-1+ +b.dataset.step)+12)%12+1;   // wraps Dec -> Jan
-    renderMonths();
-  }));
 }
+document.querySelectorAll(".mcar .marrow").forEach(b=>b.addEventListener("click",()=>{
+  MWIN=wrap12(MWIN + (+b.dataset.step));   // slides the whole window; wraps Dec -> Jan
+  renderMonths();
+}));
 renderMonths();
+renderTable();   // needs MONTHLY.ann, so it runs here rather than where it is defined
 
 document.querySelectorAll("#mmodes .hmode-btn").forEach(b=>b.addEventListener("click",()=>{
   MMODE=b.dataset.mmode;
