@@ -123,6 +123,15 @@
   .rtbl tr.me td:first-child { border-radius: 7px 0 0 7px; }
   .rtbl tr.me td:last-child { border-radius: 0 7px 7px 0; }
   .rtbl tr.gap td { text-align: center; color: var(--muted); padding: 1px; letter-spacing: 2px; }
+  .rtbl tr.none td { color: var(--muted); font-size: 12px; padding-top: 8px; }
+
+  .mnav { display: flex; align-items: center; gap: 2px; }
+  .marrow {
+    border: none; background: transparent; color: var(--muted); cursor: pointer;
+    font: inherit; font-size: 15px; line-height: 1; padding: 3px 6px; border-radius: 6px;
+  }
+  .marrow:hover { color: var(--ink); background: var(--plane); }
+  .mname { font-size: 15.5px; font-weight: 640; letter-spacing: -0.01em; min-width: 3.6em; text-align: center; }
   .season { margin-top: 60px; }
   .sec-head { max-width: 700px; margin-bottom: 24px; }
   .sec-title { font-size: clamp(22px, 3.4vw, 32px); font-weight: 660; letter-spacing: -0.02em; margin: 8px 0 12px; text-wrap: balance; }
@@ -191,6 +200,20 @@
       <p class="sec-lede">The longest run of <em>consecutive</em> days or nights meeting each threshold, ranked across every year. Respects the toggle — full-year or the same Jan 1–__YTD__ window. <b>__CURYEAR__</b> (✷) is highlighted wherever it lands.</p>
     </div>
     <div class="ranks-grid" id="streaks"></div>
+  </section>
+
+  <section class="ranks">
+    <div class="sec-head">
+      <p class="eyebrow">Monthly averages</p>
+      <h2 class="sec-title">The warmest months on record</h2>
+      <p class="sec-lede">Each month's average temperature, ranked across every year since 1960. Step any card through the calendar with the arrows, and switch between the daily mean, the average daytime high, and the average overnight low. <b>__CURYEAR__</b> (✷) is highlighted wherever it lands. A month only appears once it is complete, so __CURYEAR__ is absent from months still running.</p>
+    </div>
+    <div class="mmodes hmodes" role="tablist" id="mmodes">
+      <button class="hmode-btn active" data-mmode="avg" role="tab">Daily mean</button>
+      <button class="hmode-btn" data-mmode="hi" role="tab">Average high</button>
+      <button class="hmode-btn" data-mmode="lo" role="tab">Average low</button>
+    </div>
+    <div class="ranks-grid" id="months"></div>
   </section>
 
   <section class="season">
@@ -507,9 +530,70 @@ function renderStreaks(){
 }
 renderStreaks();
 
-document.querySelectorAll(".hmode-btn").forEach(b=>b.addEventListener("click",()=>{
+// ---- monthly averages ----
+const MONTHLY = __MONTHLY__;
+const MONTH_NAMES = ["January","February","March","April","May","June",
+                     "July","August","September","October","November","December"];
+const MMODES = {
+  avg: {label:"daily mean",    color:"var(--hot25)"},
+  hi:  {label:"average high",  color:"var(--hot30)"},
+  lo:  {label:"average low",   color:"var(--night15)"},
+};
+let MMODE = "avg";
+let MSEL = [5,6,7,8];              // May–August, the months the heat lives in
+
+function renderMonths(){
+  const cur=MONTHLY.cur, host=document.getElementById("months");
+  const mode=MMODES[MMODE];
+  let out="";
+  MSEL.forEach((mon,slot)=>{
+    const vals=MONTHLY[MMODE][String(mon)];
+    // a year only ranks once its month is complete
+    const rows=MONTHLY.years.map((y,i)=>({y,v:vals[i]}))
+                            .filter(r=>r.v!==null)
+                            .sort((a,b)=>b.v-a.v||a.y-b.y);
+    const rankOf=v=>1+rows.filter(r=>r.v>v).length;   // ties share a rank
+    const top=rows.slice(0,10);
+    const curRow=rows.find(r=>r.y===cur);
+    const inTop=top.some(r=>r.y===cur);
+    let body="";
+    top.forEach(r=>{ body+=`<tr class="${r.y===cur?'me':''}"><td class="rk">${rankOf(r.v)}</td><td class="ry">${r.y}${r.y===cur?' ✷':''}</td><td class="rv">${r.v.toFixed(1)}&#8202;°C</td></tr>`; });
+    if(curRow && !inTop){
+      body+=`<tr class="gap"><td colspan="3">⋯</td></tr>`;
+      body+=`<tr class="me"><td class="rk">${rankOf(curRow.v)}</td><td class="ry">${cur} ✷</td><td class="rv">${curRow.v.toFixed(1)}&#8202;°C</td></tr>`;
+    } else if(!curRow){
+      body+=`<tr class="none"><td colspan="3">${cur} not complete</td></tr>`;
+    }
+    out+=`<div class="rcard">
+      <div class="cap">
+        <div class="cap-l"><span class="dot" style="background:${mode.color}"></span>
+          <div><div class="mnav">
+            <button class="marrow" data-slot="${slot}" data-step="-1" aria-label="Previous month">‹</button>
+            <span class="mname">${MONTH_NAMES[mon-1].slice(0,3)}</span>
+            <button class="marrow" data-slot="${slot}" data-step="1" aria-label="Next month">›</button>
+          </div><span class="sub">${mode.label}</span></div>
+        </div>
+      </div>
+      <table class="rtbl">${body}</table></div>`;
+  });
+  host.innerHTML=out;
+  host.querySelectorAll(".marrow").forEach(b=>b.addEventListener("click",()=>{
+    const s=+b.dataset.slot;
+    MSEL[s]=((MSEL[s]-1+ +b.dataset.step)+12)%12+1;   // wraps Dec -> Jan
+    renderMonths();
+  }));
+}
+renderMonths();
+
+document.querySelectorAll("#mmodes .hmode-btn").forEach(b=>b.addEventListener("click",()=>{
+  MMODE=b.dataset.mmode;
+  document.querySelectorAll("#mmodes .hmode-btn").forEach(x=>x.classList.toggle("active",x===b));
+  renderMonths();
+}));
+
+document.querySelectorAll(".hmodes:not(#mmodes) .hmode-btn").forEach(b=>b.addEventListener("click",()=>{
   HISTMODE=b.dataset.hmode;
-  document.querySelectorAll(".hmode-btn").forEach(x=>x.classList.toggle("active",x===b));
+  document.querySelectorAll(".hmodes:not(#mmodes) .hmode-btn").forEach(x=>x.classList.toggle("active",x===b));
   renderCharts(); renderRanks(); renderStreaks();
 }));
 

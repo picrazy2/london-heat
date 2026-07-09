@@ -10,7 +10,7 @@ Usage:  python3 build_charts.py
   heathrow_tn.txt (it updates only every few months). Pass --refresh-ecad to
   re-extract it from the KNMI bulk archive (slow, ~a few MB via range requests).
 """
-import urllib.request, csv, json, re, os, sys, struct, zlib
+import urllib.request, csv, json, re, os, sys, struct, zlib, calendar
 from datetime import date, timedelta, datetime
 from zoneinfo import ZoneInfo
 from collections import defaultdict
@@ -375,6 +375,26 @@ def main():
                               "n15":round(st.mean(peryr[y][2] for y in ys),1),
                               "n20":round(st.mean(peryr[y][3] for y in ys),1),"nyears":len(ys)}
 
+    # monthly averages per year: mean daily max, mean daily min, and their midpoint.
+    # A month only ranks if it is essentially complete — otherwise the part-year's
+    # 8-day July would be compared against 31-day Julys.
+    mdays_x=defaultdict(list); mdays_n=defaultdict(list); mdays_b=defaultdict(list)
+    for k,v in tx.items(): mdays_x[(int(k[:4]),int(k[4:6]))].append(v)
+    for k,v in tn.items(): mdays_n[(int(k[:4]),int(k[4:6]))].append(v)
+    for k in set(tx)&set(tn):
+        mdays_b[(int(k[:4]),int(k[4:6]))].append((tx[k]+tn[k])/2)
+    def mavg(store,y,m):
+        vals=store.get((y,m))
+        need=calendar.monthrange(y,m)[1]-2      # tolerate a couple of gaps
+        if not vals or len(vals)<need: return None
+        return round(sum(vals)/len(vals),1)
+    MONTHLY={"years":all_years,"cur":cur_year,
+             "hi":{}, "lo":{}, "avg":{}}
+    for m in range(1,13):
+        MONTHLY["hi"][str(m)]=[mavg(mdays_x,y,m) for y in all_years]
+        MONTHLY["lo"][str(m)]=[mavg(mdays_n,y,m) for y in all_years]
+        MONTHLY["avg"][str(m)]=[mavg(mdays_b,y,m) for y in all_years]
+
     # season profiles (all qualifying days, all years)
     def season(vals,thr):
         bd=[0]*366; bm=[0]*13
@@ -423,7 +443,7 @@ def main():
         .replace("__ECALAST__",fmt_long(eca_last)).replace("__METARLAST__",fmt_long(metar_last))
         .replace("__METARSHORT__",fmt_short(metar_last)).replace("__YTD__",fmt_short(metar_last))
         .replace("__CURYEAR__",str(cur_year)).replace("__NYEARS__",str(cur_year-first_year))
-        .replace("__N20_INSIGHT__",n20_txt))
+        .replace("__N20_INSIGHT__",n20_txt).replace("__MONTHLY__",j(MONTHLY)))
     emit("index.html",g,here="/",stamp=metar_last)
 
     # without this Pages answers every unknown path with index.html and a 200
