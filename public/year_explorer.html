@@ -465,21 +465,19 @@ function renderDecades(){
   const a20=DEC.avg["2020"], a60=DEC.avg["1960"];
   document.getElementById("decSummary").innerHTML=
     `Each decade's average daily high, folded onto one year. The 2020s average <b>${a20.d25} days ≥25 °C</b> and <b>${a20.d30} ≥30 °C</b> a year — up from <b>${a60.d25}</b> and <b>${a60.d30}</b> in the 1960s. Warming shows up most in the summer peak, which climbs and widens.`;
-  // fit y-axis tightly to the decade means so the curves fill the panel
+  // A fixed 5-30 axis, gridded every 5 degrees. Today's data spans 5.3-27.6 and
+  // fits inside it; lo/hi are still consulted so future data widens the axis
+  // rather than being clipped silently off the panel.
   let lo=99,hi=-99;
   decs.forEach(dec=>DEC.weekmax[dec].forEach(v=>{if(v!=null){if(v<lo)lo=v;if(v>hi)hi=v;}}));
-  YMIN=Math.floor((lo-1)/2)*2; YMAX=Math.ceil((hi+1)/2)*2;
+  YMIN=Math.min(5, Math.floor(lo/5)*5); YMAX=Math.max(30, Math.ceil(hi/5)*5);
   const svg=el("svg",{viewBox:`0 0 ${W} ${H}`,role:"img","aria-label":"Average daily high by decade"});
-  yGrid(svg,2);
+  yGrid(svg,5);
   for(let m=0;m<12;m++){
     const gx=x(MSTART[m]);
     if(m>0) svg.appendChild(el("line",{class:"g",x1:gx,x2:gx,y1:M.t,y2:M.t+ph,"stroke-opacity":"0.6"}));
     const mid=(MSTART[m]+MSTART[m+1])/2;
     const t=el("text",{class:"ax",x:x(mid),y:H-9,"text-anchor":"middle"});t.textContent=MABBR[m];svg.appendChild(t);
-  }
-  if(YMAX>=25){
-    svg.appendChild(el("line",{class:"thr",x1:M.l,x2:M.l+pw,y1:y(25),y2:y(25),stroke:"var(--warm)","stroke-opacity":"0.55"}));
-    let l1=el("text",{class:"thr-lab",x:M.l+4,y:y(25)-5,fill:"var(--warm)"});l1.textContent="25° avg high";svg.appendChild(l1);
   }
   // decade lines (weekly averages)
   const CEN=DEC.weeks;
