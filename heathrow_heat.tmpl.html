@@ -1,70 +1,8 @@
 <title>Heathrow — a warming record</title>
 <style>
-  :root {
-    --surface:      #faf8f5;
-    --panel:        #ffffff;
-    --plane:        #f2efe9;
-    --ink:          #1a1714;
-    --ink-2:        #5c554d;
-    --muted:        #948b7f;
-    --grid:         #e7e2d8;
-    --axis:         #cfc8bb;
-    --ring:         rgba(26,23,20,0.08); --hl: rgba(224,99,31,0.14);
-    --hot25:        #e0631f;
-    --hot30:        #c62f2f;
-    --night15:      #2a78d6;
-    --night20:      #5442b0;
-    --shadow:       0 1px 2px rgba(26,23,20,.05), 0 8px 24px rgba(26,23,20,.06);
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --surface:  #16130f;
-      --panel:    #201c17;
-      --plane:    #0e0c09;
-      --ink:      #f7f3ec;
-      --ink-2:    #c3bbad;
-      --muted:    #8f867a;
-      --grid:     #2e2820;
-      --axis:     #3d362b;
-      --ring:     rgba(247,243,236,0.10); --hl: rgba(242,130,74,0.22);
-      --hot25:    #f2824a;
-      --hot30:    #ec6a6a;
-      --night15:  #4f97ec;
-      --night20:  #9b8cf0;
-      --shadow:   0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
-    }
-  }
-  :root[data-theme="light"] {
-    --surface:#faf8f5;--panel:#ffffff;--plane:#f2efe9;--ink:#1a1714;--ink-2:#5c554d;
-    --muted:#948b7f;--grid:#e7e2d8;--axis:#cfc8bb;--ring:rgba(26,23,20,0.08); --hl: rgba(224,99,31,0.14);
-    --hot25:#e0631f;--hot30:#c62f2f;--night15:#2a78d6;--night20:#5442b0;
-    --shadow:0 1px 2px rgba(26,23,20,.05),0 8px 24px rgba(26,23,20,.06);
-  }
-  :root[data-theme="dark"] {
-    --surface:#16130f;--panel:#201c17;--plane:#0e0c09;--ink:#f7f3ec;--ink-2:#c3bbad;
-    --muted:#8f867a;--grid:#2e2820;--axis:#3d362b;--ring:rgba(247,243,236,0.10); --hl: rgba(242,130,74,0.22);
-    --hot25:#f2824a;--hot30:#ec6a6a;--night15:#4f97ec;--night20:#9b8cf0;
-    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
-  }
 
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; background: var(--surface); color: var(--ink);
-    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-    -webkit-font-smoothing: antialiased; line-height: 1.5;
-  }
-  .wrap { max-width: 1120px; margin: 0 auto; padding: clamp(24px, 5vw, 64px) clamp(18px, 4vw, 48px) 72px; }
-
-  header { margin-bottom: 40px; max-width: 760px; }
-  .eyebrow {
-    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
-    color: var(--muted); font-weight: 600; margin: 0 0 14px;
-  }
-  h1 {
-    font-size: clamp(30px, 5vw, 46px); line-height: 1.06; letter-spacing: -0.02em;
-    margin: 0 0 18px; text-wrap: balance; font-weight: 680;
-  }
   h1 .warm { color: var(--hot30); }
+  header { margin-bottom: 40px; }
   .lede { font-size: clamp(16px, 2.1vw, 18px); color: var(--ink-2); margin: 0; max-width: 62ch; }
   .source { font-size: 13px; color: var(--muted); margin-top: 18px; }
   .source b { color: var(--ink-2); font-weight: 600; }
@@ -153,8 +91,6 @@
   .wlabel { fill: var(--ink); font-size: 12.5px; font-weight: 620; }
   .wrange { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
   .peak-lab { fill: var(--ink); font-size: 10px; font-weight: 660; font-variant-numeric: tabular-nums; }
-  .today { stroke: var(--ink-2); stroke-width: 1.25; stroke-dasharray: 3 3; stroke-opacity: .75; }
-  .today-lab { fill: var(--ink-2); font-size: 9.5px; font-weight: 620; letter-spacing: .04em; }
 
   .foot { margin-top: 34px; display: flex; flex-wrap: wrap; gap: 20px 40px; align-items: flex-start; }
   .key { font-size: 12.5px; color: var(--ink-2); }
@@ -667,7 +603,13 @@ function renderMonths(){
     `${MONTH_NAMES[months[0]-1]} – ${MONTH_NAMES[months[MSPAN-1]-1]}`;
   let out="";
   months.forEach(mon=>{
-    const me=latestYearOf(mon);                        // the row we highlight
+    // On the month currently running, the "so far" row already carries this year.
+    // Highlighting last year beside it would mark two rows and imply last year is
+    // somehow the subject; it is just the most recent finished one.
+    // "running" only once the provisional row will actually show; below the day
+    // floor the month behaves like any other unfinished one and last year leads.
+    const running = !!(part && part.m===mon && part.days>=MIN_PART_DAYS && part[MMODE]!==null);
+    const me = running ? null : latestYearOf(mon);
     const vals=MONTHLY[MMODE][String(mon)];
     // a year only ranks once its month is complete
     const rows=MONTHLY.years.map((y,i)=>({y,v:vals[i]}))
@@ -675,8 +617,8 @@ function renderMonths(){
                             .sort((a,b)=>b.v-a.v||a.y-b.y);
     const rankOf=v=>1+rows.filter(r=>r.v>v).length;   // ties share a rank
     const top=rows.slice(0,10);
-    const meRow=rows.find(r=>r.y===me);
-    const inTop=top.some(r=>r.y===me);
+    const meRow=me===null?null:rows.find(r=>r.y===me);
+    const inTop=me!==null && top.some(r=>r.y===me);
     let body="";
     top.forEach(r=>{ body+=`<tr class="${r.y===me?'me':''}"><td class="rk">${rankOf(r.v)}</td><td class="ry">${r.y}${r.y===me?' ✷':''}</td><td class="rv">${r.v.toFixed(1)}&#8202;°C</td></tr>`; });
     if(meRow && !inTop){
@@ -685,7 +627,7 @@ function renderMonths(){
     }
     // the month still running: shown apart from the ranking, never inside it
     let foot="";
-    if(part && part.m===mon && part.days>=MIN_PART_DAYS && part[MMODE]!==null){
+    if(running){
       foot=`<tr class="prov"><td class="rk">—</td><td class="ry">${part.y}<span class="pflag">so far</span></td>`
          + `<td class="rv">${part[MMODE].toFixed(1)}&#8202;°C</td></tr>`
          + `<tr class="none"><td colspan="3">${part.days} of ${new Date(part.y,part.m,0).getDate()} days, to ${part.through} — provisional, and biased by however the month has run so far</td></tr>`;

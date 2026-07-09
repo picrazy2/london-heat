@@ -119,6 +119,100 @@ def social_card(path, years, vals, partial_year):
 # page and into the site bar, so it stops floating over the content.
 TOGGLE_HTML = '<button class="toggle" id="themeBtn" aria-label="Toggle colour theme">◐ Theme</button>'
 
+# ---------------------------------------------------------------------------
+# One palette and one set of primitives, injected into both pages. They used to
+# be defined twice, which is how the pages drifted apart: --grid was #e7e2d8 on
+# one and #ece7dd on the other, --ring .08 against .09, different shadows.
+# Order inside the <style> is: theme, base, the page's own rules, then chrome.
+# So a page can still override a primitive, but it starts from the same place.
+# ---------------------------------------------------------------------------
+THEME_CSS = """
+  :root {
+    --surface:#faf8f5; --panel:#ffffff; --plane:#f2efe9;
+    --ink:#1a1714; --ink-2:#5c554d; --muted:#948b7f;
+    --grid:#e7e2d8; --axis:#cfc8bb; --band:#c9c2b4;
+    --ring:rgba(26,23,20,0.08); --hl:rgba(224,99,31,0.14);
+    --hot25:#e0631f; --hot30:#c62f2f; --night15:#2a78d6; --night20:#5442b0;
+    --warm:var(--hot25); --hot:var(--hot30); --cool:#8aa0b5;
+    --shadow:0 1px 2px rgba(26,23,20,.05), 0 8px 24px rgba(26,23,20,.06);
+  }
+  @media (prefers-color-scheme: dark) { :root {
+    --surface:#16130f; --panel:#201c17; --plane:#0e0c09;
+    --ink:#f7f3ec; --ink-2:#c3bbad; --muted:#8f867a;
+    --grid:#2e2820; --axis:#3d362b; --band:#4a443a;
+    --ring:rgba(247,243,236,0.10); --hl:rgba(242,130,74,0.22);
+    --hot25:#f2824a; --hot30:#ec6a6a; --night15:#4f97ec; --night20:#9b8cf0;
+    --cool:#6f8598;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+  }}
+  :root[data-theme="light"] {
+    --surface:#faf8f5; --panel:#ffffff; --plane:#f2efe9;
+    --ink:#1a1714; --ink-2:#5c554d; --muted:#948b7f;
+    --grid:#e7e2d8; --axis:#cfc8bb; --band:#c9c2b4;
+    --ring:rgba(26,23,20,0.08); --hl:rgba(224,99,31,0.14);
+    --hot25:#e0631f; --hot30:#c62f2f; --night15:#2a78d6; --night20:#5442b0;
+    --cool:#8aa0b5;
+    --shadow:0 1px 2px rgba(26,23,20,.05), 0 8px 24px rgba(26,23,20,.06);
+  }
+  :root[data-theme="dark"] {
+    --surface:#16130f; --panel:#201c17; --plane:#0e0c09;
+    --ink:#f7f3ec; --ink-2:#c3bbad; --muted:#8f867a;
+    --grid:#2e2820; --axis:#3d362b; --band:#4a443a;
+    --ring:rgba(247,243,236,0.10); --hl:rgba(242,130,74,0.22);
+    --hot25:#f2824a; --hot30:#ec6a6a; --night15:#4f97ec; --night20:#9b8cf0;
+    --cool:#6f8598;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+  }
+"""
+
+BASE_CSS = """
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--surface); color:var(--ink);
+    font-family:system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing:antialiased; line-height:1.5;
+  }
+  .eyebrow { font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--muted); font-weight:600; margin:0 0 14px; }
+  h1 { font-size:clamp(30px,5vw,46px); line-height:1.06; letter-spacing:-0.02em;
+    margin:0 0 18px; text-wrap:balance; font-weight:680; }
+
+  figure { margin:0; background:var(--panel); border:1px solid var(--ring);
+    border-radius:14px; padding:20px 20px 14px; box-shadow:var(--shadow); }
+  .cap { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:2px; }
+  .cap-l { display:flex; align-items:center; gap:9px; }
+  .dot { width:11px; height:11px; border-radius:3px; flex:none; }
+  .cap h2 { font-size:15.5px; font-weight:640; margin:0; letter-spacing:-0.01em; }
+  .cap .sub { font-size:12.5px; color:var(--muted); }
+  .chart { margin-top:12px; position:relative; }
+  svg { display:block; width:100%; height:auto; overflow:visible; }
+
+  .sec-head { max-width:700px; margin-bottom:24px; }
+  .sec-title { font-size:clamp(22px,3.4vw,32px); font-weight:660; letter-spacing:-0.02em;
+    margin:8px 0 12px; text-wrap:balance; }
+  .sec-lede { font-size:clamp(15px,2vw,16.5px); color:var(--ink-2); margin:0; max-width:60ch; }
+
+  .tip {
+    position:absolute; pointer-events:none; opacity:0; transition:opacity .1s;
+    background:var(--ink); color:var(--surface); padding:7px 10px; border-radius:8px;
+    font-size:12px; line-height:1.35; white-space:nowrap; z-index:5;
+    transform:translate(-50%,-100%); box-shadow:0 6px 18px rgba(0,0,0,.25);
+  }
+  .tip b { font-variant-numeric:tabular-nums; }
+  .tip .yr { color:var(--surface); opacity:.65; font-size:10.5px; letter-spacing:.04em; }
+
+  .toggle {
+    background:var(--panel); color:var(--ink-2); border:1px solid var(--ring);
+    border-radius:999px; padding:7px 13px; font:inherit; font-size:12.5px;
+    cursor:pointer; box-shadow:var(--shadow);
+  }
+  .toggle:hover { color:var(--ink); }
+  :focus-visible { outline:2px solid var(--night15); outline-offset:2px; border-radius:4px; }
+
+  .today { stroke:var(--ink-2); stroke-width:1.25; stroke-dasharray:3 3; stroke-opacity:.75; }
+  .today-lab { fill:var(--ink-2); font-size:9.5px; font-weight:620; letter-spacing:.04em; }
+"""
+
 # Site chrome is deliberately unlike the in-page controls: a bar with an underline
 # marker, not a segmented pill. Switching page is a different act from switching a
 # view within one. What the two pages must share is measure and control styling,
@@ -219,8 +313,14 @@ def wrap(frag, here=None, stamp=""):
     real files they need one: without a charset the °C signs mojibake, and without a
     viewport phones render at desktop width."""
     i = frag.find("</style>")
-    if i == -1: head, body = "", frag
-    else:       head, body = frag[:i] + NAV_CSS + "</style>", frag[i+8:]
+    if i == -1:
+        head, body = "", frag
+    else:
+        o = frag.find("<style>")
+        title, page_css = frag[:o], frag[o+7:i]
+        # theme, then primitives, then the page's own rules, then site chrome
+        head = (title + "<style>" + THEME_CSS + BASE_CSS + page_css + NAV_CSS + "</style>")
+        body = frag[i+8:]
     social = social_meta(here, stamp) if here in META else ""
     if here:
         if TOGGLE_HTML not in body:
@@ -481,14 +581,25 @@ def main():
     # Season profiles, over complete years only. The part-year can contribute days
     # up to today but none after it, so pooling it in tilts every distribution
     # earlier — worst for tropical nights, where 67 years hold only ~25 of them.
+    def _smooth(a,w):
+        n=len(a)
+        return [sum(a[max(0,i-w):min(n,i+w+1)])/(min(n,i+w+1)-max(0,i-w)) for i in range(n)]
+
     def season(vals,thr):
         bd=[0]*366; bm=[0]*13
         for k,v in vals.items():
             if int(k[:4]) not in good: continue
             if v>=thr:
                 dn=doy(*_ymd(k)); bd[dn]+=1; bm[int(k[4:6])]+=1
-        peak=max(range(1,366),key=lambda i:bd[i])
-        return {"doy":bd[1:366],"mf":0,"ml":0,"pk":peak,"tot":sum(bd),"mon":bm[1:13]}
+        # Peak of the *smoothed* curve, with the same +/-4 day kernel the page draws
+        # with. The raw argmax is meaningless on a thin series: 25 tropical nights in
+        # 67 years means the busiest single day holds two of them, chosen by tie-break,
+        # and it landed 37 days from where the drawn curve actually peaks.
+        series = bd[1:366]
+        sm = _smooth(series,4)
+        peak = max(range(365), key=lambda i: sm[i]) + 1
+        return {"doy":series,"mf":0,"ml":0,"pk":peak,"tot":sum(bd),"mon":bm[1:13],
+                "ny":len(good)}
     SEASON={"d25":season(tx,25),"d30":season(tx,30),"n15":season(tn,15),"n20":season(tn,20)}
 
     # dynamic strings
