@@ -3,7 +3,7 @@
 Interactive charts of hot days / warm nights at **London Heathrow**, 1960–present,
 built from genuine thermometer observations.
 
-Live at **[london-heat.akguo.com](https://london-heat.akguo.com)** — Cloudflare Pages
+Live at **[weather.akguo.com](https://weather.akguo.com)** — Cloudflare Pages
 serves the `public/` directory, deploying on every push to `main`.
 
 ## Refresh (one command)
