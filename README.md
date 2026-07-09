@@ -3,15 +3,17 @@
 Interactive charts of hot days / warm nights at **London Heathrow**, 1960–present,
 built from genuine thermometer observations.
 
+Live at **[london-heat.akguo.com](https://london-heat.akguo.com)** — Cloudflare Pages
+serves the `public/` directory, deploying on every push to `main`.
+
 ## Refresh (one command)
 
 ```bash
 python3 build_charts.py
 ```
 
-This downloads the latest data, recomputes every dataset, and regenerates both
-HTML files with all dates/values current. Then publish `year_explorer.html` and
-`heathrow_heat.html` as artifacts.
+This downloads the latest data, recomputes every dataset, and regenerates the three
+pages in `public/` with all dates/values current. Commit and push to publish.
 
 Add `--refresh-ecad` to also re-extract the official ECA&D daily series from KNMI
 (only needed every few months, when they publish an update):
@@ -40,9 +42,15 @@ estimate, not the final official count.
 | `build_charts.py` | the one-command refresh + generator |
 | `*.tmpl.html` | HTML templates with `__TOKEN__` data placeholders |
 | `heathrow_tx.txt` / `heathrow_tn.txt` | cached ECA&D daily max / min |
-| `year_explorer.html` | generated — daily explorer with year picker + decade mode |
-| `heathrow_heat.html` | generated — annual counts + seasonal timing |
+| `public/` | generated — the deployed site (do not edit by hand) |
+| `public/index.html` | generated — landing page |
+| `public/year_explorer.html` | generated — daily explorer with year picker + decade mode |
+| `public/heathrow_heat.html` | generated — annual counts + seasonal timing |
 | `egll_metar.csv` | downloaded each run (git-ignored) |
+
+The templates are bare fragments (they began life as Claude artifacts, which supplied
+the document skeleton); `build_charts.py` wraps each one in a real `<!doctype>` /
+`<head>` with a charset and viewport before writing it to `public/`.
 
 ## Metrics
 

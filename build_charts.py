@@ -16,7 +16,26 @@ from collections import defaultdict
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 P = lambda f: os.path.join(BASE, f)
+SITE = os.path.join(BASE, "public")          # what Cloudflare Pages serves
+O = lambda f: os.path.join(SITE, f)
 MABBR = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+
+def wrap(frag):
+    """Templates are bare fragments (a <title>, a <style>, then content) because they
+    began life as Claude artifacts, which supplied the document skeleton. Served as
+    real files they need one: without a charset the °C signs mojibake, and without a
+    viewport phones render at desktop width."""
+    i = frag.find("</style>")
+    if i == -1: head, body = "", frag
+    else:       head, body = frag[:i+8], frag[i+8:]
+    return ('<!doctype html>\n<html lang="en">\n<head>\n'
+            '<meta charset="utf-8">\n'
+            '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
+            f'{head}\n</head>\n<body>{body}</body>\n</html>\n')
+
+def emit(name, text):
+    with open(O(name), "w", encoding="utf-8") as f:
+        f.write(wrap(text))
 
 def doy(y,m,d): return (date(y,m,d) - date(y,1,1)).days + 1
 def fmt_short(dstr):  # 'YYYY-MM-DD' or 'YYYYMMDD' -> '7 Jul'
@@ -223,12 +242,14 @@ def main():
 
     first_year=all_years[0]
 
+    os.makedirs(SITE, exist_ok=True)
+
     # render year_explorer
     t=open(P("year_explorer.tmpl.html")).read()
     t=(t.replace("__ALL__",j(ALL)).replace("__DEC__",j(DEC))
         .replace("__LASTDATE__",fmt_short(metar_last))
         .replace("__CURYEAR__",str(cur_year)).replace("__LASTCOMPLETE__",str(cur_year-1)))
-    open(P("year_explorer.html"),"w").write(t)
+    emit("year_explorer.html",t)
 
     # render heathrow_heat
     g=open(P("heathrow_heat.tmpl.html")).read()
@@ -237,7 +258,13 @@ def main():
         .replace("__METARSHORT__",fmt_short(metar_last)).replace("__YTD__",fmt_short(metar_last))
         .replace("__CURYEAR__",str(cur_year)).replace("__NYEARS__",str(cur_year-first_year))
         .replace("__N20_INSIGHT__",n20_txt))
-    open(P("heathrow_heat.html"),"w").write(g)
+    emit("heathrow_heat.html",g)
+
+    # render landing page
+    x=open(P("index.tmpl.html")).read()
+    x=(x.replace("__METARLAST__",fmt_long(metar_last))
+        .replace("__CURYEAR__",str(cur_year)).replace("__NYEARS__",str(cur_year-first_year)))
+    emit("index.html",x)
 
     # report
     i=all_years.index(cur_year)
@@ -245,7 +272,7 @@ def main():
     print(f"ECA&D official through {fmt_long(eca_last)}; METAR through {fmt_long(metar_last)}")
     print(f"{cur_year} YTD: {HIST['d25'][i]} d≥25°, {HIST['d30'][i]} d≥30°, "
           f"{HIST['n15'][i]} nights≥15°, {HIST['n20'][i]} tropical nights≥20°")
-    print("wrote year_explorer.html and heathrow_heat.html")
+    print("wrote public/index.html, public/heathrow_heat.html, public/year_explorer.html")
 
 if __name__=="__main__":
     main()
