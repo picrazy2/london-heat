@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Not found — Heathrow temperature</title>
+<style>
+  :root {
+    --surface:#faf8f5; --ink:#1a1714; --ink-2:#5c554d; --muted:#948b7f; --hot25:#e0631f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --surface:#16130f; --ink:#f7f3ec; --ink-2:#c3bbad; --muted:#8f867a; --hot25:#f2824a; }
+  }
+  :root[data-theme="light"] { --surface:#faf8f5;--ink:#1a1714;--ink-2:#5c554d;--muted:#948b7f;--hot25:#e0631f; }
+  :root[data-theme="dark"]  { --surface:#16130f;--ink:#f7f3ec;--ink-2:#c3bbad;--muted:#8f867a;--hot25:#f2824a; }
+
+  * { box-sizing: border-box; }
+  body {
+    margin:0; min-height:100vh; display:grid; place-items:center;
+    background:var(--surface); color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .box { text-align:center; padding:32px; max-width:44ch; }
+  .code { font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:600; margin:0 0 14px; }
+  h1 { font-size:clamp(26px,5vw,38px); letter-spacing:-0.02em; margin:0 0 14px; font-weight:680; }
+  p { color:var(--ink-2); margin:0 0 26px; }
+  a { color:var(--hot25); font-weight:600; text-decoration:none; }
+  a:hover { text-decoration:underline; }
+</style>
+</head>
+<body>
+
+<div class="box">
+  <p class="code">Error 404</p>
+  <h1>No such page.</h1>
+  <p>That address doesn't exist here. The charts are all reachable from the front page.</p>
+  <a href="/">← Back to the charts</a>
+</div>
+</body>
+</html>

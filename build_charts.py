@@ -266,6 +266,9 @@ def main():
         .replace("__CURYEAR__",str(cur_year)).replace("__NYEARS__",str(cur_year-first_year)))
     emit("index.html",x)
 
+    # without this Pages answers every unknown path with index.html and a 200
+    emit("404.html",open(P("404.tmpl.html")).read())
+
     # report
     i=all_years.index(cur_year)
     print("\n=== refreshed ===")
