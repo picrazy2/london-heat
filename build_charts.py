@@ -115,24 +115,72 @@ def social_card(path, years, vals, partial_year):
     fill(buf, W, H, L-14, zero-1, L+pw+14, zero+1, neutral)
     write_png(path, W, H, buf)
 
+# The theme button is identical in both templates. wrap() lifts it out of the
+# page and into the site bar, so it stops floating over the content.
+TOGGLE_HTML = '<button class="toggle" id="themeBtn" aria-label="Toggle colour theme">◐ Theme</button>'
+
+# Site chrome is deliberately unlike the in-page controls: a bar with an underline
+# marker, not a segmented pill. Switching page is a different act from switching a
+# view within one. What the two pages must share is measure and control styling,
+# which they did not — hence the .wrap and .modes/.hmodes rules below.
 NAV_CSS = """
-  .sitenav { display:flex; gap:6px; margin:0 0 28px; flex-wrap:wrap; }
+  .sitebar {
+    display:flex; align-items:center; gap:18px; margin:0 0 34px;
+    padding-bottom:13px; border-bottom:1px solid var(--ring);
+  }
+  .brand {
+    display:flex; align-items:center; gap:9px; text-decoration:none; color:var(--ink);
+    font-size:14px; font-weight:680; letter-spacing:-0.01em; white-space:nowrap;
+  }
+  .brand-mark {
+    width:15px; height:15px; border-radius:4px; flex:none;
+    background:linear-gradient(150deg, #4f97ec 0%, #f2824a 55%, #e0504f 100%);
+  }
+  .sitenav { display:flex; gap:20px; margin-left:auto; align-items:center; }
   .sitenav a {
-    font-size:13.5px; font-weight:600; text-decoration:none; color:var(--muted);
-    padding:7px 13px; border-radius:999px; border:1px solid transparent; line-height:1;
-    transition:color .12s ease, background .12s ease, border-color .12s ease;
+    position:relative; font-size:13px; font-weight:600; text-decoration:none;
+    color:var(--muted); padding:4px 0; transition:color .12s ease;
   }
   .sitenav a:hover { color:var(--ink); }
-  .sitenav a[aria-current="page"] {
-    color:var(--ink); background:var(--panel); border-color:var(--ring); box-shadow:var(--shadow);
+  .sitenav a[aria-current="page"] { color:var(--ink); }
+  .sitenav a[aria-current="page"]::after {
+    content:""; position:absolute; left:0; right:0; bottom:-14px;
+    height:2px; border-radius:2px; background:var(--ink);
   }
+  .sitebar .toggle { position:static; box-shadow:none; padding:6px 11px; font-size:12px; }
+  @media (max-width:520px) {
+    .sitebar { gap:12px; }
+    .brand span:last-child { display:none; }
+    .sitenav { gap:14px; }
+  }
+
+  /* Both pages get the same measure; they were 1120px and 1080px with different padding. */
+  .wrap { max-width:1120px; margin:0 auto; padding:clamp(24px,5vw,64px) clamp(18px,4vw,48px) 72px; }
+
+  /* One segmented control, not two. The explorer's was a different size and used a
+     warm active fill; the record page's used ink. */
+  .modes, .hmodes {
+    display:inline-flex; background:var(--panel); border:1px solid var(--ring);
+    border-radius:11px; padding:4px; gap:4px; box-shadow:var(--shadow);
+  }
+  .mode-btn, .hmode-btn {
+    border:none; background:transparent; color:var(--ink-2); font:inherit;
+    font-size:13px; font-weight:600; padding:7px 14px; border-radius:8px; cursor:pointer;
+  }
+  .mode-btn:hover, .hmode-btn:hover { color:var(--ink); }
+  .mode-btn.active, .hmode-btn.active { background:var(--ink); color:var(--surface); }
 """
 
 def nav_html(here):
     links = "".join(
         f'    <a href="{href}"{" aria-current=\"page\"" if href==here else ""}>{label}</a>\n'
         for href, label in PAGES)
-    return f'\n  <nav class="sitenav" aria-label="Pages">\n{links}  </nav>\n'
+    return (f'\n  <header class="sitebar">\n'
+            f'    <a class="brand" href="/"><span class="brand-mark"></span>'
+            f'<span>{SITE_NAME}</span></a>\n'
+            f'    <nav class="sitenav" aria-label="Pages">\n{links}    </nav>\n'
+            f'    {TOGGLE_HTML}\n'
+            f'  </header>\n')
 
 def esc(s): return (s.replace("&","&amp;").replace('"',"&quot;")
                      .replace("<","&lt;").replace(">","&gt;"))
@@ -175,6 +223,9 @@ def wrap(frag, here=None, stamp=""):
     else:       head, body = frag[:i] + NAV_CSS + "</style>", frag[i+8:]
     social = social_meta(here, stamp) if here in META else ""
     if here:
+        if TOGGLE_HTML not in body:
+            raise SystemExit(f"{here}: theme button markup changed; nav_html must be updated too")
+        body = body.replace(TOGGLE_HTML, "", 1)      # it moves into the site bar
         marker = '<div class="wrap">'
         body = body.replace(marker, marker + nav_html(here), 1)
     return ('<!doctype html>\n<html lang="en">\n<head>\n'

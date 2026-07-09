@@ -251,7 +251,8 @@ function render(yr){
 // build dropdown
 const sel=document.getElementById("yearSel");
 for(const y of YEARS.slice().reverse()){ const o=document.createElement("option");o.value=y;o.textContent=y;sel.appendChild(o); }
-const DEFAULT = YEARS.includes("2025")?"2025":YEARS[YEARS.length-1];
+// open on the year we are in, so the "today" rule has something to point at
+const DEFAULT = YEARS.includes(String(CURYEAR)) ? String(CURYEAR) : YEARS[YEARS.length-1];
 sel.value=DEFAULT;
 sel.addEventListener("change",()=>render(sel.value));
 document.getElementById("prev").addEventListener("click",()=>{const i=YEARS.indexOf(sel.value);if(i>0){sel.value=YEARS[i-1];render(sel.value);}});
