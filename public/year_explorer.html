@@ -267,8 +267,10 @@
       <span class="it"><span class="sw" style="background:var(--night15)"></span> daily low</span>
       <span class="it" style="color:var(--night15)"><span class="dash"></span> 15 °C night</span>
       <span class="it" style="color:var(--night20)"><span class="dash"></span> 20 °C night</span>
-      <span class="it"><span class="swb" style="background:var(--hot);border-radius:2px;width:6px;height:12px"></span> ≥30 °C day</span>
-      <span class="it"><span class="swb" style="background:var(--night20);border-radius:2px;width:6px;height:12px"></span> tropical night</span>
+      <span class="it"><span class="swb" style="background:var(--hot25);border-radius:2px;width:6px;height:12px;opacity:.55"></span> high in 25–30 °C</span>
+      <span class="it"><span class="swb" style="background:var(--hot30);border-radius:2px;width:6px;height:12px;opacity:.55"></span> high above 30 °C</span>
+      <span class="it"><span class="swb" style="background:var(--night15);border-radius:2px;width:6px;height:12px;opacity:.55"></span> low in 15–20 °C</span>
+      <span class="it"><span class="swb" style="background:var(--night20);border-radius:2px;width:6px;height:12px;opacity:.55"></span> low above 20 °C</span>
     </div>
     <p class="note">Hover the chart for any day's high and low. Data: ECA&amp;D official daily series; 2026 tops up from Heathrow METAR to 8 Jul.</p>
   </figure>
@@ -371,10 +373,20 @@ function render(yr){
     let bot="";
     for(let i=pts.length-1;i>=0;i--){ const[dn,,lo]=pts[i]; bot+=` L ${x(dn).toFixed(1)} ${y(lo==null?pts[i][1]:lo).toFixed(1)}`; }
     svg.appendChild(el("path",{d:top+bot+" Z",fill:"var(--band)","fill-opacity":"0.45"}));
-    // >=30 stems
-    for(const[dn,hi]of pts){ if(hi>=30) svg.appendChild(el("line",{x1:x(dn),x2:x(dn),y1:y(hi),y2:y(25),stroke:"var(--hot)","stroke-width":2.2,"stroke-opacity":"0.5"})); }
-    // tropical-night stems, mirroring the >=30 stems on the low side
-    for(const[dn,,lo]of pts){ if(lo!=null&&lo>=20) svg.appendChild(el("line",{x1:x(dn),x2:x(dn),y1:y(lo),y2:y(15),stroke:"var(--night20)","stroke-width":2.2,"stroke-opacity":"0.5"})); }
+    // Exceedance stems, each clipped to its own band, so a colour never bleeds past
+    // the threshold it marks: 25-30 is orange and only above 30 turns red; on the
+    // low side 15-20 is blue and only above 20 turns purple.
+    const stem=(dn,from,to,colour)=>svg.appendChild(el("line",
+      {x1:x(dn),x2:x(dn),y1:y(to),y2:y(from),stroke:colour,"stroke-width":2.2,"stroke-opacity":"0.55"}));
+    for(const[dn,hi]of pts){
+      if(hi>25) stem(dn, 25, Math.min(hi,30), "var(--hot25)");
+      if(hi>30) stem(dn, 30, hi,              "var(--hot30)");
+    }
+    for(const[dn,,lo]of pts){
+      if(lo==null) continue;
+      if(lo>15) stem(dn, 15, Math.min(lo,20), "var(--night15)");
+      if(lo>20) stem(dn, 20, lo,              "var(--night20)");
+    }
     // the low was only ever the band's bottom edge; draw it as its own series
     let lowD="", pen=false;
     for(const[dn,,lo]of pts){
