@@ -1,0 +1,56 @@
+name: Refresh charts
+
+on:
+  schedule:
+    # Daily. 05:15 UTC is after the UK day has fully closed, so yesterday's
+    # max/min are settled rather than still being written.
+    - cron: '15 5 * * *'
+    # Monthly, additionally re-extracting the ECA&D series, which KNMI
+    # republishes every few months.
+    - cron: '40 5 1 * *'
+  workflow_dispatch:
+    inputs:
+      refresh_ecad:
+        description: 'Also re-extract the ECA&D daily series from KNMI'
+        type: boolean
+        default: false
+
+# Never let two refreshes race to commit.
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Rebuild the site
+        run: |
+          if [ "${{ github.event.schedule == '40 5 1 * *' || inputs.refresh_ecad }}" = "true" ]; then
+            echo "::notice::Re-extracting ECA&D as well"
+            python3 build_charts.py --refresh-ecad
+          else
+            python3 build_charts.py
+          fi
+
+      - name: Commit if the output changed
+        run: |
+          git config user.name  'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A public heathrow_tx.txt heathrow_tn.txt
+          if git diff --cached --quiet; then
+            echo "::notice::No change — nothing to publish."
+            exit 0
+          fi
+          git commit -m "Refresh charts through $(date -u +'%-d %b %Y')"
+          git push

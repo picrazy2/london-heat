@@ -20,22 +20,46 @@ SITE = os.path.join(BASE, "public")          # what Cloudflare Pages serves
 O = lambda f: os.path.join(SITE, f)
 MABBR = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
-def wrap(frag):
+PAGES = [("/", "The warming record"), ("/year_explorer", "A year in temperature")]
+
+NAV_CSS = """
+  .sitenav { display:flex; gap:6px; margin:0 0 28px; flex-wrap:wrap; }
+  .sitenav a {
+    font-size:13.5px; font-weight:600; text-decoration:none; color:var(--muted);
+    padding:7px 13px; border-radius:999px; border:1px solid transparent; line-height:1;
+    transition:color .12s ease, background .12s ease, border-color .12s ease;
+  }
+  .sitenav a:hover { color:var(--ink); }
+  .sitenav a[aria-current="page"] {
+    color:var(--ink); background:var(--panel); border-color:var(--ring); box-shadow:var(--shadow);
+  }
+"""
+
+def nav_html(here):
+    links = "".join(
+        f'    <a href="{href}"{" aria-current=\"page\"" if href==here else ""}>{label}</a>\n'
+        for href, label in PAGES)
+    return f'\n  <nav class="sitenav" aria-label="Pages">\n{links}  </nav>\n'
+
+def wrap(frag, here=None):
     """Templates are bare fragments (a <title>, a <style>, then content) because they
     began life as Claude artifacts, which supplied the document skeleton. Served as
     real files they need one: without a charset the °C signs mojibake, and without a
     viewport phones render at desktop width."""
     i = frag.find("</style>")
     if i == -1: head, body = "", frag
-    else:       head, body = frag[:i+8], frag[i+8:]
+    else:       head, body = frag[:i] + NAV_CSS + "</style>", frag[i+8:]
+    if here:
+        marker = '<div class="wrap">'
+        body = body.replace(marker, marker + nav_html(here), 1)
     return ('<!doctype html>\n<html lang="en">\n<head>\n'
             '<meta charset="utf-8">\n'
             '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
             f'{head}\n</head>\n<body>{body}</body>\n</html>\n')
 
-def emit(name, text):
+def emit(name, text, here=None):
     with open(O(name), "w", encoding="utf-8") as f:
-        f.write(wrap(text))
+        f.write(wrap(text, here))
 
 def doy(y,m,d): return (date(y,m,d) - date(y,1,1)).days + 1
 def fmt_short(dstr):  # 'YYYY-MM-DD' or 'YYYYMMDD' -> '7 Jul'
@@ -249,22 +273,16 @@ def main():
     t=(t.replace("__ALL__",j(ALL)).replace("__DEC__",j(DEC))
         .replace("__LASTDATE__",fmt_short(metar_last))
         .replace("__CURYEAR__",str(cur_year)).replace("__LASTCOMPLETE__",str(cur_year-1)))
-    emit("year_explorer.html",t)
+    emit("year_explorer.html",t,here="/year_explorer")
 
-    # render heathrow_heat
+    # render heathrow_heat as the site's front page
     g=open(P("heathrow_heat.tmpl.html")).read()
     g=(g.replace("__HIST__",j(HIST)).replace("__SEASON__",j(SEASON))
         .replace("__ECALAST__",fmt_long(eca_last)).replace("__METARLAST__",fmt_long(metar_last))
         .replace("__METARSHORT__",fmt_short(metar_last)).replace("__YTD__",fmt_short(metar_last))
         .replace("__CURYEAR__",str(cur_year)).replace("__NYEARS__",str(cur_year-first_year))
         .replace("__N20_INSIGHT__",n20_txt))
-    emit("heathrow_heat.html",g)
-
-    # render landing page
-    x=open(P("index.tmpl.html")).read()
-    x=(x.replace("__METARLAST__",fmt_long(metar_last))
-        .replace("__CURYEAR__",str(cur_year)).replace("__NYEARS__",str(cur_year-first_year)))
-    emit("index.html",x)
+    emit("index.html",g,here="/")
 
     # without this Pages answers every unknown path with index.html and a 200
     emit("404.html",open(P("404.tmpl.html")).read())
@@ -275,7 +293,7 @@ def main():
     print(f"ECA&D official through {fmt_long(eca_last)}; METAR through {fmt_long(metar_last)}")
     print(f"{cur_year} YTD: {HIST['d25'][i]} d≥25°, {HIST['d30'][i]} d≥30°, "
           f"{HIST['n15'][i]} nights≥15°, {HIST['n20'][i]} tropical nights≥20°")
-    print("wrote public/index.html, public/heathrow_heat.html, public/year_explorer.html")
+    print("wrote public/index.html (the record), public/year_explorer.html, public/404.html")
 
 if __name__=="__main__":
     main()

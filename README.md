@@ -6,6 +6,15 @@ built from genuine thermometer observations.
 Live at **[weather.akguo.com](https://weather.akguo.com)** — Cloudflare Pages
 serves the `public/` directory, deploying on every push to `main`.
 
+The site is two pages: the warming record at `/` and the daily explorer at
+`/year_explorer`, linked by a nav bar that `build_charts.py` injects into both.
+
+`.github/workflows/refresh.yml` rebuilds and commits daily at 05:15 UTC, and
+additionally re-extracts the ECA&D series on the 1st of each month. Pages
+redeploys on the resulting push, so the site stays current with no local machine
+involved. No secrets are needed — both data sources are keyless, and the commit
+uses the built-in `GITHUB_TOKEN`.
+
 ## Refresh (one command)
 
 ```bash
@@ -43,9 +52,9 @@ estimate, not the final official count.
 | `*.tmpl.html` | HTML templates with `__TOKEN__` data placeholders |
 | `heathrow_tx.txt` / `heathrow_tn.txt` | cached ECA&D daily max / min |
 | `public/` | generated — the deployed site (do not edit by hand) |
-| `public/index.html` | generated — landing page |
+| `public/index.html` | generated — annual counts + seasonal timing (the front page) |
 | `public/year_explorer.html` | generated — daily explorer with year picker + decade mode |
-| `public/heathrow_heat.html` | generated — annual counts + seasonal timing |
+| `public/404.html` | generated — without it, Pages answers unknown paths with a 200 |
 | `egll_metar.csv` | downloaded each run (git-ignored) |
 
 The templates are bare fragments (they began life as Claude artifacts, which supplied
