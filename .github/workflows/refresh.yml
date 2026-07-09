@@ -2,12 +2,15 @@ name: Refresh charts
 
 on:
   schedule:
-    # Daily. 05:15 UTC is after the UK day has fully closed, so yesterday's
-    # max/min are settled rather than still being written.
-    - cron: '15 5 * * *'
+    # The build ends the series at yesterday, so we want to fire as soon after
+    # London midnight as the data is trustworthy. Heathrow reports at :20 and
+    # :50, so the last observation of the day lands ~23:55 local; 00:40 UTC
+    # clears it even in winter, when UTC and London time coincide. Not on the
+    # hour: GitHub's scheduler is most congested there and can slip an hour.
+    - cron: '40 0 * * *'
     # Monthly, additionally re-extracting the ECA&D series, which KNMI
     # republishes every few months.
-    - cron: '40 5 1 * *'
+    - cron: '10 1 1 * *'
   workflow_dispatch:
     inputs:
       refresh_ecad:
@@ -36,7 +39,7 @@ jobs:
 
       - name: Rebuild the site
         run: |
-          if [ "${{ github.event.schedule == '40 5 1 * *' || inputs.refresh_ecad }}" = "true" ]; then
+          if [ "${{ github.event.schedule == '10 1 1 * *' || inputs.refresh_ecad }}" = "true" ]; then
             echo "::notice::Re-extracting ECA&D as well"
             python3 build_charts.py --refresh-ecad
           else
@@ -52,5 +55,6 @@ jobs:
             echo "::notice::No change — nothing to publish."
             exit 0
           fi
-          git commit -m "Refresh charts through $(date -u +'%-d %b %Y')"
+          # The series ends at yesterday in London, which is not today in UTC.
+          git commit -m "Refresh charts through $(TZ=Europe/London date -d yesterday +'%-d %b %Y')"
           git push

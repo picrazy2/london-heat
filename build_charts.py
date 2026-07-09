@@ -11,7 +11,8 @@ Usage:  python3 build_charts.py
   re-extract it from the KNMI bulk archive (slow, ~a few MB via range requests).
 """
 import urllib.request, csv, json, re, os, sys, struct, zlib
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
+from zoneinfo import ZoneInfo
 from collections import defaultdict
 
 BASE = os.path.dirname(os.path.abspath(__file__))
@@ -124,8 +125,17 @@ def download_metar(start_ymd):
     data=urllib.request.urlopen(url, timeout=120).read()
     open(P("egll_metar.csv"),"wb").write(data)
 
-def metar_daily(cutoff_ymd):
-    """Return dicts date('YYYYMMDD')->max/min for METAR days AFTER the ECA&D cutoff."""
+def today_london():
+    return datetime.now(ZoneInfo("Europe/London")).strftime("%Y%m%d")
+
+def metar_daily(cutoff_ymd, end_excl):
+    """Return dicts date('YYYYMMDD')->max/min for METAR days after the ECA&D cutoff
+    and strictly before end_excl.
+
+    Excluding the in-progress day matters: a day's minimum lands near dawn but its
+    maximum lands mid-afternoon, so a partial day always has a usable min and a
+    too-low max. Counting it would drop hot days while keeping tropical nights.
+    """
     cutoff = "%04d%02d%02d" % cutoff_ymd
     mx=defaultdict(lambda:-99.); mn=defaultdict(lambda:99.)
     with open(P("egll_metar.csv")) as f:
@@ -135,7 +145,7 @@ def metar_daily(cutoff_ymd):
             try: v=float(v)
             except: continue
             k=r["valid"][:10].replace("-","")
-            if k<=cutoff: continue
+            if k<=cutoff or k>=end_excl: continue
             mx[k]=max(mx[k],v); mn[k]=min(mn[k],v)
     return {k:round(v,1) for k,v in mx.items()}, {k:round(v,1) for k,v in mn.items()}
 
@@ -149,7 +159,7 @@ def main():
     yy,mm,dd=_ymd(eca_last)
     nxt=date(yy,mm,dd)+timedelta(days=1)
     download_metar((nxt.year,nxt.month,nxt.day))
-    mmx,mmn=metar_daily((yy,mm,dd))
+    mmx,mmn=metar_daily((yy,mm,dd), today_london())
     for k in mmx: tx[k]=mmx[k]
     for k in mmn: tn[k]=mmn[k]
     metar_last=max(mmx) if mmx else eca_last
