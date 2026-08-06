@@ -205,11 +205,11 @@ const DATA = __HIST__;
 
 const METRICS = [
   {key:"d25", label:"Hot days", sub:"≥ 25 °C", color:"var(--hot25)", unit:"days",
-   insight:"Rising and noisy — <b>2018 leads with 64</b>. Seven of the ten highest years fall since 2003."},
+   insight:"__D25_INSIGHT__"},
   {key:"d30", label:"Very hot days", sub:"≥ 30 °C", color:"var(--hot30)", unit:"days",
-   insight:"The <b>1976 record of 20</b> still stands, but ≥30 °C days are now routine where they were once rare."},
+   insight:"__D30_INSIGHT__"},
   {key:"n15", label:"Mild nights", sub:"min ≥ 15 °C", color:"var(--night15)", unit:"nights",
-   insight:"The steadiest climb of the four — from ~13 a year in the 1960s to <b>~42 in the 2020s</b>."},
+   insight:"__N15_INSIGHT__"},
   {key:"n20", label:"Tropical nights", sub:"min ≥ 20 °C", color:"var(--night20)", unit:"nights",
    insight:"__N20_INSIGHT__"},
 ];
@@ -472,20 +472,25 @@ function renderMonths(){
                             .filter(r=>r.v!==null)
                             .sort((a,b)=>b.v-a.v||a.y-b.y);
     const rankOf=v=>1+rows.filter(r=>r.v>v).length;   // ties share a rank
+    // Two decimals, matching the precision the months are ranked on. At one decimal
+    // the ranking looked broken: July 2006 and July 2018 both printed 22.4 and both
+    // came out first, when 0.06 °C separates them. What still shares a rank here
+    // really is level — within 0.01 °C, finer than the daily readings resolve.
+    const fmt=v=>`${v.toFixed(2)}&#8202;°C`;
     const top=rows.slice(0,10);
     const meRow=me===null?null:rows.find(r=>r.y===me);
     const inTop=me!==null && top.some(r=>r.y===me);
     let body="";
-    top.forEach(r=>{ body+=`<tr class="${r.y===me?'me':''}"><td class="rk">${rankOf(r.v)}</td><td class="ry">${r.y}${r.y===me?' ✷':''}</td><td class="rv">${r.v.toFixed(1)}&#8202;°C</td></tr>`; });
+    top.forEach(r=>{ body+=`<tr class="${r.y===me?'me':''}"><td class="rk">${rankOf(r.v)}</td><td class="ry">${r.y}${r.y===me?' ✷':''}</td><td class="rv">${fmt(r.v)}</td></tr>`; });
     if(meRow && !inTop){
       body+=`<tr class="gap"><td colspan="3">⋯</td></tr>`;
-      body+=`<tr class="me"><td class="rk">${rankOf(meRow.v)}</td><td class="ry">${me} ✷</td><td class="rv">${meRow.v.toFixed(1)}&#8202;°C</td></tr>`;
+      body+=`<tr class="me"><td class="rk">${rankOf(meRow.v)}</td><td class="ry">${me} ✷</td><td class="rv">${fmt(meRow.v)}</td></tr>`;
     }
     // the month still running: shown apart from the ranking, never inside it
     let foot="";
     if(running){
       foot=`<tr class="prov"><td class="rk">—</td><td class="ry">${part.y}<span class="pflag">so far</span></td>`
-         + `<td class="rv">${part[MMODE].toFixed(1)}&#8202;°C</td></tr>`
+         + `<td class="rv">${fmt(part[MMODE])}</td></tr>`
          + `<tr class="none"><td colspan="3">${part.days} of ${new Date(part.y,part.m,0).getDate()} days, to ${part.through} — provisional, and biased by however the month has run so far</td></tr>`;
     }
     out+=`<div class="rcard">

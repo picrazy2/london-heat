@@ -534,11 +534,16 @@ def main():
     for k,v in tn.items(): mdays_n[(int(k[:4]),int(k[4:6]))].append(v)
     for k in set(tx)&set(tn):
         mdays_b[(int(k[:4]),int(k[4:6]))].append((tx[k]+tn[k])/2)
+    # Two decimals, not one. The page displays a month at 0.1 °C, but ranking on the
+    # displayed figure invents ties: July 2006 (22.45) and July 2018 (22.39) both read
+    # 22.4 and so both came out first. Daily values land on a 0.1 °C grid, so a
+    # month's mean is meaningful to about 0.003 °C — 2dp separates all but the months
+    # that really are level, and those keep their shared rank honestly.
     def mavg(store,y,m):
         vals=store.get((y,m))
         need=calendar.monthrange(y,m)[1]-2      # tolerate a couple of gaps
         if not vals or len(vals)<need: return None
-        return round(sum(vals)/len(vals),1)
+        return round(sum(vals)/len(vals),2)
     MONTHLY={"years":all_years,"cur":cur_year,
              "hi":{}, "lo":{}, "avg":{}}
     for m in range(1,13):
@@ -561,7 +566,7 @@ def main():
     if (ly,lm) != (ay,am):
         days=len(mdays_b.get((ly,lm),[]))
         if days:
-            mean=lambda s: round(sum(s[(ly,lm)])/len(s[(ly,lm)]),1) if s.get((ly,lm)) else None
+            mean=lambda s: round(sum(s[(ly,lm)])/len(s[(ly,lm)]),2) if s.get((ly,lm)) else None
             MONTHLY["part"]={"y":ly,"m":lm,"days":days,"through":fmt_short(metar_last),
                              "avg":mean(mdays_b),"hi":mean(mdays_x),"lo":mean(mdays_n)}
 
@@ -602,16 +607,64 @@ def main():
                 "ny":len(good)}
     SEASON={"d25":season(tx,25),"d30":season(tx,30),"n15":season(tn,15),"n20":season(tn,20)}
 
-    # dynamic strings
-    n20_cur=HIST["n20"][-1]
-    prev_rec=max(HIST["n20"][:-1]) if len(HIST["n20"])>1 else 0
-    prev_rec_yr=all_years[HIST["n20"].index(prev_rec)] if prev_rec else None
-    if n20_cur>prev_rec:
-        n20_txt=(f"Genuinely rare even now. <b>Part-year {cur_year} leads at {n20_cur}</b> "
-                 f"— a new all-time high, past {prev_rec_yr}'s {prev_rec}.")
+    # Chart captions. Every number in them is computed: hand-written ones go stale
+    # silently, and one already had — "the 1976 record of 20 still stands" survived
+    # part-year 2026 drawing level with it.
+    WORDS=["no","One","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten"]
+
+    def record(key):
+        """Record holder for `key`, and where the part-year stands against it.
+
+        index() takes the *earliest* year at the maximum, so a part-year that merely
+        draws level does not take the record off the year that set it."""
+        vals=HIST[key]
+        best=max(vals); yr=all_years[vals.index(best)]
+        cur=vals[-1]
+        return yr,best,cur
+
+    def top_years(key,n=10):
+        return [y for _,y in sorted(zip(HIST[key],all_years),reverse=True)[:n]]
+
+    # Hot days: the leader, and how much of the top ten sits in the last quarter century.
+    yr,best,cur=record("d25")
+    cut=cur_year-24
+    recent=sum(1 for y in top_years("d25") if y>=cut)
+    lead=(f"<b>Part-year {cur_year} already leads with {cur}</b>" if yr==cur_year
+          else f"<b>{yr} leads with {best}</b>")
+    d25_txt=(f"Rising and noisy — {lead}. "
+             f"{WORDS[recent]} of the ten highest years fall since {cut}.")
+
+    # Very hot days: whether the standing record has been reached this year.
+    yr,best,cur=record("d30")
+    tail="≥30 °C days are now routine where they were once rare."
+    if yr==cur_year:
+        d30_txt=(f"<b>Part-year {cur_year} leads with {cur}</b>, a new all-time high — {tail}")
+    elif cur==best:
+        d30_txt=(f"The <b>{yr} record of {best}</b> stood for {cur_year-yr} years, and "
+                 f"part-year {cur_year} has now matched it. {tail}")
     else:
-        n20_txt=(f"Genuinely rare even now. <b>{prev_rec_yr} holds the record at {prev_rec}</b>; "
-                 f"{cur_year} so far has {n20_cur}.")
+        d30_txt=f"The <b>{yr} record of {best}</b> still stands, but {tail}"
+
+    # Mild nights: the climb, read off the first and last decade averages.
+    decs=sorted(DEC["avg"], key=int)
+    first_dec,last_dec=decs[0],decs[-1]
+    n15_txt=(f"The steadiest climb of the four — from ~{round(DEC['avg'][first_dec]['n15'])} "
+             f"a year in the {first_dec}s to <b>~{round(DEC['avg'][last_dec]['n15'])} "
+             f"in the {last_dec}s</b>.")
+
+    # Tropical nights: still rare enough that the record is a single-digit count.
+    yr,best,cur=record("n20")
+    if yr==cur_year:
+        prev=max(HIST["n20"][:-1]) if len(HIST["n20"])>1 else 0
+        prev_yr=all_years[HIST["n20"].index(prev)] if prev else None
+        n20_txt=(f"Genuinely rare even now. <b>Part-year {cur_year} leads at {cur}</b> "
+                 f"— a new all-time high, past {prev_yr}'s {prev}.")
+    elif cur==best:
+        n20_txt=(f"Genuinely rare even now. <b>{yr} holds the record at {best}</b>, "
+                 f"and part-year {cur_year} has already matched it.")
+    else:
+        n20_txt=(f"Genuinely rare even now. <b>{yr} holds the record at {best}</b>; "
+                 f"{cur_year} so far has {cur}.")
 
     j=lambda o: json.dumps(o,separators=(",",":"))
 
@@ -640,7 +693,9 @@ def main():
         .replace("__ECALAST__",fmt_long(eca_last)).replace("__METARLAST__",fmt_long(metar_last))
         .replace("__METARSHORT__",fmt_short(metar_last)).replace("__YTD__",fmt_short(metar_last))
         .replace("__CURYEAR__",str(cur_year)).replace("__NYEARS__",str(cur_year-first_year))
-        .replace("__N20_INSIGHT__",n20_txt).replace("__MONTHLY__",j(MONTHLY)))
+        .replace("__D25_INSIGHT__",d25_txt).replace("__D30_INSIGHT__",d30_txt)
+        .replace("__N15_INSIGHT__",n15_txt).replace("__N20_INSIGHT__",n20_txt)
+        .replace("__MONTHLY__",j(MONTHLY)))
     emit("index.html",g,here="/",stamp=metar_last)
 
     # without this Pages answers every unknown path with index.html and a 200
