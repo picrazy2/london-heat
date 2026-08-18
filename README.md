@@ -42,25 +42,38 @@ Every one of them is keyless.
 |------|-------|--------|
 | London daily max/min | **ECA&D** (KNMI) blended series, Heathrow STAID 1860 | Authoritative; lags weeks to months |
 | London recent days | **METAR** EGLL via Iowa Environmental Mesonet | Current to the hour; maxima run slightly low |
-| Beijing daily max/min | **GHCN-Daily** station `CHM00054511` (Capital Airport) | Complete 1951–2012; then broken (see below) |
-| Beijing recent + gaps | **METAR** ZBAA via Iowa Environmental Mesonet | Unbroken 1973–now; whole degrees only |
+| Beijing to 2012 | **GHCN-Daily** station `CHM00054511` (Capital Airport) | Official, complete from 1951 |
+| Beijing from 2013 | **METAR** ZBAA via Iowa Environmental Mesonet | Unbroken to the hour; whole degrees only |
 | Beijing PM2.5 history | **CNEMC** hourly publication, mirrored daily at `quotsoft.net` | 35 city stations, hourly, µg/m³, from Dec 2013 |
 | Beijing PM2.5 live | **CNEMC** real-time feed, `air.cnemc.cn` | 23 stations with coordinates; drives the map |
 | London live temperature | **Open-Meteo** | Only for the overview tile, not the record |
 
-### Why Beijing's temperature is stitched
+### Why Beijing's temperature is spliced, and where
 
-NOAA's Beijing series is complete and official to 2012, then collapses: 2013–2019
-is almost entirely absent, and NOAA stopped receiving the station in August 2025.
-So every day GHCN does not cover is filled from the same airport's METAR. The
-stitch is per-day, not just at the tail.
+NOAA's Beijing series is complete and official from 1951 to 2012. From 2013 it
+carries only a fraction of days — 2016 and 2017 have one or two between them —
+and NOAA lost the station altogether in August 2025. So the record changes
+instrument once, on 1 January 2013.
 
-The build measures the resulting bias instead of hand-waving at it. On the ~6,400
-recent days where both sources report, METAR runs about 0.7 °C below the official
-daily maximum and 1.1 °C below the official minimum, so the METAR-filled years
-*undercount* every threshold — the page states the per-threshold figures it
-computed. Nothing before 2013 is METAR, so the 1961–90 baseline the charts are
-measured against is not itself mixed.
+It is a **splice, not a gap-fill**, and that distinction was worth getting right.
+Filling GHCN's holes and keeping its remaining values looks more respectful of
+the official source, but the build measures the two series against each other and
+the post-2013 GHCN days are the ones that have gone wrong:
+
+| Window | Days both report | Mean difference | Spread (σ) |
+|--------|------------------|-----------------|-----------|
+| 2009–2012 | 1,460 | 0.30 °C | 1.03 °C |
+| 2013– | 1,714 | — | **2.05 °C** |
+
+No date offset explains the jump, METAR's sampling got *denser* over that period,
+and the change is entirely on NOAA's side. Interleaving would have left every
+recent year inhomogeneous within itself — and did: before this was caught, 2023
+showed 48 days at ≥35 °C against the 39 the airport actually reported.
+
+The build recomputes those figures every run and the page prints them. METAR
+reads the lower of the two (whole degrees, half-hourly sampling rather than a
+true daily extreme), so recent years undercount if anything. Nothing before 2013
+is METAR, so the 1961–90 baseline is entirely official.
 
 ### Why not the obvious PM2.5 sources
 

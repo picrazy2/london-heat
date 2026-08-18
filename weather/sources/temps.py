@@ -226,6 +226,26 @@ def stitch(base, fill):
     return out, filled
 
 
+def splice(base, later, cutover):
+    """`base` up to `cutover` (exclusive), `later` from it on.
+
+    Different from `stitch`, and deliberately: stitch fills whatever holes the
+    base leaves, which is right when the base is trustworthy and merely
+    incomplete. When the base becomes *untrustworthy* after a date, filling its
+    holes leaves the bad values in place and interleaves them with good ones.
+    A splice replaces the series outright from the cutover.
+
+    Returns the merged dict and the set of dates that came from `later`.
+    """
+    out = {k: v for k, v in base.items() if k < cutover}
+    taken = set()
+    for k, v in later.items():
+        if k >= cutover:
+            out[k] = v
+            taken.add(k)
+    return out, taken
+
+
 def day_after(ymd):
     y, m, d = int(ymd[:4]), int(ymd[4:6]), int(ymd[6:8])
     return date(y, m, d) + timedelta(days=1)

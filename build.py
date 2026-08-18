@@ -43,6 +43,15 @@ LONDON_METRICS = [
     Metric("n2", "Tropical nights", "min ≥ 20 °C", "min", 20, "--night-2", "nights"),
 ]
 
+# Where Beijing's record changes instrument. NOAA's series is complete and in
+# close agreement with the airport's own reports up to the end of 2012, and from
+# 2013 reports only a fraction of days whose values no longer track them. So the
+# splice is here, and it is a splice rather than a gap-fill: interleaving a
+# suspect series with a dense one inside the same year would leave every recent
+# year internally inhomogeneous.
+BJ_HANDOVER_YEAR = 2013
+BJ_HANDOVER = f"{BJ_HANDOVER_YEAR}0101"
+
 # Beijing's thresholds are five degrees up on London's at every level, because a
 # continental summer makes 25 C unremarkable for four months. 35 is not a round
 # number chosen for symmetry: it is the China Meteorological Administration's own
@@ -92,61 +101,67 @@ def build_beijing_temps(args):
     gn = temps.load_pairs(P("data", "beijing_ghcn_tn.txt"))
     ghcn_last = max(gx) if gx else "19510101"
     today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
-    # METAR is pulled from the start of the record, not from GHCN's cutoff,
-    # because GHCN's Beijing gaps are interior, not just at the tail.
-    mx, mn = temps.metar_daily("ZBAA", "Asia/Shanghai", date(1973, 1, 1), today,
+
+    # METAR is fetched from four years before the handover, not from 1973. The
+    # extra years are not used as data — they exist so the seam between the two
+    # series can be measured on days when both are dense. Pulling the whole
+    # fifty years every morning would be 15 MB a day off a free service to fill
+    # in nothing.
+    mx, mn = temps.metar_daily("ZBAA", "Asia/Shanghai",
+                               date(BJ_HANDOVER_YEAR - 4, 1, 1), today,
                                cache_path=P("zbaa_metar.csv"), offline=args.offline)
-    tx, filled = temps.stitch(gx, mx)
-    tn, _ = temps.stitch(gn, mn)
+
+    seam = seam_stats(gx, gn, mx, mn)
+    tx, filled = temps.splice(gx, mx, BJ_HANDOVER)
+    tn, _ = temps.splice(gn, mn, BJ_HANDOVER)
     last = max(tx)
 
     rec = Record(tx, tn, BEIJING_METRICS, first_year=1960, cur_date=last, filled=filled)
-    n_filled = sum(1 for k in filled if int(k[:4]) >= 1960)
-    first_filled = min((k for k in filled if int(k[:4]) >= 1960), default=None)
-    bias = metar_bias(gx, gn, mx, mn)
-    source = (f"Official daily figures for Beijing Capital Airport (station 54511) via "
-              f"NOAA's <b>GHCN-Daily</b>. That series is complete from 1951 to 2012 and "
-              f"then falls apart — 2013–2019 is almost entirely absent, and NOAA stopped "
-              f"receiving the station in <b>{fmt_long(ghcn_last)}</b> — so the "
-              f"<b>{n_filled:,}</b> days it does not cover are derived from the same "
-              f"airport's <b>METAR</b> reports via the Iowa Environmental Mesonet, current "
-              f"to <b>{fmt_long(last)}</b>. Everything before "
-              f"<b>{fmt_long(first_filled) if first_filled else '2013'}</b> is the official "
-              f"figure, so the 1961–90 baseline these charts are measured against is not "
-              f"itself mixed. On the {bias[0]['n']:,} recent days where both sources report, "
-              f"METAR runs <b>{abs(bias[0]['mean']):.1f} °C below</b> the official maximum "
-              f"and {abs(bias[1]['mean']):.1f} °C below the official minimum, because it "
-              f"reports whole degrees and samples every half hour instead of reading a true "
-              f"daily extreme. So the METAR-filled years <em>undercount</em> every threshold "
-              f"here — by "
-              + ", ".join(f"{abs(b['pct']):.0f}% for {b['label'].lower()}" for b in bias[2:])
-              + " — and the recent rise is understated rather than inflated.")
+    source = (f"Two series, spliced once. Up to <b>{BJ_HANDOVER_YEAR - 1}</b> these are the "
+              f"official daily figures for Beijing Capital Airport (station 54511) from "
+              f"NOAA's <b>GHCN-Daily</b>, which is complete from 1951. From "
+              f"<b>{BJ_HANDOVER_YEAR}</b> they are derived from the same airport's "
+              f"<b>METAR</b> reports via the Iowa Environmental Mesonet, current to "
+              f"<b>{fmt_long(last)}</b>. "
+              f"GHCN did not simply stop — NOAA lost the station altogether on "
+              f"<b>{fmt_long(ghcn_last)}</b> — but from {BJ_HANDOVER_YEAR} it carries only a "
+              f"fraction of days, and those days stop agreeing with the airport's own "
+              f"reports. Over the {seam['n']:,} days of {BJ_HANDOVER_YEAR - 4}–"
+              f"{BJ_HANDOVER_YEAR - 1}, when both series are dense, they differ by "
+              f"<b>{abs(seam['mean']):.2f} °C</b> with a spread of {seam['sd']:.2f} °C; over "
+              f"the {seam['n_after']:,} days after the splice the spread is "
+              f"<b>{seam['sd_after']:.2f} °C</b>, and no date offset explains it. The change "
+              f"is entirely on NOAA's side, so the METAR series is taken whole from "
+              f"{BJ_HANDOVER_YEAR} rather than interleaved with it — mixing them would leave "
+              f"every recent year inhomogeneous within itself. "
+              f"METAR reads the smaller of the two because it reports whole degrees and "
+              f"samples every half hour rather than reading a true daily extreme, so the "
+              f"recent years, if anything, undercount. The 1961–90 baseline these charts "
+              f"are measured against is entirely official.")
     return rec, city_page.payload(rec, "Beijing", "bj", source, (-18, 42))
 
 
-def metar_bias(gx, gn, mx, mn):
-    """How far METAR sits inside the official figures — measured, not assumed.
+def seam_stats(gx, gn, mx, mn):
+    """How closely the two Beijing series agree just before they are spliced.
 
-    Both series describe the same airport, and for several thousand recent days
-    both report. Comparing them there turns "METAR probably runs a bit low" into
-    a number, and settles the question a mixed record always raises: whether the
-    recent counts are inflated by the change of source. They are not. They are
-    held back by it, and the page says so with the figures rather than a hedge.
+    A record joined from two instruments is only as trustworthy as its seam, and
+    this one can be checked: for the four years before the handover both series
+    are dense, so the difference between them is measurable rather than assumed.
+    It is about a quarter of a degree, with a spread under one — which is what
+    makes the splice defensible, and is why the page prints the number.
     """
     import statistics as st
-    out = []
-    for label, g, m in (("maximum", gx, mx), ("minimum", gn, mn)):
-        both = [(g[k], m[k]) for k in set(g) & set(m) if k >= "20000101"]
-        d = [b - a for a, b in both] or [0.0]
-        out.append({"label": label, "n": len(both), "mean": st.mean(d), "pct": 0.0})
-    for metric in BEIJING_METRICS:
-        g, m = (gx, mx) if metric.series == "max" else (gn, mn)
-        both = [(g[k], m[k]) for k in set(g) & set(m) if k >= "20000101"]
-        off = sum(1 for a, _ in both if a >= metric.thr)
-        est = sum(1 for _, b in both if b >= metric.thr)
-        out.append({"label": metric.label, "n": len(both), "mean": 0.0,
-                    "pct": 100 * (est - off) / off if off else 0.0})
-    return out
+    a = f"{BJ_HANDOVER_YEAR - 4}0101"
+    b = f"{BJ_HANDOVER_YEAR - 1}1231"
+    both = [(gx[k], mx[k]) for k in set(gx) & set(mx) if a <= k <= b]
+    d = [y - x for x, y in both] or [0.0]
+    # The same comparison on the far side of the splice, where GHCN has gone
+    # sparse. Asserting that the disagreement grows is easy; printing how much
+    # it grows is the part that can be checked.
+    after = [(gx[k], mx[k]) for k in set(gx) & set(mx) if k >= BJ_HANDOVER]
+    da = [y - x for x, y in after] or [0.0]
+    return {"n": len(both), "mean": st.mean(d), "sd": st.pstdev(d) if len(d) > 1 else 0.0,
+            "n_after": len(after), "sd_after": st.pstdev(da) if len(da) > 1 else 0.0}
 
 
 def build_air(args):
