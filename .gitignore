@@ -1,4 +1,8 @@
+# Raw downloads, re-fetched every build. The parsed series in data/ is what is
+# committed; these are just the wire format they arrived in.
 egll_metar.csv
-_c.js
+zbaa_metar.csv
 __pycache__/
 *.pyc
+.DS_Store
+tmp/

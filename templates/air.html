@@ -1,0 +1,114 @@
+<div class="aq" id="aq">
+  <div class="bar-row">
+    <div class="seg" id="aqViews" role="radiogroup" aria-label="Air quality view"
+         style="grid-template-columns:repeat(3,1fr)">
+      <span class="thumb" aria-hidden="true"></span>
+      <button role="radio" data-view="now"    aria-checked="true">Right now</button>
+      <button role="radio" data-view="trend"  aria-checked="false">The long trend</button>
+      <button role="radio" data-view="rhythm" aria-checked="false">Rhythm</button>
+    </div>
+    <span class="spacer"></span>
+    <div class="seg" id="aqScale" role="radiogroup" aria-label="Air quality index scale"
+         style="grid-template-columns:repeat(2,1fr)">
+      <span class="thumb" aria-hidden="true"></span>
+      <button role="radio" data-scale="us" aria-checked="true">US EPA</button>
+      <button role="radio" data-scale="cn" aria-checked="false">China</button>
+    </div>
+  </div>
+
+  <!-- ── Right now ─────────────────────────────────────────────────────── -->
+  <section data-view="now" class="stack">
+    <div class="now glass-card" id="aqNow">
+      <div>
+        <div class="lab footnote" style="font-weight:600">Beijing, city average</div>
+        <div class="idx"><span class="n display" id="aqNum">–</span>
+          <span class="of" id="aqScaleName">AQI</span></div>
+        <div class="cat" id="aqCat">Loading…</div>
+        <div class="conc" id="aqConc"></div>
+        <div class="stamp" id="aqStamp"></div>
+        <div class="otherscale" id="aqOther" hidden></div>
+      </div>
+      <div class="ruler" id="aqRuler"></div>
+    </div>
+
+    <div class="grid-2" style="align-items:start">
+      <div class="aq-card" style="padding-bottom:18px">
+        <div class="card-head"><h3>Across the city</h3>
+          <span class="sub" id="aqMapSub"></span></div>
+        <div id="aqMap" style="margin-top:12px"></div>
+        <p class="mapnote" id="aqMapNote"></p>
+      </div>
+      <div class="stack">
+        <div class="aq-card">
+          <div class="card-head"><h3>The last three days</h3>
+            <span class="sub">hourly city mean</span></div>
+          <div id="aqRecent" style="margin-top:10px"></div>
+        </div>
+        <div class="list stations" id="aqStations"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── The long trend ────────────────────────────────────────────────── -->
+  <section data-view="trend" class="stack" hidden>
+    <div>
+      <h2>Beijing cleaned up its air, and it is not finished</h2>
+      <p class="lede" style="margin-top:8px">The city's annual mean PM2.5 against the
+        standards that judge it. Which reference line matters depends on who is
+        measuring — and by the strictest of them, the air is still a long way from
+        clean.</p>
+    </div>
+    <div class="aq-card">
+      <div class="card-head"><h3>Annual mean PM2.5</h3><span class="sub">µg/m³</span></div>
+      <div id="aqAnnual" style="margin-top:12px"></div>
+      <p class="cap" id="aqAnnualCap"></p>
+    </div>
+
+    <div class="aq-card">
+      <div class="card-head"><h3>Every day of every year, sorted into bands</h3>
+        <span class="sub" id="aqBandsSub"></span></div>
+      <div id="aqBands" style="margin-top:12px"></div>
+      <div class="bandkey" id="aqBandKey"></div>
+      <p class="cap" id="aqBandsCap"></p>
+    </div>
+
+    <div class="aq-card">
+      <div class="card-head"><h3>Month by month</h3>
+        <span class="sub">mean PM2.5, µg/m³</span></div>
+      <div id="aqHeat" style="margin-top:14px"></div>
+      <p class="cap">Winter is the worst season and always has been: coal heating and
+        cold, still air that traps what the city emits. The improvement is visible
+        along every row, but it is steepest in the winter columns.</p>
+    </div>
+  </section>
+
+  <!-- ── Rhythm ────────────────────────────────────────────────────────── -->
+  <section data-view="rhythm" class="stack" hidden>
+    <div>
+      <h2>The shape of a polluted day</h2>
+      <p class="lede" style="margin-top:8px">Air quality has a daily and a yearly
+        rhythm, and neither is obvious from an annual average. These are averaged over
+        the whole record.</p>
+    </div>
+    <div class="grid-2">
+      <div class="aq-card">
+        <div class="card-head"><h3>By hour of day</h3><span class="sub">Beijing time</span></div>
+        <div id="aqDiurnal" style="margin-top:12px"></div>
+        <p class="cap" id="aqDiurnalCap"></p>
+      </div>
+      <div class="aq-card">
+        <div class="card-head"><h3>By month</h3><span class="sub">whole record</span></div>
+        <div id="aqSeason" style="margin-top:12px"></div>
+        <p class="cap" id="aqSeasonCap"></p>
+      </div>
+    </div>
+    <div class="aq-card">
+      <div class="card-head"><h3>How often each level happens</h3>
+        <span class="sub">daily means, whole record</span></div>
+      <div id="aqHist" style="margin-top:12px"></div>
+      <p class="cap" id="aqHistCap"></p>
+    </div>
+  </section>
+
+  <p class="footnote" id="aqSource"></p>
+</div>

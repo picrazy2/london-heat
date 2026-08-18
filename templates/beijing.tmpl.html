@@ -1,0 +1,90 @@
+<title>Beijing — heat and air quality</title>
+<style>
+__TEMP_CSS__
+__AIR_CSS__
+  /* The top-level switch is a wider, quieter control than the view segmented
+     controls beneath it: it changes subject, not view, so it should not look
+     like one more tab in the same row. */
+  .topics { display:inline-flex; gap:6px; padding:5px; border-radius:var(--r-full);
+    margin-bottom:clamp(16px,2.5vw,22px); }
+  .topics button { border:0; background:none; font:inherit; font-size:14.5px;
+    font-weight:600; color:var(--ink-muted); padding:8px 20px; border-radius:var(--r-full);
+    cursor:pointer; display:inline-flex; align-items:center; gap:8px;
+    transition:all .2s var(--ease-spring); }
+  .topics button[aria-selected="true"] { background:var(--accent); color:var(--ink-on-accent);
+    box-shadow:var(--shadow-2); }
+  .topics button:not([aria-selected="true"]):hover { color:var(--ink); }
+  .topics .badge { font-size:11px; font-weight:700; padding:2px 7px; border-radius:var(--r-full);
+    background:var(--live-tint,var(--surface-2)); color:#fff; font-variant-numeric:tabular-nums; }
+  .topics button[aria-selected="true"] .badge { background:rgba(255,255,255,.22); }
+</style>
+<div class="wrap">
+  __TOPBAR__
+  <div class="hero">
+    <p class="kicker">Beijing · air and heat</p>
+    <h1>The air got better. The summers got hotter.</h1>
+    <p class="lede">Two records that moved in opposite directions. PM2.5 comes from the
+      city's own monitoring stations and is judged here on both the US and the Chinese
+      scale; the temperature comes from the thermometer at Capital Airport.</p>
+  </div>
+
+  <div class="topics glass" role="tablist" aria-label="Beijing topic">
+    <button role="tab" data-topic="air" aria-selected="true">Air quality
+      <span class="badge" id="topicBadge" hidden></span></button>
+    <button role="tab" data-topic="heat" aria-selected="false">Heat</button>
+  </div>
+
+  <div data-topic="air">
+    __AIR_HTML__
+  </div>
+  <div data-topic="heat" hidden>
+    __TEMP_HTML__
+  </div>
+</div>
+<div class="tip" id="tip"></div>
+<script>window.TEMP = __TEMP_DATA__; window.AIR = __AIR_DATA__;</script>
+<script>
+__TEMP_JS__
+</script>
+<script>
+__AIR_JS__
+</script>
+<script>
+/* The topic switch. It defers the heat module's first paint until the tab is
+   opened — building four annual charts and a 60-year explorer into a hidden
+   subtree is work nobody asked for on a page whose headline is the live AQI. */
+(function () {
+  var tabs = [].slice.call(document.querySelectorAll(".topics button"));
+  function show(name) {
+    tabs.forEach(function (t) { t.setAttribute("aria-selected", String(t.dataset.topic === name)); });
+    [].forEach.call(document.querySelectorAll("[data-topic]"), function (p) {
+      if (p.tagName === "BUTTON") return;
+      p.hidden = p.dataset.topic !== name;
+    });
+    try { history.replaceState(null, "", name === "air" ? location.pathname : "#heat"); } catch (e) {}
+    window.dispatchEvent(new Event("resize"));   // segmented thumbs measure on show
+  }
+  tabs.forEach(function (t) { t.addEventListener("click", function () { show(t.dataset.topic); }); });
+  if (location.hash === "#heat") show("heat");
+
+  /* A live badge on the tab itself, so the current index is visible even when
+     the reader is looking at the temperature charts. */
+  function badge() {
+    var A = window.AIR;
+    if (!A || !A.live || A.live.city == null) return;
+    var S = A.scales.us, c = A.live.city;
+    var cc = S.trunc ? Math.floor(c * 10) / 10 : Math.round(c), out = null;
+    for (var i = 0; i < S.bp.length; i++) {
+      var b = S.bp[i];
+      if (cc <= b[1]) { out = { i: Math.round(b[2] + (cc - b[0]) / (b[1] - b[0]) * (b[3] - b[2])), cat: b[4] }; break; }
+    }
+    if (!out) return;
+    var el = document.getElementById("topicBadge");
+    el.hidden = false;
+    el.textContent = out.i;
+    document.querySelector(".topics").style.setProperty("--live-tint",
+      getComputedStyle(document.documentElement).getPropertyValue(S.cats[out.cat].css).trim());
+  }
+  badge();
+})();
+</script>

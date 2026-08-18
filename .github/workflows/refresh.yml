@@ -1,20 +1,32 @@
-name: Refresh charts
+name: Refresh
 
 on:
   schedule:
-    # The build ends the series at yesterday, so we want to fire as soon after
-    # London midnight as the data is trustworthy. Heathrow reports at :20 and
-    # :50, so the last observation of the day lands ~23:55 local; 00:40 UTC
-    # clears it even in winter, when UTC and London time coincide. Not on the
-    # hour: GitHub's scheduler is most congested there and can slip an hour.
+    # Two cities, eight hours apart, so each build ends the day it is reporting.
+    #
+    # 00:40 UTC clears London's last observation of the day (Heathrow reports at
+    # :20 and :50, so the last one lands ~23:55 local) even in winter, when UTC
+    # and London time coincide. Beijing is UTC+8, so its day has been over since
+    # 16:00 UTC — one build a day covers both, and this is the later of the two
+    # deadlines. Not on the hour: GitHub's scheduler is most congested there and
+    # routinely slips.
     - cron: '40 0 * * *'
-    # Monthly, additionally re-extracting the ECA&D series, which KNMI
-    # republishes every few months.
+    # A second pass in the afternoon picks up the Beijing air-quality readings
+    # that the network back-fills late, which the daily build's ten-day trailing
+    # window would otherwise not see until the next morning.
+    - cron: '25 13 * * *'
+    # Monthly, additionally re-extracting the two official archives: KNMI
+    # republishes Heathrow every few months, NOAA republishes Beijing daily but
+    # only meaningfully changes it in bulk.
     - cron: '10 1 1 * *'
   workflow_dispatch:
     inputs:
-      refresh_ecad:
-        description: 'Also re-extract the ECA&D daily series from KNMI'
+      refresh_archives:
+        description: 'Also re-extract the ECA&D and GHCN daily series'
+        type: boolean
+        default: false
+      backfill_aq:
+        description: 'Also rebuild the whole PM2.5 archive from 2013 (slow)'
         type: boolean
         default: false
 
@@ -29,7 +41,7 @@ permissions:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -39,22 +51,30 @@ jobs:
 
       - name: Rebuild the site
         run: |
-          if [ "${{ github.event.schedule == '10 1 1 * *' || inputs.refresh_ecad }}" = "true" ]; then
-            echo "::notice::Re-extracting ECA&D as well"
-            python3 build_charts.py --refresh-ecad
-          else
-            python3 build_charts.py
+          FLAGS=""
+          if [ "${{ github.event.schedule == '10 1 1 * *' || inputs.refresh_archives }}" = "true" ]; then
+            echo "::notice::Re-extracting ECA&D and GHCN as well"
+            FLAGS="$FLAGS --refresh-ecad --refresh-ghcn"
           fi
+          if [ "${{ inputs.backfill_aq }}" = "true" ]; then
+            echo "::notice::Rebuilding the whole PM2.5 archive"
+            FLAGS="$FLAGS --backfill-aq"
+          fi
+          python3 build.py $FLAGS
 
       - name: Commit if the output changed
         run: |
           git config user.name  'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A public heathrow_tx.txt heathrow_tn.txt
+          git add -A public data
           if git diff --cached --quiet; then
             echo "::notice::No change — nothing to publish."
             exit 0
           fi
-          # The series ends at yesterday in London, which is not today in UTC.
-          git commit -m "Refresh charts through $(TZ=Europe/London date -d yesterday +'%-d %b %Y')"
+          # The series end yesterday in each city's own time, which is not today
+          # in UTC. London is the later of the two deadlines, so it names the commit.
+          git commit -m "Refresh through $(TZ=Europe/London date -d yesterday +'%-d %b %Y')"
+          # A concurrent human push would otherwise make this fail outright; the
+          # generated output is ours to rebase onto whatever landed meanwhile.
+          git pull --rebase --autostash origin main
           git push

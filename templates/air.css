@@ -1,0 +1,105 @@
+/* ── The air-quality module ────────────────────────────────────────────────
+   The design problem here is that one concentration produces two different
+   verdicts, and the page has to make that legible rather than pick a side. So
+   the scale toggle is not a filter tucked in a corner — it is the second thing
+   on the page, and the hero shows what the *other* scale says at the same time. */
+
+.aq { display:flex; flex-direction:column; gap:clamp(18px,3vw,26px); }
+
+/* ── the live hero ── */
+.now {
+  display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);
+  gap:clamp(18px,3vw,30px); align-items:center;
+  border-radius:var(--r-lg); padding:clamp(20px,3vw,30px);
+}
+@media (max-width:760px) { .now { grid-template-columns:1fr; } }
+.now .idx { display:flex; align-items:baseline; gap:12px; }
+.now .idx .n { font-size:clamp(60px,11vw,96px); color:var(--tint); }
+.now .idx .of { font-size:14px; color:var(--ink-muted); font-weight:600; }
+.now .cat { font-size:clamp(17px,2.4vw,21px); font-weight:680; letter-spacing:-0.02em;
+  color:var(--tint); margin-top:2px; }
+.now .conc { font-size:15px; color:var(--ink-muted); margin-top:10px; }
+.now .conc b { color:var(--ink); font-weight:680; font-variant-numeric:tabular-nums; }
+.now .stamp { font-size:12.5px; color:var(--ink-faint); margin-top:6px; }
+/* The other scale's verdict, stated plainly. This is the whole point of the page. */
+.otherscale { margin-top:16px; padding:12px 14px; border-radius:var(--r-sm);
+  background:var(--surface-2); font-size:13.5px; line-height:1.5; color:var(--ink-muted); }
+.otherscale b { color:var(--ink); font-weight:660; }
+.otherscale .pill { display:inline-block; padding:1px 8px; border-radius:var(--r-full);
+  font-size:12px; font-weight:660; color:#fff; background:var(--other-tint); margin-inline:2px; }
+
+/* ── the two-scale ruler ──
+   Both scales drawn against the same concentration axis, stacked. The offset
+   between the two bands at the same x is the disagreement, made visible. */
+.ruler { display:flex; flex-direction:column; gap:9px; }
+.ruler .lane { position:relative; height:30px; border-radius:9px; overflow:hidden;
+  display:flex; }
+.ruler .lane .b { flex:none; height:100%; position:relative; }
+.ruler .lane .b span { position:absolute; inset:0; display:flex; align-items:center;
+  justify-content:center; font-size:10px; font-weight:660; color:#fff;
+  text-shadow:0 1px 2px rgba(0,0,0,.35); white-space:nowrap; overflow:hidden; }
+.ruler .lane-lab { font-size:11.5px; font-weight:640; color:var(--ink-muted);
+  display:flex; justify-content:space-between; align-items:baseline; }
+.ruler .lane-lab em { font-style:normal; color:var(--ink-faint); font-weight:500; }
+.ruler .needle { position:absolute; top:-4px; bottom:-4px; width:3px; border-radius:2px;
+  background:var(--ink); box-shadow:0 0 0 2px var(--surface-1); z-index:2;
+  transition:left .5s var(--ease-out); }
+.ruler .scaleaxis { display:flex; justify-content:space-between; font-size:10px;
+  color:var(--ink-faint); font-variant-numeric:tabular-nums; }
+
+/* ── map ── */
+#aqMap { height:clamp(300px,46vh,460px); border-radius:var(--r-md); overflow:hidden;
+  background:var(--surface-2); z-index:0; }
+.leaflet-container { background:var(--surface-2); font:inherit; }
+.leaflet-control-attribution { background:var(--glass-thick) !important;
+  backdrop-filter:var(--blur-sm); color:var(--ink-faint) !important; font-size:10px !important; }
+.leaflet-control-attribution a { color:var(--ink-muted) !important; }
+.leaflet-bar a { background:var(--surface-1) !important; color:var(--ink) !important;
+  border-color:var(--border) !important; }
+.leaflet-popup-content-wrapper, .leaflet-popup-tip {
+  background:var(--surface-1); color:var(--ink); box-shadow:var(--shadow-3);
+  border-radius:var(--r-sm); }
+.leaflet-popup-content { margin:11px 14px; font-size:13px; line-height:1.5; }
+.leaflet-popup-content .pn { font-weight:680; font-size:14px; }
+.leaflet-popup-content .pv { font-variant-numeric:tabular-nums; }
+.leaflet-popup-close-button { color:var(--ink-faint) !important; }
+[data-theme="dark"] .leaflet-tile, :root:not([data-theme="light"]) .leaflet-tile { filter:none; }
+.mapnote { font-size:12px; color:var(--ink-faint); margin-top:8px; }
+
+/* ── station list ── */
+.stations { max-height:330px; overflow:auto; }
+.stations .row { padding:10px 16px; }
+.stations .dotv { width:34px; height:22px; border-radius:6px; flex:none; display:flex;
+  align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#fff;
+  font-variant-numeric:tabular-nums; }
+.stations .nm { font-size:13.5px; font-weight:560; }
+.stations .zh { font-size:11.5px; color:var(--ink-faint); }
+.stations .val { font-size:13px; }
+.stations .val small { color:var(--ink-faint); font-weight:400; margin-left:2px; }
+
+/* ── charts ── */
+.aq-card { background:var(--surface-1); border-radius:var(--r-md); box-shadow:var(--shadow-2);
+  padding:18px 18px 14px; }
+.aq-card h3 { font-size:15px; }
+.aq-card .sub { font-size:12.5px; color:var(--ink-muted); }
+.aq-card .cap { font-size:12.5px; color:var(--ink-muted); margin-top:10px; line-height:1.45; }
+.aq-card .cap b { color:var(--ink); font-weight:640; }
+
+/* the stacked band chart's legend */
+.bandkey { display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:10px; font-size:11.5px;
+  color:var(--ink-muted); }
+.bandkey span { display:inline-flex; align-items:center; gap:6px; }
+.bandkey i { width:11px; height:11px; border-radius:3px; }
+
+/* the year x month grid */
+.heat { display:grid; gap:2px; grid-template-columns:auto repeat(12,minmax(0,1fr));
+  font-size:10.5px; }
+.heat .hl { color:var(--ink-faint); display:flex; align-items:center;
+  justify-content:flex-end; padding-right:7px; font-variant-numeric:tabular-nums; }
+.heat .hh { color:var(--ink-faint); text-align:center; padding-bottom:3px; }
+.heat .cell { aspect-ratio:1.5; border-radius:3px; background:var(--surface-2);
+  cursor:default; transition:transform .12s var(--ease-out); }
+.heat .cell[data-v]:hover { transform:scale(1.18); z-index:2; position:relative; }
+
+/* the distribution */
+.hist-lab { fill:var(--ink-faint); font-size:9.5px; }

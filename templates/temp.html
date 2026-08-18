@@ -1,0 +1,86 @@
+<div class="tm" id="tm">
+  <div class="bar-row" style="margin-bottom:18px">
+    <div class="seg" id="tmViews" role="radiogroup" aria-label="Temperature view"
+         style="grid-template-columns:repeat(3,1fr)">
+      <span class="thumb" aria-hidden="true"></span>
+      <button role="radio" data-view="record"   aria-checked="true">Record</button>
+      <button role="radio" data-view="rankings" aria-checked="false">Rankings</button>
+      <button role="radio" data-view="explorer" aria-checked="false">Explorer</button>
+    </div>
+    <span class="spacer"></span>
+    <div class="seg" id="tmWindow" role="radiogroup" aria-label="Counting window"
+         style="grid-template-columns:repeat(2,1fr)">
+      <span class="thumb" aria-hidden="true"></span>
+      <button role="radio" data-win="full" aria-checked="true">Full year</button>
+      <button role="radio" data-win="ytd"  aria-checked="false">To <span id="tmYtd"></span></button>
+    </div>
+  </div>
+
+  <div class="tm-views">
+    <!-- ── Record ─────────────────────────────────────────────────────── -->
+    <section data-view="record" class="stack">
+      <div class="tiles" id="tmTiles"></div>
+      <div class="charts" id="tmCharts"></div>
+      <p class="footnote" id="tmSource"></p>
+    </section>
+
+    <!-- ── Rankings ───────────────────────────────────────────────────── -->
+    <section data-view="rankings" class="stack" hidden>
+      <div>
+        <h2>Longest unbroken runs</h2>
+        <p class="lede" style="margin-top:8px">The longest run of <em>consecutive</em> days
+          or nights meeting each threshold, ranked across every year in the record. The
+          window toggle applies here too.</p>
+      </div>
+      <div class="rank-grid" id="tmStreaks"></div>
+
+      <div style="margin-top:14px">
+        <h2>The warmest months on record</h2>
+        <p class="lede" style="margin-top:8px">Each calendar month's average temperature,
+          ranked across every year. The arrows slide a four-month window through the
+          calendar. A month only ranks once it is complete, so the running month appears
+          separately, below the line.</p>
+      </div>
+      <div class="bar-row">
+        <div class="seg" id="tmMonthMode" role="radiogroup" aria-label="Monthly measure"
+             style="grid-template-columns:repeat(3,1fr)">
+          <span class="thumb" aria-hidden="true"></span>
+          <button role="radio" data-mm="avg" aria-checked="true">Daily mean</button>
+          <button role="radio" data-mm="hi"  aria-checked="false">Average high</button>
+          <button role="radio" data-mm="lo"  aria-checked="false">Average low</button>
+        </div>
+        <span class="spacer"></span>
+        <div class="mcar">
+          <button data-step="-1" aria-label="Earlier months">&lsaquo;</button>
+          <span class="range" id="tmRange" aria-live="polite"></span>
+          <button data-step="1" aria-label="Later months">&rsaquo;</button>
+        </div>
+      </div>
+      <div class="rank-grid" id="tmMonths"></div>
+
+      <div style="margin-top:14px">
+        <h2>The whole record, year by year</h2>
+        <p class="lede" style="margin-top:8px">Every metric on this page, one row per year.
+          Click a column to sort by it.</p>
+      </div>
+      <div class="tblwrap"><table class="dtbl" id="tmTable"></table></div>
+    </section>
+
+    <!-- ── Explorer ───────────────────────────────────────────────────── -->
+    <section data-view="explorer" class="stack" hidden>
+      <div class="expl-head">
+        <div class="yearpick">
+          <button id="tmPrev" aria-label="Previous year">&lsaquo;</button>
+          <select id="tmYear" aria-label="Year"></select>
+          <button id="tmNext" aria-label="Next year">&rsaquo;</button>
+        </div>
+        <p class="footnote" id="tmYearSummary" style="flex:1;min-width:16em"></p>
+      </div>
+      <div class="expl-stats" id="tmYearStats"></div>
+      <div class="card" style="padding:16px 14px 8px">
+        <div id="tmYearChart"></div>
+      </div>
+      <div class="legend" id="tmYearLegend"></div>
+    </section>
+  </div>
+</div>

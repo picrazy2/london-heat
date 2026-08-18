@@ -2,698 +2,532 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<meta name="theme-color" content="#faf8f5" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#16130f" media="(prefers-color-scheme: dark)">
-<meta name="description" content="Hot days and tropical nights at London Heathrow since 1960, counted from the airport's own thermometer. Updated daily.">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#f4f3f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b0b12" media="(prefers-color-scheme: dark)">
+<meta name="description" content="Live air quality in Beijing and the long temperature record in both cities, from the instruments themselves. Updated every day.">
 <link rel="canonical" href="https://weather.akguo.com">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="London Heat">
-<meta property="og:title" content="London Heat — Heathrow's warming record">
-<meta property="og:description" content="Hot days and tropical nights at London Heathrow since 1960, counted from the airport's own thermometer. Updated daily.">
+<meta property="og:site_name" content="Weather">
+<meta property="og:title" content="Weather — London and Beijing, measured">
+<meta property="og:description" content="Live air quality in Beijing and the long temperature record in both cities, from the instruments themselves. Updated every day.">
 <meta property="og:url" content="https://weather.akguo.com">
-<meta property="og:image" content="https://weather.akguo.com/social.png?v=20260805">
+<meta property="og:image" content="https://weather.akguo.com/social.png?v=20260817">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Hot days per year at Heathrow, 1960 to today, as a deviation from the 1961-90 average: mostly below it early on, almost entirely above it since the 1990s">
+<meta property="og:image:alt" content="Two panels: London&#x27;s hot days per year rising since 1960, and Beijing&#x27;s PM2.5 falling since 2014">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="London Heat — Heathrow's warming record">
-<meta name="twitter:description" content="Hot days and tropical nights at London Heathrow since 1960, counted from the airport's own thermometer. Updated daily.">
-<meta name="twitter:image" content="https://weather.akguo.com/social.png?v=20260805">
-<title>Heathrow — a warming record</title>
+<meta name="twitter:title" content="Weather — London and Beijing, measured">
+<meta name="twitter:description" content="Live air quality in Beijing and the long temperature record in both cities, from the instruments themselves. Updated every day.">
+<meta name="twitter:image" content="https://weather.akguo.com/social.png?v=20260817">
+<title>Weather — London and Beijing, measured</title>
+<script>
+(function(){try{var t=localStorage.getItem('theme');
+if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
+</script>
 <style>
   :root {
-    --surface:#faf8f5; --panel:#ffffff; --plane:#f2efe9;
-    --ink:#1a1714; --ink-2:#5c554d; --muted:#948b7f;
-    --grid:#e7e2d8; --axis:#cfc8bb; --band:#c9c2b4;
-    --ring:rgba(26,23,20,0.08); --hl:rgba(224,99,31,0.14);
-    --hot25:#e0631f; --hot30:#c62f2f; --night15:#2a78d6; --night20:#5442b0;
-    --warm:var(--hot25); --hot:var(--hot30); --cool:#8aa0b5;
-    --shadow:0 1px 2px rgba(26,23,20,.05), 0 8px 24px rgba(26,23,20,.06);
-  }
-  @media (prefers-color-scheme: dark) { :root {
-    --surface:#16130f; --panel:#201c17; --plane:#0e0c09;
-    --ink:#f7f3ec; --ink-2:#c3bbad; --muted:#8f867a;
-    --grid:#2e2820; --axis:#3d362b; --band:#4a443a;
-    --ring:rgba(247,243,236,0.10); --hl:rgba(242,130,74,0.22);
-    --hot25:#f2824a; --hot30:#ec6a6a; --night15:#4f97ec; --night20:#9b8cf0;
-    --cool:#6f8598;
-    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
-  }}
-  :root[data-theme="light"] {
-    --surface:#faf8f5; --panel:#ffffff; --plane:#f2efe9;
-    --ink:#1a1714; --ink-2:#5c554d; --muted:#948b7f;
-    --grid:#e7e2d8; --axis:#cfc8bb; --band:#c9c2b4;
-    --ring:rgba(26,23,20,0.08); --hl:rgba(224,99,31,0.14);
-    --hot25:#e0631f; --hot30:#c62f2f; --night15:#2a78d6; --night20:#5442b0;
-    --cool:#8aa0b5;
-    --shadow:0 1px 2px rgba(26,23,20,.05), 0 8px 24px rgba(26,23,20,.06);
-  }
-  :root[data-theme="dark"] {
-    --surface:#16130f; --panel:#201c17; --plane:#0e0c09;
-    --ink:#f7f3ec; --ink-2:#c3bbad; --muted:#8f867a;
-    --grid:#2e2820; --axis:#3d362b; --band:#4a443a;
-    --ring:rgba(247,243,236,0.10); --hl:rgba(242,130,74,0.22);
-    --hot25:#f2824a; --hot30:#ec6a6a; --night15:#4f97ec; --night20:#9b8cf0;
-    --cool:#6f8598;
-    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
-  }
+    /* canvas & surfaces */
+    --bg:#f4f3f7; --bg-tint:#edecf4;
+    --surface-1:#ffffff; --surface-2:#f2f1f7; --surface-3:#e7e6f0;
 
-  * { box-sizing:border-box; }
+    /* glass materials — deliberately low alpha: the blur and the rim light do
+       the work. High alpha is the "solid white card" mistake. */
+    --glass-thin:rgba(255,255,255,.22); --glass-regular:rgba(255,255,255,.34);
+    --glass-thick:rgba(255,255,255,.5);
+    --glass-highlight:rgba(255,255,255,.9); --glass-shadow-edge:rgba(0,0,0,.05);
+
+    /* hairlines */
+    --border:rgba(52,50,68,.12); --border-strong:rgba(52,50,68,.22);
+    --separator:rgba(52,50,68,.15);
+
+    /* ink */
+    --ink:#1b1a22; --ink-muted:rgba(56,54,72,.62); --ink-faint:rgba(56,54,72,.32);
+    --ink-on-accent:#ffffff;
+
+    /* one interactive tint, one secondary. Indigo + teal — the budget app's
+       sibling palette, not its twin. */
+    --accent:#5e5ce6; --accent-press:#4a48c9; --accent-soft:rgba(94,92,230,.12);
+    --secondary:#30b0c7;
+    --positive:#34c759; --warning:#ff9f0a; --negative:#ff3b30;
+
+    /* Temperature. Hue says day or night; depth within the hue says how extreme
+       the threshold is. That keeps all four series legible together and keeps
+       every one of them clear of the indigo accent, which is chrome only. */
+    --night-1:#5aa9e6; --night-2:#1f6fb2;
+    --day-1:#f2a03d;   --day-2:#d63b34;
+
+    /* Air quality: the six AQI categories, retuned from the official US EPA
+       swatches so they hold contrast on both themes (raw #FFFF00 is unreadable
+       on white, and #00E400 vibrates). Hue identity is preserved, so the ramp
+       still reads as the one people know. */
+    --aqi-1:#39a852; --aqi-2:#d4a017; --aqi-3:#ef8033; --aqi-4:#e0483f;
+    --aqi-5:#9c4fbf; --aqi-6:#8c2740;
+
+    /* geometry */
+    --r-xs:10px; --r-sm:14px; --r-md:24px; --r-lg:30px; --r-xl:38px; --r-full:9999px;
+
+    /* elevation — soft and layered, never one hard drop */
+    --shadow-1:0 1px 2px rgba(24,22,40,.05), 0 1px 1px rgba(24,22,40,.04);
+    --shadow-2:0 4px 16px -4px rgba(24,22,40,.10), 0 1px 3px rgba(24,22,40,.06);
+    --shadow-3:0 12px 40px -8px rgba(24,22,40,.16), 0 2px 8px rgba(24,22,40,.07);
+
+    --blur-sm:blur(10px) saturate(180%); --blur-md:blur(14px) saturate(185%);
+    --blur-lg:blur(18px) saturate(190%);
+
+    --ease-out:cubic-bezier(.16,1,.3,1); --ease-in-out:cubic-bezier(.65,0,.35,1);
+    --ease-spring:cubic-bezier(.34,1.56,.64,1);
+
+    --safe-top:env(safe-area-inset-top,0px); --safe-bottom:env(safe-area-inset-bottom,0px);
+    --dock-h:60px; --maxw:1100px;
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { color-scheme:dark;
+    --bg:#0b0b12; --bg-tint:#0e0e17;
+    --surface-1:#17171f; --surface-2:#212129; --surface-3:#2c2c36;
+    --glass-thin:rgba(23,23,31,.55); --glass-regular:rgba(25,25,34,.62);
+    --glass-thick:rgba(25,25,34,.78);
+    --glass-highlight:rgba(255,255,255,.10); --glass-shadow-edge:rgba(0,0,0,.5);
+    --border:rgba(255,255,255,.12); --border-strong:rgba(255,255,255,.22);
+    --separator:rgba(255,255,255,.14);
+    --ink:#f4f3f8; --ink-muted:rgba(235,234,245,.62); --ink-faint:rgba(235,234,245,.34);
+    --accent:#7d7bff; --accent-press:#9b99ff; --accent-soft:rgba(125,123,255,.26);
+    --secondary:#40c8e0;
+    --positive:#30d158; --warning:#ffd60a; --negative:#ff453a;
+    --night-1:#6fbcf0; --night-2:#4d92dd; --day-1:#ffab5c; --day-2:#ff6b62;
+    --aqi-1:#4ed16a; --aqi-2:#f2ca5c; --aqi-3:#ff9f4a; --aqi-4:#ff6b62;
+    --aqi-5:#c07ae0; --aqi-6:#d4566f;
+    --shadow-1:0 1px 2px rgba(0,0,0,.5);
+    --shadow-2:0 4px 16px -4px rgba(0,0,0,.6), 0 1px 3px rgba(0,0,0,.4);
+    --shadow-3:0 12px 40px -8px rgba(0,0,0,.7), 0 2px 8px rgba(0,0,0,.4);
+} }
+  :root[data-theme="dark"] { color-scheme:dark;
+    --bg:#0b0b12; --bg-tint:#0e0e17;
+    --surface-1:#17171f; --surface-2:#212129; --surface-3:#2c2c36;
+    --glass-thin:rgba(23,23,31,.55); --glass-regular:rgba(25,25,34,.62);
+    --glass-thick:rgba(25,25,34,.78);
+    --glass-highlight:rgba(255,255,255,.10); --glass-shadow-edge:rgba(0,0,0,.5);
+    --border:rgba(255,255,255,.12); --border-strong:rgba(255,255,255,.22);
+    --separator:rgba(255,255,255,.14);
+    --ink:#f4f3f8; --ink-muted:rgba(235,234,245,.62); --ink-faint:rgba(235,234,245,.34);
+    --accent:#7d7bff; --accent-press:#9b99ff; --accent-soft:rgba(125,123,255,.26);
+    --secondary:#40c8e0;
+    --positive:#30d158; --warning:#ffd60a; --negative:#ff453a;
+    --night-1:#6fbcf0; --night-2:#4d92dd; --day-1:#ffab5c; --day-2:#ff6b62;
+    --aqi-1:#4ed16a; --aqi-2:#f2ca5c; --aqi-3:#ff9f4a; --aqi-4:#ff6b62;
+    --aqi-5:#c07ae0; --aqi-6:#d4566f;
+    --shadow-1:0 1px 2px rgba(0,0,0,.5);
+    --shadow-2:0 4px 16px -4px rgba(0,0,0,.6), 0 1px 3px rgba(0,0,0,.4);
+    --shadow-3:0 12px 40px -8px rgba(0,0,0,.7), 0 2px 8px rgba(0,0,0,.4);
+}
+
+  *, *::before, *::after { box-sizing:border-box; }
+  html, body { margin:0; }
   body {
-    margin:0; background:var(--surface); color:var(--ink);
-    font-family:system-ui, -apple-system, "Segoe UI", sans-serif;
-    -webkit-font-smoothing:antialiased; line-height:1.5;
+    /* The ambient mesh is what makes glass worth having: without something
+       coloured behind it, translucency just looks like dirty white. */
+    background:
+      radial-gradient(55% 45% at 10% 0%, color-mix(in srgb, var(--accent) 15%, transparent) 0%, transparent 60%),
+      radial-gradient(52% 42% at 100% 4%, color-mix(in srgb, var(--secondary) 15%, transparent) 0%, transparent 58%),
+      radial-gradient(65% 55% at 50% 106%, color-mix(in srgb, var(--day-1) 11%, transparent) 0%, transparent 62%),
+      radial-gradient(120% 80% at 50% -10%, var(--surface-1) 0%, transparent 55%),
+      var(--bg-tint);
+    background-attachment:fixed;
+    color:var(--ink);
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+      Inter, system-ui, "Segoe UI", Roboto, sans-serif;
+    font-size:16px; line-height:1.45;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
   }
-  .eyebrow { font-size:12px; letter-spacing:.14em; text-transform:uppercase;
-    color:var(--muted); font-weight:600; margin:0 0 14px; }
-  h1 { font-size:clamp(30px,5vw,46px); line-height:1.06; letter-spacing:-0.02em;
-    margin:0 0 18px; text-wrap:balance; font-weight:680; }
-
-  figure { margin:0; background:var(--panel); border:1px solid var(--ring);
-    border-radius:14px; padding:20px 20px 14px; box-shadow:var(--shadow); }
-  .cap { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:2px; }
-  .cap-l { display:flex; align-items:center; gap:9px; }
-  .dot { width:11px; height:11px; border-radius:3px; flex:none; }
-  .cap h2 { font-size:15.5px; font-weight:640; margin:0; letter-spacing:-0.01em; }
-  .cap .sub { font-size:12.5px; color:var(--muted); }
-  .chart { margin-top:12px; position:relative; }
-  svg { display:block; width:100%; height:auto; overflow:visible; }
-
-  .sec-head { max-width:700px; margin-bottom:24px; }
-  .sec-title { font-size:clamp(22px,3.4vw,32px); font-weight:660; letter-spacing:-0.02em;
-    margin:8px 0 12px; text-wrap:balance; }
-  .sec-lede { font-size:clamp(15px,2vw,16.5px); color:var(--ink-2); margin:0; max-width:60ch; }
-
-  .tip {
-    position:absolute; pointer-events:none; opacity:0; transition:opacity .1s;
-    background:var(--ink); color:var(--surface); padding:7px 10px; border-radius:8px;
-    font-size:12px; line-height:1.35; white-space:nowrap; z-index:5;
-    transform:translate(-50%,-100%); box-shadow:0 6px 18px rgba(0,0,0,.25);
+  [data-theme="dark"] body, :root:not([data-theme="light"]) body {
+    background-attachment:fixed;
   }
-  .tip b { font-variant-numeric:tabular-nums; }
-  .tip .yr { color:var(--surface); opacity:.65; font-size:10.5px; letter-spacing:.04em; }
-
-  .toggle {
-    background:var(--panel); color:var(--ink-2); border:1px solid var(--ring);
-    border-radius:999px; padding:7px 13px; font:inherit; font-size:12.5px;
-    cursor:pointer; box-shadow:var(--shadow);
-  }
-  .toggle:hover { color:var(--ink); }
-  :focus-visible { outline:2px solid var(--night15); outline-offset:2px; border-radius:4px; }
-
-  .today { stroke:var(--ink-2); stroke-width:1.25; stroke-dasharray:3 3; stroke-opacity:.75; }
-  .today-lab { fill:var(--ink-2); font-size:9.5px; font-weight:620; letter-spacing:.04em; }
-
-
-  h1 .warm { color: var(--hot30); }
-  header { margin-bottom: 40px; }
-  .lede { font-size: clamp(16px, 2.1vw, 18px); color: var(--ink-2); margin: 0; max-width: 62ch; }
-  .source { font-size: 13px; color: var(--muted); margin-top: 18px; }
-  .source b { color: var(--ink-2); font-weight: 600; }
-
-  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
-  @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
-
-  figure {
-    margin: 0; background: var(--panel); border: 1px solid var(--ring);
-    border-radius: 14px; padding: 20px 20px 14px; box-shadow: var(--shadow);
-  }
-  .cap { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 2px; }
-  .cap-l { display: flex; align-items: center; gap: 9px; }
-  .dot { width: 11px; height: 11px; border-radius: 3px; flex: none; }
-  .cap h2 { font-size: 15.5px; font-weight: 640; margin: 0; letter-spacing: -0.01em; }
-  .cap .sub { font-size: 12.5px; color: var(--muted); }
-  .chart { margin-top: 12px; position: relative; }
-  svg { display: block; width: 100%; height: auto; overflow: visible; }
-  .insight { font-size: 12.5px; color: var(--ink-2); margin: 8px 2px 2px; line-height: 1.45; }
-  .insight b { color: var(--ink); font-weight: 620; }
-
-  .bar { cursor: pointer; }
-  .grid-line { stroke: var(--grid); stroke-width: 1; }
-  .axis-line { stroke: var(--axis); stroke-width: 1; }
-  .tick { fill: var(--muted); font-size: 10px; font-variant-numeric: tabular-nums; }
-  .xtick { fill: var(--muted); font-size: 10.5px; font-variant-numeric: tabular-nums; }
-  .norm { stroke-dasharray: 3 3; stroke-width: 1.25; }
-  .norm-lab { font-size: 9.5px; font-weight: 600; }
-  .rec-lab { font-size: 10px; font-weight: 660; fill: var(--ink); font-variant-numeric: tabular-nums; }
-
-  .tip {
-    position: absolute; pointer-events: none; opacity: 0; transition: opacity .1s;
-    background: var(--ink); color: var(--surface); padding: 7px 10px; border-radius: 8px;
-    font-size: 12px; line-height: 1.35; white-space: nowrap; z-index: 5;
-    transform: translate(-50%, -100%); box-shadow: 0 6px 18px rgba(0,0,0,.25);
-  }
-  .tip b { font-variant-numeric: tabular-nums; }
-  .tip .yr { color: var(--surface); opacity: .65; font-size: 10.5px; letter-spacing: .04em; }
-
-  .hmodes { display:inline-flex; background:var(--panel); border:1px solid var(--ring); border-radius:11px; padding:4px; gap:4px; margin:0 0 22px; box-shadow:var(--shadow); }
-  .hmode-btn { border:none; background:transparent; color:var(--ink-2); font:inherit; font-size:13px; font-weight:600; padding:7px 14px; border-radius:8px; cursor:pointer; }
-  .hmode-btn.active { background:var(--ink); color:var(--surface); }
-  .ranks { margin-top: 60px; }
-  .ranks-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-  @media (max-width: 900px) { .ranks-grid { grid-template-columns: repeat(2, 1fr); } }
-  @media (max-width: 520px) { .ranks-grid { grid-template-columns: 1fr; } }
-  .rcard { background: var(--panel); border: 1px solid var(--ring); border-radius: 14px; padding: 18px 18px 14px; box-shadow: var(--shadow); }
-  .rtbl { width: 100%; border-collapse: collapse; margin-top: 12px; font-variant-numeric: tabular-nums; }
-  .rtbl td { padding: 4px 6px; font-size: 13px; border: none; text-align: left; }
-  .rtbl .rk { color: var(--muted); width: 24px; text-align: right; padding-right: 10px; }
-  .rtbl .rv { text-align: right; font-weight: 640; }
-  .rtbl tr.me td { background: var(--hl); font-weight: 680; }
-  .rtbl tr.me td:first-child { border-radius: 7px 0 0 7px; }
-  .rtbl tr.me td:last-child { border-radius: 0 7px 7px 0; }
-  .rtbl tr.gap td { text-align: center; color: var(--muted); padding: 1px; letter-spacing: 2px; }
-  .rtbl tr.none td { color: var(--muted); font-size: 11.5px; line-height: 1.35; padding: 2px 6px 0; text-wrap: pretty; }
-  /* the running month: dashed, cooler ink, never mistaken for a ranked row */
-  .rtbl tr.prov td { color: var(--ink-2); border-top: 1px dashed var(--axis); padding-top: 9px; }
-  .rtbl tr.prov .rv { font-weight: 640; }
-  .rtbl tr.prov .rk { color: var(--axis); }
-  .pflag { font-size: 10px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
-    color: var(--muted); border: 1px solid var(--ring); border-radius: 5px; padding: 1px 5px; margin-left: 6px; }
-
-  .mbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin: 0 0 22px; }
-  .mbar .hmodes { margin: 0; }
-  .mcar { display: inline-flex; align-items: center; gap: 2px; background: var(--panel);
-    border: 1px solid var(--ring); border-radius: 11px; padding: 4px; box-shadow: var(--shadow); }
-  .marrow {
-    border: none; background: transparent; color: var(--ink-2); cursor: pointer;
-    font: inherit; font-size: 16px; line-height: 1; padding: 6px 11px; border-radius: 8px;
-  }
-  .marrow:hover { color: var(--ink); background: var(--plane); }
-  .mrange { font-size: 13px; font-weight: 600; color: var(--ink); min-width: 10.5em;
-    text-align: center; font-variant-numeric: tabular-nums; }
-  .mname { font-size: 15.5px; font-weight: 640; letter-spacing: -0.01em; }
-  .sec-head { max-width: 700px; margin-bottom: 24px; }
-  .sec-title { font-size: clamp(22px, 3.4vw, 32px); font-weight: 660; letter-spacing: -0.02em; margin: 8px 0 12px; text-wrap: balance; }
-  .sec-lede { font-size: clamp(15px, 2vw, 16.5px); color: var(--ink-2); margin: 0; max-width: 60ch; }
-
-  .foot { margin-top: 34px; display: flex; flex-wrap: wrap; gap: 20px 40px; align-items: flex-start; }
-  .key { font-size: 12.5px; color: var(--ink-2); }
-  .key .row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-  .key .sw { width: 22px; height: 8px; border-radius: 2px; }
-  .key .hatch-sw { width: 22px; height: 8px; border-radius: 2px; background: var(--muted);
-    background-image: repeating-linear-gradient(45deg, transparent 0 2px, var(--panel) 2px 3px); opacity:.7; }
-  table { border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 12px; }
-  th, td { padding: 3px 10px 3px 0; text-align: right; }
-  th:first-child, td:first-child { text-align: left; }
-  th { color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--axis); }
-
-  .dwrap { background: var(--panel); border: 1px solid var(--ring); border-radius: 14px;
-    box-shadow: var(--shadow); overflow: auto; max-height: 70vh; }
-  .dtbl { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
-  .dtbl th, .dtbl td { padding: 9px 14px; text-align: right; white-space: nowrap; }
-  .dtbl th:first-child, .dtbl td:first-child { text-align: left; position: sticky; left: 0; background: var(--panel); }
-  .dtbl thead th {
-    position: sticky; top: 0; z-index: 2; background: var(--panel); cursor: pointer;
-    border-bottom: 1px solid var(--axis); font-size: 12px; font-weight: 620; color: var(--ink-2);
-    user-select: none;
-  }
-  .dtbl thead th:first-child { z-index: 3; }
-  .dtbl thead th:hover { color: var(--ink); }
-  .dtbl thead th .ar { color: var(--muted); font-size: 10px; margin-left: 4px; }
-  .dtbl tbody tr:hover td { background: var(--plane); }
-  .dtbl tbody tr:hover td:first-child { background: var(--plane); }
-  .dtbl tbody td { border-bottom: 1px solid var(--grid); }
-  .dtbl tr.me td { background: var(--hl); font-weight: 660; }
-  .dtbl tr.me td:first-child { background: var(--hl); }
-  .dtbl .na { color: var(--muted); }
-  .dnote { font-size: 12.5px; color: var(--muted); margin-top: 12px; }
-
-  .toggle {
-    position: fixed; top: 16px; right: 16px; z-index: 10;
-    background: var(--panel); color: var(--ink-2); border: 1px solid var(--ring);
-    border-radius: 999px; padding: 7px 13px; font: inherit; font-size: 12.5px;
-    cursor: pointer; box-shadow: var(--shadow);
-  }
-  .toggle:hover { color: var(--ink); }
-  :focus-visible { outline: 2px solid var(--night15); outline-offset: 2px; border-radius: 4px; }
-
-  .sitebar {
-    display:flex; align-items:center; gap:18px; margin:0 0 34px;
-    padding-bottom:13px; border-bottom:1px solid var(--ring);
-  }
-  .brand {
-    display:flex; align-items:center; gap:9px; text-decoration:none; color:var(--ink);
-    font-size:14px; font-weight:680; letter-spacing:-0.01em; white-space:nowrap;
-  }
-  .brand-mark {
-    width:15px; height:15px; border-radius:4px; flex:none;
-    background:linear-gradient(150deg, #4f97ec 0%, #f2824a 55%, #e0504f 100%);
-  }
-  .sitenav { display:flex; gap:20px; margin-left:auto; align-items:center; }
-  .sitenav a {
-    position:relative; font-size:13px; font-weight:600; text-decoration:none;
-    color:var(--muted); padding:4px 0; transition:color .12s ease;
-  }
-  .sitenav a:hover { color:var(--ink); }
-  .sitenav a[aria-current="page"] { color:var(--ink); }
-  .sitenav a[aria-current="page"]::after {
-    content:""; position:absolute; left:0; right:0; bottom:-14px;
-    height:2px; border-radius:2px; background:var(--ink);
-  }
-  .sitebar .toggle { position:static; box-shadow:none; padding:6px 11px; font-size:12px; }
-  @media (max-width:520px) {
-    .sitebar { gap:12px; }
-    .brand span:last-child { display:none; }
-    .sitenav { gap:14px; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) body {
+    background:
+      radial-gradient(55% 45% at 10% 0%, color-mix(in srgb, var(--accent) 12%, transparent) 0%, transparent 60%),
+      radial-gradient(52% 42% at 100% 4%, color-mix(in srgb, var(--secondary) 10%, transparent) 0%, transparent 58%),
+      radial-gradient(65% 55% at 50% 106%, color-mix(in srgb, var(--day-1) 8%, transparent) 0%, transparent 62%),
+      radial-gradient(120% 80% at 50% -12%, var(--surface-1) 0%, transparent 55%),
+      var(--bg-tint);
+  }}
+  :root[data-theme="dark"] body {
+    background:
+      radial-gradient(55% 45% at 10% 0%, color-mix(in srgb, var(--accent) 12%, transparent) 0%, transparent 60%),
+      radial-gradient(52% 42% at 100% 4%, color-mix(in srgb, var(--secondary) 10%, transparent) 0%, transparent 58%),
+      radial-gradient(65% 55% at 50% 106%, color-mix(in srgb, var(--day-1) 8%, transparent) 0%, transparent 62%),
+      radial-gradient(120% 80% at 50% -12%, var(--surface-1) 0%, transparent 55%),
+      var(--bg-tint);
   }
 
-  /* Both pages get the same measure; they were 1120px and 1080px with different padding. */
-  .wrap { max-width:1120px; margin:0 auto; padding:clamp(24px,5vw,64px) clamp(18px,4vw,48px) 72px; }
+  /* ── type scale (iOS-ish) ── */
+  h1, h2, h3 { margin:0; font-weight:640; letter-spacing:-0.022em; text-wrap:balance; }
+  h1 { font-size:clamp(30px,5.2vw,44px); line-height:1.05; font-weight:700; }
+  h2 { font-size:clamp(21px,3vw,27px); line-height:1.12; }
+  h3 { font-size:17px; line-height:1.3; letter-spacing:-0.01em; }
+  p { margin:0; }
+  .lede { font-size:clamp(15.5px,1.9vw,17px); color:var(--ink-muted); max-width:62ch; }
+  .muted { color:var(--ink-muted); }
+  .faint { color:var(--ink-faint); }
+  .footnote { font-size:13px; color:var(--ink-muted); line-height:1.4; }
+  .caption { font-size:12px; color:var(--ink-muted); }
+  .tnum { font-variant-numeric:tabular-nums; font-feature-settings:"tnum" 1; }
+  .display {
+    font-family:ui-rounded,"SF Pro Rounded",-apple-system,system-ui,sans-serif;
+    font-weight:700; letter-spacing:-0.025em; line-height:1;
+    font-variant-numeric:tabular-nums;
+  }
+  a { color:var(--accent); text-decoration:none; }
+  a:hover { text-decoration:underline; }
 
-  /* One segmented control, not two. The explorer's was a different size and used a
-     warm active fill; the record page's used ink. */
-  .modes, .hmodes {
-    display:inline-flex; background:var(--panel); border:1px solid var(--ring);
-    border-radius:11px; padding:4px; gap:4px; box-shadow:var(--shadow);
+  /* ── glass materials ── */
+  .glass {
+    background:var(--glass-regular);
+    backdrop-filter:var(--blur-md); -webkit-backdrop-filter:var(--blur-md);
+    border:1px solid var(--border);
+    box-shadow:inset 0 1px 0 var(--glass-highlight),
+               inset 0 -1px 0 var(--glass-shadow-edge), var(--shadow-3);
   }
-  .mode-btn, .hmode-btn {
-    border:none; background:transparent; color:var(--ink-2); font:inherit;
-    font-size:13px; font-weight:600; padding:7px 14px; border-radius:8px; cursor:pointer;
+  .glass-card {
+    position:relative; background:var(--glass-regular);
+    backdrop-filter:var(--blur-md) brightness(1.06);
+    -webkit-backdrop-filter:var(--blur-md) brightness(1.06);
+    border:1px solid rgba(255,255,255,.45);
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.9),
+               inset 0 0 0 .5px rgba(255,255,255,.3), var(--shadow-2);
   }
-  .mode-btn:hover, .hmode-btn:hover { color:var(--ink); }
-  .mode-btn.active, .hmode-btn.active { background:var(--ink); color:var(--surface); }
+  [data-theme="dark"] .glass-card, :root:not([data-theme="light"]) .glass-card {
+    border-color:rgba(255,255,255,.12);
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .glass-card {
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.14),
+               inset 0 0 0 .5px rgba(255,255,255,.08), var(--shadow-2);
+  }}
+  :root[data-theme="dark"] .glass-card {
+    border-color:rgba(255,255,255,.12);
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.14),
+               inset 0 0 0 .5px rgba(255,255,255,.08), var(--shadow-2);
+  }
+  .dock {
+    background:var(--glass-thick);
+    backdrop-filter:var(--blur-lg) brightness(1.08) saturate(180%);
+    -webkit-backdrop-filter:var(--blur-lg) brightness(1.08) saturate(180%);
+    border:1px solid rgba(255,255,255,.5);
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.95),
+               inset 0 -1px 1px var(--glass-shadow-edge),
+               0 10px 34px -6px rgba(24,22,40,.24), 0 2px 8px rgba(24,22,40,.1);
+  }
+  :root[data-theme="dark"] .dock, :root:not([data-theme="light"]) .dock {
+    border-color:rgba(255,255,255,.14);
+  }
+  @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+    .glass, .glass-card, .dock { background:var(--surface-1); }
+  }
+
+  /* ── card ── */
+  .card {
+    background:var(--surface-1); border-radius:var(--r-md);
+    box-shadow:var(--shadow-2); padding:20px;
+  }
+  .card-tight { padding:16px; }
+  .card-head { display:flex; align-items:flex-start; justify-content:space-between;
+    gap:12px; margin-bottom:4px; }
+  .card-head h3 { font-size:15.5px; font-weight:640; }
+  .card-head .sub { font-size:12.5px; color:var(--ink-muted); white-space:nowrap; }
+
+  /* ── grouped inset list (the iOS workhorse) ── */
+  .list { background:var(--surface-1); border-radius:var(--r-md);
+    box-shadow:var(--shadow-2); overflow:hidden; }
+  .row { display:flex; align-items:center; gap:12px; padding:12px 16px;
+    position:relative; }
+  .row + .row::before { content:""; position:absolute; left:16px; right:0; top:0;
+    height:1px; background:var(--separator); }
+  .row .grow { flex:1; min-width:0; }
+  .row .val { font-variant-numeric:tabular-nums; font-weight:640; }
+
+  /* ── segmented control ── */
+  .seg { position:relative; display:grid; background:var(--surface-2);
+    border-radius:var(--r-full); padding:4px; user-select:none; }
+  .seg .thumb { position:absolute; top:4px; bottom:4px; left:4px;
+    border-radius:var(--r-full); background:var(--surface-1); box-shadow:var(--shadow-1);
+    transition:transform .24s var(--ease-spring); }
+  .seg button { position:relative; z-index:1; border:0; background:none; font:inherit;
+    font-size:14px; font-weight:560; color:var(--ink-muted); padding:7px 14px;
+    border-radius:var(--r-full); cursor:pointer; white-space:nowrap;
+    transition:color .16s var(--ease-out); }
+  .seg button[aria-checked="true"] { color:var(--ink); font-weight:620; }
+  .seg button:hover { color:var(--ink); }
+
+  /* ── chips & buttons ── */
+  .chip { display:inline-flex; align-items:center; gap:6px; border:0; font:inherit;
+    font-size:13px; font-weight:560; padding:7px 13px; border-radius:var(--r-full);
+    background:var(--surface-2); color:var(--ink-muted); cursor:pointer; }
+  .chip[aria-pressed="true"], .chip.on { background:var(--accent-soft); color:var(--accent); font-weight:620; }
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    border:0; font:inherit; font-size:14px; font-weight:600; padding:9px 16px;
+    border-radius:var(--r-sm); background:var(--surface-2); color:var(--ink);
+    cursor:pointer; }
+  .btn-accent { background:var(--accent); color:var(--ink-on-accent); }
+
+  /* ── press & focus ── */
+  button, a, select, input, [role="button"], [role="radio"], .pressable {
+    touch-action:manipulation; -webkit-tap-highlight-color:transparent;
+  }
+  .pressable { transition:transform .14s var(--ease-out), background-color .14s var(--ease-out); }
+  .pressable:active { transform:scale(.97); }
+  :focus-visible { outline:none; box-shadow:0 0 0 4px var(--accent-soft), 0 0 0 1.5px var(--accent); border-radius:6px; }
+
+  /* ── charts ── */
+  svg.chart { display:block; width:100%; height:auto; overflow:visible; }
+  .gridline { stroke:var(--separator); stroke-width:1; }
+  .axisline { stroke:var(--border-strong); stroke-width:1; }
+  .tick { fill:var(--ink-faint); font-size:10px; font-variant-numeric:tabular-nums; }
+  .ref { stroke:var(--ink-faint); stroke-width:1.25; stroke-dasharray:3 3; }
+  .ref-lab { fill:var(--ink-faint); font-size:9.5px; font-weight:600; }
+  .mark-lab { fill:var(--ink); font-size:10px; font-weight:660; font-variant-numeric:tabular-nums; }
+  .bar { cursor:pointer; }
+  .chart-in { animation:fade-in .3s var(--ease-out) both; }
+  @keyframes fade-in { from { opacity:0 } to { opacity:1 } }
+
+  /* ── tooltip ── */
+  .tip { position:fixed; pointer-events:none; opacity:0; z-index:60;
+    transition:opacity .1s; background:var(--ink); color:var(--bg);
+    padding:8px 11px; border-radius:var(--r-xs); font-size:12px; line-height:1.4;
+    white-space:nowrap; transform:translate(-50%,-100%);
+    box-shadow:0 8px 24px rgba(0,0,0,.28); }
+  .tip b { font-variant-numeric:tabular-nums; font-weight:680; }
+  .tip .k { opacity:.6; font-size:10.5px; letter-spacing:.04em; }
+
+  /* ── layout ── */
+  .wrap { max-width:var(--maxw); margin:0 auto;
+    padding:clamp(20px,4vw,40px) clamp(16px,4vw,40px)
+            calc(var(--dock-h) + 46px + var(--safe-bottom)); }
+  .grid-2 { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+  .grid-3 { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+  .grid-4 { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }
+  @media (max-width:900px) { .grid-3, .grid-4 { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  @media (max-width:620px) { .grid-2, .grid-3, .grid-4 { grid-template-columns:1fr; } }
+  .stack { display:flex; flex-direction:column; gap:16px; }
+  .bar-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  @media (max-width:620px) {
+    .bar-row { gap:8px; }
+    .bar-row .spacer { display:none; }
+    .bar-row > .seg { width:100%; }
+    .seg button { padding:8px 6px; font-size:13px; }
+  }
+  .spacer { flex:1; }
+  .no-scrollbar { scrollbar-width:none; }
+  .no-scrollbar::-webkit-scrollbar { display:none; }
+  [hidden] { display:none !important; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration:.001ms !important; transition-duration:.001ms !important; }
+  }
+
+  .topbar { display:flex; align-items:center; gap:14px; margin-bottom:clamp(20px,3vw,30px); }
+  .brand { display:inline-flex; align-items:center; gap:9px; color:var(--ink);
+    text-decoration:none; font-size:14.5px; font-weight:680; letter-spacing:-0.01em; }
+  .brand:hover { text-decoration:none; }
+  .brand-mark { width:23px; height:23px; flex:none; display:block;
+    border-radius:6px; box-shadow:0 1px 3px rgba(94,92,230,.35); }
+  .stamp { font-size:12.5px; color:var(--ink-faint); }
+
+  .iconbtn { display:inline-flex; align-items:center; justify-content:center;
+    width:34px; height:34px; border:0; border-radius:var(--r-full); cursor:pointer;
+    background:var(--surface-1); color:var(--ink-muted); box-shadow:var(--shadow-1);
+    font-size:15px; line-height:1; }
+  .iconbtn:hover { color:var(--ink); }
+
+  .hero { margin-bottom:clamp(20px,3vw,28px); }
+  .hero .kicker { font-size:14px; font-weight:600; color:var(--accent); margin-bottom:6px; }
+  .hero h1 { margin-bottom:10px; }
+
+  /* The dock floats over the content it belongs to; it does not sit in the flow.
+     Left-aligned rather than centred so it never covers the middle of a chart. */
+  .dockwrap { position:fixed; inset-inline:0; z-index:50; display:flex;
+    justify-content:center; pointer-events:none;
+    bottom:calc(12px + var(--safe-bottom)); padding-inline:16px; }
+  .dock { pointer-events:auto; display:flex; align-items:center; gap:4px;
+    border-radius:var(--r-full); padding:6px; }
+  .dock a, .dock button { display:flex; flex-direction:column; align-items:center;
+    gap:2px; border:0; background:none; font:inherit; cursor:pointer;
+    padding:6px 14px; border-radius:var(--r-full); color:var(--ink-faint);
+    text-decoration:none; transition:all .2s var(--ease-spring); }
+  .dock a:hover, .dock button:hover { color:var(--ink-muted); text-decoration:none; }
+  .dock a[aria-current="page"] { background:var(--accent-soft); color:var(--accent); padding-inline:18px; }
+  .dock .glyph { font-size:19px; line-height:1; }
+  .dock .lab { font-size:11px; font-weight:560; line-height:1.1; }
+  .dock a[aria-current="page"] .lab { font-weight:660; }
+  .dock .sep { width:1px; align-self:stretch; margin:6px 4px; background:var(--separator); }
+
+  .cities { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:clamp(14px,2.5vw,20px); }
+  @media (max-width:740px) { .cities { grid-template-columns:1fr; } }
+
+  /* Each city is one large tappable card. The whole card is the link — a "read
+     more" under a card the reader already wants to press is a wasted row. */
+  .citycard {
+    display:block; text-decoration:none; color:inherit; border-radius:var(--r-lg);
+    padding:clamp(20px,3vw,28px); position:relative; overflow:hidden;
+    transition:transform .22s var(--ease-out), box-shadow .22s var(--ease-out);
+  }
+  .citycard:hover { text-decoration:none; transform:translateY(-3px); }
+  .citycard .name { font-size:clamp(22px,3vw,28px); font-weight:700; letter-spacing:-0.025em; }
+  .citycard .place { font-size:13px; color:var(--ink-muted); margin-top:2px; }
+  .citycard .headline { display:flex; align-items:baseline; gap:10px; margin:clamp(16px,3vw,26px) 0 4px; }
+  .citycard .big { font-size:clamp(46px,8vw,68px); color:var(--tint); }
+  .citycard .unit { font-size:15px; font-weight:640; color:var(--ink-muted); }
+  .citycard .verdict { font-size:15px; font-weight:660; color:var(--tint); }
+  .citycard .sub { font-size:13.5px; color:var(--ink-muted); margin-top:8px; line-height:1.5; }
+  .citycard .sub b { color:var(--ink); font-weight:640; }
+  .citycard .go { display:inline-flex; align-items:center; gap:6px; margin-top:18px;
+    font-size:13.5px; font-weight:640; color:var(--accent); }
+  .citycard .go svg { transition:transform .2s var(--ease-out); }
+  .citycard:hover .go svg { transform:translateX(3px); }
+
+  /* A sparkline of the last two weeks, bled to the card's bottom edge. */
+  .citycard .spark { margin-top:18px; height:56px; }
+  .citycard .spark svg { display:block; width:100%; height:100%; overflow:visible; }
+
+  .facts { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px;
+    margin-top:clamp(20px,3vw,28px); }
+  @media (max-width:860px) { .facts { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  .fact { background:var(--surface-1); border-radius:var(--r-md); box-shadow:var(--shadow-2);
+    padding:16px; }
+  .fact .v { font-size:26px; font-weight:700; letter-spacing:-0.025em;
+    font-variant-numeric:tabular-nums; color:var(--tint,var(--ink)); }
+  .fact .l { font-size:12.5px; color:var(--ink-muted); margin-top:4px; line-height:1.4; }
+
+  .about { margin-top:clamp(28px,4vw,44px); }
+  .about h2 { margin-bottom:10px; }
+  .about .cols { display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:clamp(16px,3vw,28px); margin-top:16px; }
+  @media (max-width:740px) { .about .cols { grid-template-columns:1fr; } }
+  .about h3 { margin-bottom:6px; }
+  .about p { font-size:14px; color:var(--ink-muted); line-height:1.6; }
+  .about p + p { margin-top:8px; }
 </style>
 </head>
 <body>
-
-
-
 <div class="wrap">
-  <header class="sitebar">
-    <a class="brand" href="/"><span class="brand-mark"></span><span>London Heat</span></a>
-    <nav class="sitenav" aria-label="Pages">
-    <a href="/" aria-current="page">The warming record</a>
-    <a href="/year_explorer">A year in temperature</a>
-    </nav>
-    <button class="toggle" id="themeBtn" aria-label="Toggle colour theme">◐ Theme</button>
-  </header>
-
-  <header>
-    <p class="eyebrow">London Heathrow · 1960–2026</p>
-    <h1>66 years of <span class="warm">rising heat</span>, counted day by day</h1>
-    <p class="lede">How many days each year cleared 25 °C and 30 °C, and how many nights stayed at or above 15 °C and 20 °C — from the actual airport thermometer. The dashed line marks each metric's 1961–1990 climate normal; nearly every recent year now sits well above it.</p>
-    <p class="source">Source: <b>ECA&amp;D</b> official daily series (to 30 Jun 2026), topped up with <b>Heathrow METAR</b> observations to 5 Aug 2026. 2026 is a part-year (hatched).</p>
-  </header>
-
-  <div class="hmodes" role="tablist">
-    <button class="hmode-btn active" data-hmode="full" role="tab">Full year</button>
-    <button class="hmode-btn" data-hmode="ytd" role="tab">Year-to-date · to 5 Aug</button>
+  <header class="topbar"><a class="brand" href="/"><svg class='brand-mark' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="wxmark" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6f6dff"/><stop offset="1" stop-color="#2ea8bf"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#wxmark)"/><g fill="none" stroke="#fff" stroke-linecap="round"><path d="M14 42c6-13 12-19 18-19s12 6 18 19" stroke-width="5"/><path d="M20 49h24" stroke-width="4.5" stroke-opacity=".55"/><circle cx="32" cy="30" r="3.5" fill="#fff" stroke="none"/></g></svg><span>Weather</span></a><span class="spacer"></span><span class="stamp">rebuilt 18 Aug</span></header>
+  <div class="hero">
+    <p class="kicker">Two cities, two instruments</p>
+    <h1>What the thermometers and the monitors actually say</h1>
+    <p class="lede">Long records, taken from the instruments themselves rather than from a
+      forecast: sixty-six years of temperature at London Heathrow, and Beijing's air
+      measured hour by hour by the city's own network. Rebuilt every morning.</p>
   </div>
 
-  <div class="grid" id="grid"></div>
+  <div class="cities">
+    <a class="citycard glass-card" href="/london" style="--tint:var(--day-2)">
+      <div class="name">London</div>
+      <div class="place">Heathrow · 1960–2026</div>
+      <div class="headline">
+        <span class="big display">29</span>
+        <span class="unit">days</span>
+      </div>
+      <div class="verdict">Very hot days ≥ 30 °C</div>
+      <p class="sub">So far in 2026, to 17 Aug — <b>1st</b> of 67 years on record for the same window.</p>
+      <div class="spark"><svg viewBox="0 0 300 56" preserveAspectRatio="none" aria-hidden="true"><path d="M 0,56 L 0.0,45.4 L 7.7,50.5 L 15.4,14.0 L 23.1,25.0 L 30.8,37.4 L 38.5,38.1 L 46.2,44.0 L 53.8,30.8 L 61.5,18.4 L 69.2,33.7 L 76.9,29.4 L 84.6,45.4 L 92.3,30.1 L 100.0,43.2 L 107.7,33.7 L 115.4,41.8 L 123.1,22.8 L 130.8,36.7 L 138.5,30.8 L 146.2,24.3 L 153.8,52.0 L 161.5,43.2 L 169.2,39.6 L 176.9,32.3 L 184.6,37.4 L 192.3,38.1 L 200.0,30.8 L 207.7,35.2 L 215.4,40.3 L 223.1,32.3 L 230.8,35.2 L 238.5,10.4 L 246.2,30.1 L 253.8,19.9 L 261.5,39.6 L 269.2,20.6 L 276.9,25.7 L 284.6,35.2 L 292.3,14.8 L 300.0,6.0 L 300,56 Z" fill="var(--day-1)" fill-opacity=".14"/><path d="M 0.0,45.4 L 7.7,50.5 L 15.4,14.0 L 23.1,25.0 L 30.8,37.4 L 38.5,38.1 L 46.2,44.0 L 53.8,30.8 L 61.5,18.4 L 69.2,33.7 L 76.9,29.4 L 84.6,45.4 L 92.3,30.1 L 100.0,43.2 L 107.7,33.7 L 115.4,41.8 L 123.1,22.8 L 130.8,36.7 L 138.5,30.8 L 146.2,24.3 L 153.8,52.0 L 161.5,43.2 L 169.2,39.6 L 176.9,32.3 L 184.6,37.4 L 192.3,38.1 L 200.0,30.8 L 207.7,35.2 L 215.4,40.3 L 223.1,32.3 L 230.8,35.2 L 238.5,10.4 L 246.2,30.1 L 253.8,19.9 L 261.5,39.6 L 269.2,20.6 L 276.9,25.7 L 284.6,35.2 L 292.3,14.8 L 300.0,6.0" fill="none" stroke="var(--day-1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg></div>
+      <span class="go">Open the record
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
+      </span>
+    </a>
 
-  <div class="foot">
-    <div class="key">
-      <div class="row"><span class="sw" style="background:var(--axis)"></span> completed year</div>
-      <div class="row"><span class="hatch-sw"></span> 2026, partial (to 5 Aug)</div>
-      <div class="row"><span class="sw" style="background:none;border-top:1.5px dashed var(--muted);height:0;width:22px"></span> 1961–90 average</div>
-    </div>
+    <a class="citycard glass-card" href="/beijing" style="--tint:var(--aqi-2)">
+      <div class="name">Beijing</div>
+      <div class="place">City monitoring network · live</div>
+      <div class="headline">
+        <span class="big display" id="homeAqi">58</span>
+        <span class="unit">US EPA AQI</span>
+      </div>
+      <div class="verdict" id="homeCat">Moderate</div>
+      <p class="sub" id="homeSub">PM2.5 <b>13 µg/m³</b> over the last 24 hours, averaged across <b>23</b> stations. 18 Aug, 21:00</p>
+      <div class="spark"><svg viewBox="0 0 300 56" preserveAspectRatio="none" aria-hidden="true"><path d="M 0,56 L 0.0,6.0 L 25.0,10.8 L 50.0,17.5 L 75.0,27.5 L 100.0,33.2 L 125.0,40.4 L 150.0,43.7 L 175.0,46.9 L 200.0,49.8 L 225.0,46.6 L 250.0,49.1 L 275.0,52.0 L 300.0,51.0 L 300,56 Z" fill="var(--aqi-1)" fill-opacity=".14"/><path d="M 0.0,6.0 L 25.0,10.8 L 50.0,17.5 L 75.0,27.5 L 100.0,33.2 L 125.0,40.4 L 150.0,43.7 L 175.0,46.9 L 200.0,49.8 L 225.0,46.6 L 250.0,49.1 L 275.0,52.0 L 300.0,51.0" fill="none" stroke="var(--aqi-1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg></div>
+      <span class="go">Open air quality
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
+      </span>
+    </a>
   </div>
 
-  <section class="ranks">
-    <div class="sec-head">
-      <p class="eyebrow">All-time rankings</p>
-      <h2 class="sec-title">Where each year ranks</h2>
-      <p class="sec-lede">The ten highest years for each measure. Use the toggle above to rank on full-year totals or the same Jan 1–5 Aug window (which judges the part-year 2026 fairly). <b>2026</b> (✷) is highlighted wherever it lands, with its rank even outside the top ten.</p>
-    </div>
-    <div class="ranks-grid" id="ranks"></div>
-  </section>
+  <div class="facts"><div class="fact" style="--tint:var(--aqi-1)"><div class="v">−69%</div><div class="l">Beijing's annual PM2.5, 2014 to 2025</div></div><div class="fact" style="--tint:var(--negative)"><div class="v">5.5×</div><div class="l">and still that many times the WHO annual guideline</div></div><div class="fact" style="--tint:var(--day-2)"><div class="v">29</div><div class="l">days at 30 °C or more at Heathrow so far in 2026</div></div><div class="fact" style="--tint:var(--day-1)"><div class="v">17</div><div class="l">days at 35 °C or more in Beijing so far in 2026</div></div></div>
 
-  <section class="ranks">
-    <div class="sec-head">
-      <p class="eyebrow">Longest streaks</p>
-      <h2 class="sec-title">Longest unbroken runs</h2>
-      <p class="sec-lede">The longest run of <em>consecutive</em> days or nights meeting each threshold, ranked across every year. Respects the toggle — full-year or the same Jan 1–5 Aug window. <b>2026</b> (✷) is highlighted wherever it lands.</p>
-    </div>
-    <div class="ranks-grid" id="streaks"></div>
-  </section>
-
-  <section class="ranks">
-    <div class="sec-head">
-      <p class="eyebrow">Monthly averages</p>
-      <h2 class="sec-title">The warmest months on record</h2>
-      <p class="sec-lede">Each month's average temperature, ranked across every year since 1960. The arrows slide the four-month window through the calendar, and the toggle switches between the daily mean, the average daytime high, and the average overnight low. <b>2026</b> (✷) is highlighted wherever it lands. A month only appears once it is complete, so 2026 is absent from months still running.</p>
-    </div>
-    <div class="mbar">
-      <div class="hmodes" role="tablist" id="mmodes">
-        <button class="hmode-btn active" data-mmode="avg" role="tab">Daily mean</button>
-        <button class="hmode-btn" data-mmode="hi" role="tab">Average high</button>
-        <button class="hmode-btn" data-mmode="lo" role="tab">Average low</button>
+  <section class="about">
+    <h2>Where the numbers come from</h2>
+    <div class="cols">
+      <div>
+        <h3>London temperature</h3>
+        <p>Official Met Office daily figures for Heathrow via <b>ECA&amp;D</b> (KNMI) through <b>30 Jun 2026</b>; the days after that are derived from the airport's own <b>METAR</b> reports via the Iowa Environmental Mesonet, current to <b>17 Aug 2026</b>. METAR-derived maxima run a little below the official figures on the hottest days — half-hourly sampling misses a brief afternoon peak — so this year's tail is a close estimate, not the final count.</p>
       </div>
-      <div class="mcar">
-        <button class="marrow" data-step="-1" aria-label="Earlier months">‹</button>
-        <span class="mrange" id="mrange" aria-live="polite"></span>
-        <button class="marrow" data-step="1" aria-label="Later months">›</button>
+      <div>
+        <h3>Beijing temperature</h3>
+        <p>Beijing Capital Airport, station 54511. NOAA's official daily series is complete to 2012 and then falls apart, so the gaps and everything after are filled from the same airport's METAR reports. Thresholds are five degrees above London's, and 35 °C is the China Meteorological Administration's own high-temperature warning line rather than a round number.</p>
+      </div>
+      <div>
+        <h3>Beijing air quality</h3>
+        <p>PM2.5 measured hourly by <b>Beijing's municipal monitoring network</b> and published through the China National Environmental Monitoring Centre. The historical series is the city mean across its stations, excluding the designated clean-air control site at Dingling and the regional background site, both of which measure something other than the city's air. Concentrations are in µg/m³ and every index on this page is computed from them here, so the two scales are judging identical numbers.</p>
+      </div>
+      <div>
+        <h3>How current it is</h3>
+        <p>A GitHub Action rebuilds every page each morning and commits the result, so the site is never more than a day behind its sources. The Beijing air-quality tile goes further and asks the monitoring network directly each time the page is opened.</p>
       </div>
     </div>
-    <div class="ranks-grid" id="months"></div>
-  </section>
-
-  <section class="ranks">
-    <div class="sec-head">
-      <p class="eyebrow">Every year</p>
-      <h2 class="sec-title">The whole record, year by year</h2>
-      <p class="sec-lede">Every metric on this page, one row per year. Click any column to sort by it. <b>2026</b> (✷) is a part-year, so its counts run only to 5 Aug and its averages are withheld until the year is complete.</p>
-    </div>
-    <div class="dwrap"><table class="dtbl" id="tbl"></table></div>
   </section>
 </div>
-
-<div class="tip" id="tip"></div>
-
 <script>
-const DATA = {"years":[1960,1961,1962,1963,1964,1965,1966,1967,1968,1969,1970,1971,1972,1973,1974,1975,1976,1977,1978,1979,1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025,2026],"d25":[10,18,2,13,20,2,10,12,6,26,24,10,8,28,4,34,55,10,12,16,10,15,30,45,35,16,19,16,9,59,44,27,26,18,36,53,32,38,16,37,19,32,21,47,28,36,45,7,19,24,34,27,26,36,30,23,34,30,64,37,51,24,50,43,30,58,59],"d30":[0,3,0,0,1,0,0,1,1,2,2,0,0,3,0,6,20,0,0,0,0,0,0,9,4,0,3,0,0,7,12,0,1,0,8,17,7,3,1,4,3,8,2,10,3,6,15,0,0,3,2,4,3,6,1,5,6,7,19,9,12,6,11,10,5,14,25],"n15":[14,16,7,7,22,5,11,15,5,25,16,17,6,20,9,32,30,9,5,15,16,12,25,39,19,10,18,20,8,33,30,23,27,13,32,41,20,42,25,28,25,36,27,45,38,30,53,13,28,23,28,21,21,34,30,21,42,33,54,37,39,40,49,47,31,48,55],"n20":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,2,0,1,0,0,0,0,0,3,1,0,0,0,0,0,0,0,0,1,0,1,1,0,0,1,3,0,3,0,0,1,7],"partial":2026,"d25y":[10,9,2,13,13,1,7,10,3,21,20,9,6,12,4,23,38,10,9,13,8,8,21,29,20,9,18,10,3,46,28,12,24,15,34,38,27,18,7,29,12,23,12,26,19,22,37,5,17,15,31,19,14,25,28,18,14,26,53,26,31,18,32,21,20,43,59],"d30y":[0,2,0,0,0,0,0,1,1,1,2,0,0,0,0,4,19,0,0,0,0,0,0,8,4,0,3,0,0,7,10,0,1,0,8,11,5,0,0,4,3,4,1,5,1,5,14,0,0,3,2,4,1,6,1,3,3,7,18,5,5,4,6,3,4,11,25],"n15y":[9,4,3,6,17,2,6,11,4,16,12,10,4,7,5,16,25,6,3,5,6,5,19,26,9,7,16,10,3,21,19,12,22,10,23,22,12,17,7,16,12,20,11,27,18,17,30,7,18,11,20,8,10,23,19,11,19,21,34,22,17,23,26,23,16,35,55],"n20y":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,1,0,0,1,0,0,2,0,0,1,7],"ytd":"5 Aug","d25s":[6,7,2,5,4,1,3,4,3,7,7,5,3,7,2,15,21,6,3,4,3,3,5,18,6,3,11,4,3,16,9,7,8,4,16,14,9,11,7,10,4,9,7,13,14,8,16,2,6,8,12,7,7,8,14,6,6,7,17,7,10,8,15,11,7,11,19],"d25sy":[6,3,2,5,4,1,2,4,3,7,7,5,3,4,2,12,21,6,3,4,3,3,5,18,6,3,11,4,1,16,6,3,8,4,16,10,9,3,3,10,4,9,4,5,10,8,16,2,6,8,12,5,7,8,14,6,6,7,17,6,5,8,15,11,7,11,19],"d30s":[0,2,0,0,1,0,0,1,1,1,1,0,0,3,0,2,16,0,0,0,0,0,0,6,2,0,2,0,0,4,5,0,1,0,3,6,3,1,1,4,3,2,1,5,2,2,6,0,0,3,1,2,2,3,1,3,3,5,6,4,7,4,5,7,2,4,7],"d30sy":[0,2,0,0,0,0,0,1,1,1,1,0,0,0,0,2,16,0,0,0,0,0,0,6,2,0,2,0,0,4,5,0,1,0,3,6,3,0,0,4,3,2,1,3,1,2,6,0,0,3,1,2,1,3,1,3,3,5,6,4,4,4,3,2,2,4,7],"n15s":[3,4,1,2,5,1,3,4,2,4,4,2,2,4,2,13,17,2,2,4,3,4,6,16,3,4,4,3,2,7,7,5,8,3,8,11,5,11,4,10,4,7,7,11,15,5,15,4,7,5,5,4,8,12,11,4,6,6,12,7,14,12,12,9,5,6,16],"n15sy":[3,1,1,2,5,1,3,4,2,4,4,2,2,2,2,5,17,2,2,2,3,2,6,16,3,4,4,3,2,7,7,5,8,3,8,11,5,3,2,6,4,7,6,7,8,5,15,4,7,3,5,4,3,12,11,4,5,6,12,7,4,12,10,3,5,6,16],"n20s":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,0,1,0,0,0,0,0,2,1,0,0,0,0,0,0,0,0,1,0,1,1,0,0,1,2,0,1,0,0,1,4],"n20sy":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,1,0,0,1,0,0,1,0,0,1,4]};
-
-const METRICS = [
-  {key:"d25", label:"Hot days", sub:"≥ 25 °C", color:"var(--hot25)", unit:"days",
-   insight:"Rising and noisy — <b>2018 leads with 64</b>. Seven of the ten highest years fall since 2002."},
-  {key:"d30", label:"Very hot days", sub:"≥ 30 °C", color:"var(--hot30)", unit:"days",
-   insight:"<b>Part-year 2026 leads with 25</b>, a new all-time high — ≥30 °C days are now routine where they were once rare."},
-  {key:"n15", label:"Mild nights", sub:"min ≥ 15 °C", color:"var(--night15)", unit:"nights",
-   insight:"The steadiest climb of the four — from ~13 a year in the 1960s to <b>~42 in the 2020s</b>."},
-  {key:"n20", label:"Tropical nights", sub:"min ≥ 20 °C", color:"var(--night20)", unit:"nights",
-   insight:"Genuinely rare even now. <b>Part-year 2026 leads at 7</b> — a new all-time high, past 1976's 4."},
-];
-
-const yrs = DATA.years, N = yrs.length, PARTIAL = DATA.partial;
-const W = 520, H = 210, M = {t:22, r:12, b:26, l:26};
-const plotW = W - M.l - M.r, plotH = H - M.t - M.b;
-
-function niceMax(v){
-  const steps = [5,10,20,25,50,60,70,80];
-  for(const s of steps) if(v <= s) return s;
-  return Math.ceil(v/20)*20;
-}
-function ticks(max){
-  if(max<=5) return [0,1,2,3,4,5].filter(t=>t<=max);
-  const step = max/ (max%3===0?3: (max%4===0?4:2));
-  const out=[]; for(let t=0;t<=max+0.001;t+=step) out.push(Math.round(t)); return out;
-}
-const NS = "http://www.w3.org/2000/svg";
-function el(n, a){ const e=document.createElementNS(NS,n); for(const k in a) e.setAttribute(k,a[k]); return e; }
-
-function build(metric, vals, partialYr){
-  const max = niceMax(Math.max(...vals));
-  // 1961-1990 normal
-  const idx0 = yrs.indexOf(1961), idx1 = yrs.indexOf(1990);
-  let s=0; for(let i=idx0;i<=idx1;i++) s+=vals[i];
-  const normal = s/(idx1-idx0+1);
-  const recVal = Math.max(...vals.filter((v,i)=>yrs[i]!==partialYr));
-  const recIdx = vals.findIndex((v,i)=>v===recVal && yrs[i]!==partialYr);
-
-  const svg = el("svg",{viewBox:`0 0 ${W} ${H}`, role:"img",
-    "aria-label":`${metric.label} ${metric.sub} per year, 1960 to 2026`});
-  const x = i => M.l + (i+0.5)/N * plotW;
-  const y = v => M.t + plotH - (v/max)*plotH;
-  const bw = Math.max(3, plotW/N - 1.1);
-
-  // gridlines + y ticks
-  for(const t of ticks(max)){
-    svg.appendChild(el("line",{class:"grid-line", x1:M.l, x2:M.l+plotW, y1:y(t), y2:y(t)}));
-    const tx=el("text",{class:"tick", x:M.l-5, y:y(t)+3, "text-anchor":"end"}); tx.textContent=t; svg.appendChild(tx);
+/* The Beijing tile shows a baked snapshot immediately and then asks the edge
+   for the current hour. If the fetch fails the reader keeps the snapshot, which
+   is a real reading with a real timestamp — not a spinner and not a zero. */
+(function () {
+  var BP = [[0.0,9.0,0,50,0],[9.1,35.4,51,100,1],[35.5,55.4,101,150,2],[55.5,125.4,151,200,3],[125.5,225.4,201,300,4],[225.5,325.4,301,500,5]];
+  function aqi(c) {
+    var cc = Math.floor(c * 10) / 10;
+    for (var i = 0; i < BP.length; i++) {
+      var b = BP[i];
+      if (cc <= b[1]) return { i: Math.round(b[2] + (cc - b[0]) / (b[1] - b[0]) * (b[3] - b[2])), cat: b[4] };
+    }
+    return { i: 500, cat: 5 };
   }
-  // baseline
-  svg.appendChild(el("line",{class:"axis-line", x1:M.l, x2:M.l+plotW, y1:y(0), y2:y(0)}));
-  // x decade ticks
-  for(let d=1960; d<=2020; d+=10){
-    const i = yrs.indexOf(d); if(i<0) continue;
-    const tx=el("text",{class:"xtick", x:x(i), y:H-8, "text-anchor":"middle"}); tx.textContent=d; svg.appendChild(tx);
+  var CATS = [{"name":"Good","css":"--aqi-1"},{"name":"Moderate","css":"--aqi-2"},{"name":"Unhealthy for sensitive groups","css":"--aqi-3"},{"name":"Unhealthy","css":"--aqi-4"},{"name":"Very unhealthy","css":"--aqi-5"},{"name":"Hazardous","css":"--aqi-6"}];
+  fetch("/api/live", { headers: { accept: "application/json" } })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (j) {
+      if (!j || !j.beijing || j.beijing.city == null) return;
+      var r = aqi(j.beijing.city), c = CATS[r.cat];
+      var card = document.getElementById("homeAqi").closest(".citycard");
+      card.style.setProperty("--tint",
+        getComputedStyle(document.documentElement).getPropertyValue(c.css).trim());
+      document.getElementById("homeAqi").textContent = r.i;
+      document.getElementById("homeCat").textContent = c.name;
+      document.getElementById("homeSub").innerHTML =
+        "PM2.5 <b>" + j.beijing.city.toFixed(0) + " µg/m³</b> over the last 24 hours, " +
+        "averaged across <b>" + (j.beijing.n || 0) + "</b> stations. " +
+        (j.beijing.time || "");
+    })
+    .catch(function () {});
+})();
+</script>
+<div class="dockwrap"><nav class="dock" aria-label="Sections"><a href="/" aria-current="page"><svg class="glyph" viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true"><path d="M3 10.2 12 3l9 7.2V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span class="lab">Overview</span></a><a href="/london"><svg class="glyph" viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true"><path d="M12 2 4 8v13h5v-6h6v6h5V8zM12 5.6 17 9.3V19h-1v-6H8v6H7V9.3z"/><path d="M11 10h2v2h-2z"/></svg><span class="lab">London</span></a><a href="/beijing"><svg class="glyph" viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true"><path d="M12 2 3 7h18zM5 9h14v10h2v2H3v-2h2zm4 2v8h2v-8zm4 0v8h2v-8z"/></svg><span class="lab">Beijing</span></a><span class="sep"></span><button id="themeBtn" class="pressable" aria-label="Switch colour theme" title="Theme"><svg class="glyph" viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18zm0 2.2v13.6a6.8 6.8 0 0 1 0-13.6z"/></svg><span class="lab">Theme</span></button></nav></div>
+<script>
+(function(){
+  var btn=document.getElementById('themeBtn'); if(!btn) return;
+  var root=document.documentElement;
+  function cur(){ try{ return localStorage.getItem('theme')||'system'; }catch(e){ return 'system'; } }
+  function apply(v){
+    if(v==='system') root.removeAttribute('data-theme'); else root.setAttribute('data-theme',v);
+    try{ v==='system'? localStorage.removeItem('theme') : localStorage.setItem('theme',v); }catch(e){}
+    btn.title='Theme: '+v;
+    btn.setAttribute('aria-label','Colour theme: '+v+'. Click to change.');
   }
-
-  // bars
-  vals.forEach((v,i)=>{
-    const part = yrs[i]===partialYr;
-    const h = y(0)-y(v);
-    const r = el("rect",{class:"bar", x:x(i)-bw/2, y:y(v), width:bw, height:Math.max(0,h),
-      rx:Math.min(2,bw/2), fill: part? `url(#hatch-${metric.key})` : metric.color});
-    if(part) r.setAttribute("stroke", metric.color), r.setAttribute("stroke-width","1");
-    r.addEventListener("mouseenter", ev=>showTip(ev, yrs[i], v, metric, part, normal));
-    r.addEventListener("mousemove", ev=>moveTip(ev));
-    r.addEventListener("mouseleave", hideTip);
-    svg.appendChild(r);
+  apply(cur());
+  btn.addEventListener('click',function(){
+    var order=['system','light','dark']; apply(order[(order.indexOf(cur())+1)%3]);
   });
-
-  // hatch pattern def
-  const defs = el("defs",{});
-  const pat = el("pattern",{id:`hatch-${metric.key}`, width:4, height:4, patternTransform:"rotate(45)", patternUnits:"userSpaceOnUse"});
-  pat.appendChild(el("rect",{width:4, height:4, fill:metric.color, "fill-opacity":"0.20"}));
-  pat.appendChild(el("line",{x1:0,y1:0,x2:0,y2:4, stroke:metric.color, "stroke-width":2}));
-  defs.appendChild(pat); svg.appendChild(defs);
-
-  // normal line + label
-  svg.appendChild(el("line",{class:"norm", x1:M.l, x2:M.l+plotW, y1:y(normal), y2:y(normal), stroke:"var(--muted)"}));
-  const nl=el("text",{class:"norm-lab", x:M.l+plotW, y:y(normal)-4, "text-anchor":"end", fill:"var(--muted)"});
-  nl.textContent=`1961–90 avg ${normal.toFixed(1)}`; svg.appendChild(nl);
-
-  // record label
-  const rl=el("text",{class:"rec-lab", x:x(recIdx), y:y(recVal)-5, "text-anchor":"middle"});
-  rl.textContent=`${yrs[recIdx]}: ${recVal}`; svg.appendChild(rl);
-
-  return svg;
-}
-
-// tooltip
-const tip = document.getElementById("tip");
-function showTip(ev, yr, v, m, part, normal){
-  const rel = v>=normal ? `+${(v-normal).toFixed(1)} vs normal` : `${(v-normal).toFixed(1)} vs normal`;
-  tip.innerHTML = `<span class="yr">${yr}${part?" · part-year":""}</span><br><b>${v}</b> ${m.unit} <span style="opacity:.6">${m.sub}</span><br><span style="opacity:.7">${rel}</span>`;
-  tip.style.opacity = 1; moveTip(ev);
-}
-function moveTip(ev){
-  const r = document.querySelector(".wrap").getBoundingClientRect();
-  tip.style.left = (ev.clientX) + "px";
-  tip.style.top  = (ev.clientY - 12) + "px";
-  tip.style.position = "fixed";
-}
-function hideTip(){ tip.style.opacity = 0; }
-
-// render panels
-let HISTMODE = "full";
-const grid = document.getElementById("grid");
-function valsFor(m){ return HISTMODE==="ytd" ? DATA[m.key+"y"] : DATA[m.key]; }
-function renderCharts(){
-  grid.innerHTML = "";
-  const partialYr = HISTMODE==="full" ? PARTIAL : null;
-  for(const m of METRICS){
-    const vals = valsFor(m);
-    const fig = document.createElement("figure");
-    const nowVal = vals[N-1];
-    fig.innerHTML = `
-    <div class="cap">
-      <div class="cap-l"><span class="dot" style="background:${m.color}"></span>
-        <div><h2>${m.label}</h2><span class="sub">${m.sub}</span></div></div>
-      <div class="now"><div class="v" style="color:${m.color}">${nowVal}</div><div class="l">2026 ${HISTMODE==="ytd"?"to 5 Aug":"so far"}</div></div>
-    </div>
-    <div class="chart"></div>
-    <p class="insight">${m.insight}</p>`;
-    fig.querySelector(".chart").appendChild(build(m, vals, partialYr));
-    grid.appendChild(fig);
-  }
-}
-renderCharts();
-
-// ---- full data table (rendered after MONTHLY is defined, at the foot of the script) ----
-function renderTable(){
-  const tbl = document.getElementById("tbl");
-  const A = MONTHLY.ann;
-  const COLS = [
-    {k:"year", t:"Year",             get:i=>yrs[i]},
-    {k:"d25",  t:"Hot days ≥25 °C",  get:i=>DATA.d25[i]},
-    {k:"d30",  t:"Very hot ≥30 °C",  get:i=>DATA.d30[i]},
-    {k:"n15",  t:"Mild nights ≥15 °C", get:i=>DATA.n15[i]},
-    {k:"n20",  t:"Tropical nights ≥20 °C", get:i=>DATA.n20[i]},
-    {k:"d25s", t:"Longest ≥25 °C run", get:i=>DATA.d25s[i]},
-    {k:"d30s", t:"Longest ≥30 °C run", get:i=>DATA.d30s[i]},
-    {k:"avg",  t:"Mean °C",          get:i=>A.avg[i], dec:1},
-    {k:"hi",   t:"Avg high °C",      get:i=>A.hi[i],  dec:1},
-    {k:"lo",   t:"Avg low °C",       get:i=>A.lo[i],  dec:1},
-  ];
-  let sortKey="year", sortDir=-1;   // newest first
-
-  function draw(){
-    const idx = yrs.map((_,i)=>i).sort((a,b)=>{
-      const c=COLS.find(c=>c.k===sortKey);
-      const va=c.get(a), vb=c.get(b);
-      if(va===null && vb===null) return yrs[b]-yrs[a];
-      if(va===null) return 1;          // missing values sink, whichever way we sort
-      if(vb===null) return -1;
-      return (va-vb)*sortDir || yrs[b]-yrs[a];
-    });
-    const head = "<thead><tr>" + COLS.map(c=>
-      `<th data-k="${c.k}">${c.t}${c.k===sortKey?`<span class="ar">${sortDir<0?"▼":"▲"}</span>`:""}</th>`
-    ).join("") + "</tr></thead>";
-    const body = "<tbody>" + idx.map(i=>{
-      const me = yrs[i]===PARTIAL;
-      return `<tr class="${me?'me':''}">` + COLS.map(c=>{
-        const v=c.get(i);
-        if(v===null||v===undefined) return `<td class="na" title="year not complete">—</td>`;
-        const txt = c.k==="year" ? `${v}${me?' ✷':''}` : (c.dec?v.toFixed(c.dec):v);
-        return `<td>${txt}</td>`;
-      }).join("") + "</tr>";
-    }).join("") + "</tbody>";
-    tbl.innerHTML = head + body;
-    tbl.querySelectorAll("thead th").forEach(th=>th.addEventListener("click",()=>{
-      const k=th.dataset.k;
-      if(k===sortKey) sortDir=-sortDir;
-      else { sortKey=k; sortDir=-1; }     // a new column starts descending
-      draw();
-    }));
-  }
-  draw();
-}
-
-// ---- all-time rankings ----
-function renderRanks(){
-  const cur=DATA.partial, host=document.getElementById("ranks");
-  let out="";
-  for(const m of METRICS){
-    const vals=valsFor(m);
-    const rows=DATA.years.map((y,i)=>({y,v:vals[i]})).sort((a,b)=>b.v-a.v||a.y-b.y);
-    const rankOf=v=>1+rows.filter(r=>r.v>v).length;
-    const top=rows.slice(0,10);
-    const inTop=top.some(r=>r.y===cur);
-    let body="";
-    top.forEach(r=>{ body+=`<tr class="${r.y===cur?'me':''}"><td class="rk">${rankOf(r.v)}</td><td class="ry">${r.y}${r.y===cur?' \u2737':''}</td><td class="rv">${r.v}</td></tr>`; });
-    if(!inTop){
-      const cr=rows.find(r=>r.y===cur);
-      body+=`<tr class="gap"><td colspan="3">\u22ef</td></tr>`;
-      body+=`<tr class="me"><td class="rk">${rankOf(cr.v)}</td><td class="ry">${cr.y} \u2737</td><td class="rv">${cr.v}</td></tr>`;
-    }
-    out+=`<div class="rcard"><div class="cap"><div class="cap-l"><span class="dot" style="background:${m.color}"></span><div><h2>${m.label}</h2><span class="sub">${m.sub}</span></div></div></div><table class="rtbl">${body}</table></div>`;
-  }
-  host.innerHTML=out;
-}
-renderRanks();
-
-// ---- longest streaks ----
-function renderStreaks(){
-  const cur=DATA.partial, host=document.getElementById("streaks");
-  let out="";
-  for(const m of METRICS){
-    const vals = HISTMODE==="ytd" ? DATA[m.key+"sy"] : DATA[m.key+"s"];
-    const rows=DATA.years.map((y,i)=>({y,v:vals[i]})).sort((a,b)=>b.v-a.v||a.y-b.y);
-    const rankOf=v=>1+rows.filter(r=>r.v>v).length;
-    const top=rows.slice(0,10);
-    const inTop=top.some(r=>r.y===cur);
-    let body="";
-    top.forEach(r=>{ body+=`<tr class="${r.y===cur?'me':''}"><td class="rk">${rankOf(r.v)}</td><td class="ry">${r.y}${r.y===cur?' \u2737':''}</td><td class="rv">${r.v}</td></tr>`; });
-    if(!inTop){ const cr=rows.find(r=>r.y===cur);
-      body+=`<tr class="gap"><td colspan="3">\u22ef</td></tr>`;
-      body+=`<tr class="me"><td class="rk">${rankOf(cr.v)}</td><td class="ry">${cr.y} \u2737</td><td class="rv">${cr.v}</td></tr>`; }
-    out+=`<div class="rcard"><div class="cap"><div class="cap-l"><span class="dot" style="background:${m.color}"></span><div><h2>${m.label}</h2><span class="sub">longest run \u00b7 ${m.sub}</span></div></div></div><table class="rtbl">${body}</table></div>`;
-  }
-  host.innerHTML=out;
-}
-renderStreaks();
-
-// ---- monthly averages ----
-const MONTHLY = {"years":[1960,1961,1962,1963,1964,1965,1966,1967,1968,1969,1970,1971,1972,1973,1974,1975,1976,1977,1978,1979,1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025,2026],"cur":2026,"hi":{"1":[6.85,6.92,8.17,0.78,5.87,6.5,5.34,7.5,7.34,9.01,7.32,7.82,6.89,7.53,9.92,10.37,8.41,6.02,6.71,4.12,6.24,8.2,null,10.63,8.28,5.05,7.48,4.44,9.17,9.85,10.71,7.26,7.57,10.78,9.68,9.61,7.65,6.19,9.24,10.12,8.94,7.0,10.06,8.5,9.17,9.53,7.61,10.47,10.41,6.75,4.9,7.87,9.89,7.02,10.13,8.9,9.61,8.12,10.06,8.11,10.45,7.89,8.87,8.91,8.34,7.14,8.51],"2":[8.05,10.49,7.51,3.01,7.39,5.89,9.27,9.25,5.5,4.72,7.18,8.66,8.04,8.08,8.95,9.39,8.19,9.84,6.23,4.53,9.99,7.07,8.8,5.66,7.91,6.76,2.09,8.07,8.94,10.6,12.01,5.7,10.23,7.96,8.0,10.87,7.35,11.12,12.06,9.51,10.38,9.61,11.73,8.97,9.01,7.33,7.15,9.91,10.99,7.84,7.56,10.61,8.59,7.11,10.89,8.34,9.71,10.73,6.72,12.82,11.23,9.72,11.08,10.76,12.15,8.99,11.02],"3":[10.13,13.95,7.64,10.86,7.6,10.75,11.03,11.57,11.38,8.16,7.96,9.17,12.57,11.61,10.46,8.2,9.6,11.24,11.24,9.24,9.11,11.76,11.21,10.91,9.06,9.57,10.58,9.05,10.85,13.46,14.33,12.74,12.0,12.21,12.75,11.87,9.08,14.09,12.46,12.76,12.27,10.18,12.76,13.58,11.25,11.54,9.4,12.51,10.59,12.94,11.25,12.98,15.0,7.38,14.4,11.91,10.9,14.94,10.81,13.48,12.4,12.45,13.2,11.6,13.25,14.22,13.46],"4":[14.21,15.0,12.72,13.65,13.06,13.39,12.53,12.51,13.79,13.74,11.82,12.34,12.91,12.47,14.08,13.5,13.85,12.22,10.72,12.52,14.08,12.87,14.83,13.3,15.0,14.43,11.27,16.31,13.8,12.05,15.16,13.21,14.09,15.08,13.47,15.61,15.27,15.74,12.94,15.34,13.47,12.65,15.66,16.43,15.05,14.59,14.05,18.85,13.66,16.09,16.08,19.99,13.63,14.09,16.11,16.54,13.93,16.17,16.44,15.92,19.11,13.6,16.23,14.83,15.14,18.79,18.15],"5":[18.84,16.82,14.98,16.45,19.5,16.81,16.94,15.84,15.7,17.13,19.3,18.37,16.0,17.01,17.18,15.03,19.43,16.52,17.69,16.21,17.26,16.52,18.69,15.79,15.15,16.64,16.62,16.74,18.83,21.98,20.94,16.08,21.34,18.57,16.63,19.25,15.48,18.94,20.3,19.5,18.49,19.49,17.57,18.4,18.61,17.69,17.96,17.93,19.75,19.11,17.87,19.48,18.63,16.96,18.41,18.05,19.56,20.81,21.6,18.84,21.65,16.93,20.35,18.6,19.59,20.89,21.86],"6":[21.99,22.31,20.67,20.56,19.6,19.9,21.76,20.23,20.91,20.84,23.5,17.85,17.61,22.26,20.14,22.08,25.87,17.42,19.44,19.0,19.68,18.45,21.21,21.51,21.9,18.79,22.2,18.63,19.84,22.4,19.51,17.97,22.76,22.09,21.73,21.29,23.43,20.58,19.99,20.48,21.6,21.22,20.22,23.2,22.49,22.77,23.7,21.15,20.75,22.42,24.04,21.43,19.71,20.37,22.28,22.9,20.86,24.03,24.96,21.67,22.71,22.37,23.35,25.39,22.14,26.0,25.13],"7":[20.11,21.73,20.66,21.26,22.9,19.31,19.87,23.59,20.19,23.77,21.58,24.04,22.27,21.41,20.9,24.13,26.33,22.58,20.61,22.63,19.93,21.85,23.17,27.83,24.62,23.35,22.8,22.31,19.96,26.6,25.64,24.29,22.79,22.02,26.85,26.92,24.59,23.91,21.57,25.37,21.46,24.51,22.53,24.58,22.95,23.25,28.24,21.38,22.76,22.89,24.84,21.98,21.43,27.39,25.84,23.72,24.12,24.03,28.53,26.31,23.95,24.17,27.37,22.96,23.76,25.38,28.32],"8":[20.33,21.72,19.93,19.49,22.12,20.63,20.76,21.37,20.27,21.65,22.09,21.26,21.93,23.5,21.33,25.76,24.94,20.08,20.49,20.97,21.87,22.9,22.0,24.59,24.41,20.19,20.05,21.98,21.88,24.48,26.31,24.64,21.4,22.12,22.73,26.54,23.04,25.73,23.61,22.92,23.23,24.15,23.65,26.71,23.85,23.24,22.17,21.53,21.48,23.92,21.7,22.22,23.52,24.22,21.51,22.73,25.12,22.49,24.63,25.06,26.13,21.75,26.88,22.98,24.52,25.03,null],"9":[18.35,20.67,17.65,17.93,21.07,17.4,19.52,18.28,18.7,19.45,20.27,20.69,17.12,20.43,17.31,19.26,19.03,17.81,20.1,19.48,19.98,20.28,21.64,19.26,18.88,21.22,17.5,19.35,18.72,20.73,19.64,21.11,18.84,17.22,17.97,19.26,19.21,21.22,20.15,21.59,20.34,18.17,20.35,22.11,21.07,21.41,22.68,19.89,18.51,20.66,19.4,21.58,19.77,20.05,21.91,18.62,22.67,19.08,21.26,21.35,21.77,22.32,20.01,24.41,19.64,20.25,null],"10":[14.25,15.54,15.53,14.79,13.38,16.21,14.4,14.82,16.42,18.28,15.64,17.01,15.29,13.81,10.91,14.29,14.64,16.24,17.1,16.23,13.74,12.76,14.3,15.12,16.05,15.83,16.51,15.19,15.51,17.1,16.91,14.72,12.36,13.07,15.51,18.25,16.75,16.15,14.81,15.83,14.64,17.88,15.44,14.43,15.43,17.78,17.76,15.43,15.02,16.6,15.28,18.22,14.38,17.24,17.66,15.99,16.17,17.31,17.33,15.8,15.23,16.83,18.15,17.88,16.33,15.72,null],"11":[11.06,9.71,8.99,11.64,11.01,8.18,8.93,9.65,9.35,9.26,11.71,9.97,10.01,9.97,10.71,10.03,9.75,10.15,12.14,10.77,9.24,11.22,11.52,11.65,12.73,8.72,12.57,9.9,10.23,10.87,10.72,null,11.99,9.58,13.8,12.29,10.48,12.67,9.81,11.54,11.24,11.98,12.49,13.02,11.77,10.67,12.7,11.42,10.74,12.57,9.27,13.92,11.01,10.79,12.81,13.85,10.6,11.37,12.61,10.14,12.96,11.24,12.88,11.5,11.28,12.46,null],"12":[6.77,6.37,4.77,5.47,7.23,8.41,9.18,6.87,5.27,5.96,6.8,9.28,9.09,8.56,10.84,7.63,5.67,9.19,7.68,8.76,8.93,4.43,8.88,9.88,8.97,10.43,9.95,9.59,10.66,9.72,8.41,8.82,7.91,9.55,11.41,6.52,6.2,10.18,10.18,9.63,9.45,8.07,9.3,9.41,9.5,8.15,9.73,8.9,7.27,7.27,4.67,10.24,9.67,10.54,10.02,13.76,10.72,9.42,10.89,10.34,9.15,10.29,8.09,11.22,9.86,10.18,null]},"lo":{"1":[1.77,1.22,1.23,-4.55,0.43,1.04,1.03,2.05,1.33,3.43,2.06,2.78,2.11,1.95,3.58,4.45,3.01,0.83,0.67,-2.55,-0.14,1.96,0.23,4.33,1.43,-1.8,1.04,-0.96,3.06,3.11,4.4,1.8,2.04,3.64,2.81,2.23,3.14,0.21,3.52,3.76,2.41,1.75,3.5,2.37,3.12,3.79,2.92,5.05,4.71,0.31,-0.62,2.84,3.44,2.05,3.75,1.75,3.03,0.66,3.8,2.06,4.69,1.52,1.92,2.52,2.51,1.39,2.11],"2":[1.63,4.89,1.39,-2.23,2.0,0.89,4.37,2.63,0.16,-0.86,0.76,1.93,2.55,0.7,2.96,1.92,2.33,3.38,0.73,-0.43,2.9,-0.08,2.38,-0.52,1.27,0.18,-2.68,1.4,1.83,2.66,5.29,-1.28,2.34,2.56,1.19,4.4,0.09,3.96,3.52,2.8,3.78,2.81,4.77,1.84,3.76,2.52,1.72,3.91,2.03,2.12,1.65,4.78,1.35,1.22,4.44,1.75,2.9,4.44,0.69,3.27,4.33,3.12,3.96,3.38,6.03,2.79,5.76],"3":[4.46,2.9,-0.55,2.99,2.61,2.18,2.6,3.7,3.53,1.3,0.66,2.32,3.32,2.19,2.84,2.75,2.02,4.54,3.45,1.99,2.42,6.48,2.54,3.04,2.55,1.28,1.75,1.48,3.69,4.49,4.81,5.34,4.94,3.27,5.11,2.01,2.08,5.26,5.67,5.03,4.93,3.77,5.1,4.41,3.9,4.49,2.77,4.42,3.72,3.67,3.52,3.82,4.69,1.24,4.37,4.1,3.24,6.63,3.0,5.85,3.85,4.09,4.93,5.15,5.94,3.93,5.14],"4":[4.59,7.11,4.73,5.67,5.37,4.82,5.41,4.36,4.42,3.85,3.74,4.78,5.69,3.92,4.74,5.03,4.32,4.05,3.91,4.81,5.35,4.85,4.97,3.58,3.85,5.27,3.21,6.68,5.14,4.28,4.22,4.83,5.62,6.76,5.12,6.05,5.46,5.42,5.72,6.25,5.37,5.36,6.11,6.28,6.31,6.17,6.03,7.71,5.19,7.2,5.55,8.6,4.85,4.68,7.47,5.95,4.89,5.9,7.94,5.7,6.46,2.88,5.67,5.86,7.18,7.01,6.84],"5":[9.32,7.36,7.08,6.93,9.83,8.64,7.46,7.76,6.97,8.63,9.15,8.19,7.59,8.59,7.49,6.92,8.87,7.15,7.93,7.15,7.44,8.42,7.59,7.49,6.83,8.22,7.87,7.0,9.11,9.96,9.0,7.66,10.23,8.81,8.24,8.18,5.93,8.46,10.16,10.18,9.57,9.06,9.38,8.95,9.53,8.51,9.75,9.67,10.45,9.35,7.59,9.35,9.72,7.74,9.78,8.76,9.74,10.38,9.84,8.36,9.14,7.25,10.05,9.29,10.62,10.11,10.77],"6":[12.09,10.52,9.44,11.33,11.15,10.95,12.15,10.34,11.48,10.22,12.71,10.14,9.03,11.58,10.61,10.36,13.71,9.56,10.7,11.07,10.85,10.42,12.83,11.37,11.33,9.92,11.39,10.62,11.28,11.37,10.83,9.66,12.29,12.22,11.22,10.84,11.25,12.17,12.03,11.04,12.81,11.34,11.64,13.34,12.58,12.88,12.91,12.61,11.88,12.17,12.13,11.03,11.58,11.2,12.5,11.4,12.69,13.92,13.11,11.92,12.59,13.33,11.95,13.54,11.14,14.06,14.88],"7":[12.37,12.1,12.1,11.92,13.52,11.68,12.22,13.75,12.6,13.93,12.34,13.75,12.72,12.71,12.47,14.13,14.88,12.68,12.65,13.36,11.88,12.79,13.35,15.96,12.94,13.18,13.34,13.22,12.15,14.84,13.2,14.4,14.19,12.62,15.21,15.2,13.22,13.91,12.98,14.3,12.82,14.54,13.47,14.73,13.29,14.12,16.66,13.11,13.74,13.74,15.07,12.64,13.19,15.24,14.95,13.84,14.48,14.93,16.36,14.91,13.4,14.87,15.53,13.98,13.82,15.76,16.42],"8":[11.77,12.56,11.62,11.68,12.74,11.94,11.56,12.68,12.61,13.61,12.95,13.46,12.11,13.79,12.12,15.01,13.15,12.97,12.12,12.19,13.32,13.0,12.87,13.84,14.19,11.94,11.51,12.54,12.42,13.07,14.67,14.37,13.59,11.65,13.75,15.62,13.44,16.61,12.67,14.01,14.0,14.45,14.72,15.68,15.1,13.01,13.51,12.93,14.24,14.14,13.18,13.38,14.29,14.26,12.71,14.08,14.62,13.52,14.51,14.08,15.58,13.41,15.93,13.85,14.59,14.14,null],"9":[10.52,12.04,9.57,10.11,10.57,9.24,10.77,11.14,11.58,11.72,11.41,10.18,9.02,11.6,9.45,10.61,11.15,10.7,10.79,10.34,12.01,11.27,11.05,11.28,11.04,11.36,8.11,11.36,10.84,12.61,9.98,11.52,10.97,9.77,10.82,10.73,10.69,11.77,12.72,13.21,12.52,10.84,11.49,10.83,12.47,12.73,14.47,11.36,11.17,11.97,11.24,12.41,10.28,11.14,12.77,10.16,13.68,10.99,10.97,11.83,11.25,13.26,11.8,14.71,11.86,11.09,null],"10":[8.2,7.6,7.14,8.15,5.29,7.54,8.56,8.82,10.72,9.85,8.08,8.12,8.47,6.14,5.03,6.97,8.83,8.98,8.43,8.79,5.76,5.76,7.8,7.55,8.49,8.75,8.54,7.68,8.46,9.74,9.63,7.62,5.26,6.98,7.66,10.22,8.86,7.52,8.59,7.87,8.52,11.31,8.39,6.44,9.14,11.25,11.19,8.49,6.76,9.33,8.33,10.09,7.96,10.56,10.99,9.26,8.65,10.34,8.52,8.74,8.76,9.65,10.38,10.21,9.43,9.69,null],"11":[4.52,3.49,3.2,6.03,5.29,2.15,2.92,2.58,4.77,3.32,5.52,2.98,3.16,2.52,4.99,3.17,3.54,4.63,6.15,3.54,4.52,5.09,6.18,5.5,6.42,1.27,5.27,4.15,1.8,3.65,5.16,3.75,4.75,2.44,8.41,5.15,2.74,6.2,3.4,5.85,4.58,4.47,6.99,6.71,6.21,3.52,5.4,4.62,5.24,7.36,3.95,7.29,4.58,4.69,6.91,7.98,3.79,4.66,5.85,4.3,6.2,4.46,7.62,5.4,5.96,6.62,null],"12":[2.13,0.15,-1.14,0.0,0.89,1.71,2.15,1.33,1.01,1.44,1.72,4.54,3.49,2.11,5.59,1.52,-0.16,4.13,2.57,3.86,2.7,-1.54,1.93,2.8,2.85,5.22,3.17,4.18,4.84,4.23,2.49,1.67,1.61,3.67,4.03,1.07,1.43,4.22,3.82,2.44,4.68,1.51,5.16,3.25,2.89,1.91,4.54,3.05,1.7,1.25,-1.38,3.79,2.61,3.65,3.02,8.85,3.41,2.92,5.16,3.95,3.56,5.27,1.73,5.93,5.24,4.81,null]},"avg":{"1":[4.31,4.07,4.7,-1.88,3.15,3.77,3.18,4.78,4.33,6.22,4.69,5.3,4.5,4.74,6.75,7.41,5.71,3.43,3.69,0.78,3.05,5.08,null,7.48,4.86,1.63,4.26,1.74,6.12,6.48,7.56,4.53,4.81,7.21,6.25,5.92,5.4,3.2,6.38,6.94,5.68,4.38,6.78,5.44,6.15,6.66,5.26,7.76,7.56,3.53,2.07,5.35,6.66,4.53,6.94,5.27,6.32,4.39,6.93,5.09,7.57,4.7,5.39,5.71,5.42,4.27,5.31],"2":[4.84,7.69,4.45,0.39,4.69,3.39,6.82,5.94,2.83,1.93,3.97,5.29,5.29,4.39,5.96,5.66,5.26,6.61,3.48,2.05,6.44,3.49,5.59,2.57,4.6,3.59,-0.29,4.74,5.38,6.63,8.65,2.21,6.28,5.26,4.6,7.63,3.72,7.54,7.79,6.16,7.08,6.21,8.25,5.4,6.38,4.92,4.44,6.91,6.51,4.98,4.64,7.69,4.97,4.17,7.66,5.05,6.31,7.59,3.7,8.04,7.78,6.42,7.52,7.07,9.09,5.89,8.39],"3":[7.3,8.43,3.54,6.92,5.11,6.47,6.82,7.64,7.45,4.73,4.31,5.74,7.95,6.9,6.65,5.48,5.81,7.89,7.34,5.62,5.76,9.12,6.88,6.97,5.8,5.42,6.17,5.27,7.27,8.98,9.57,9.04,8.47,7.74,8.93,6.94,5.58,9.68,9.07,8.9,8.6,6.97,8.93,8.99,7.58,8.02,6.09,8.46,7.15,8.3,7.37,8.4,9.85,4.31,9.39,8.0,7.07,10.78,6.91,9.66,8.12,8.27,9.06,8.38,9.59,9.07,9.3],"4":[9.4,11.05,8.72,9.66,9.21,9.1,8.97,8.44,9.1,8.8,7.78,8.56,9.3,8.2,9.41,9.27,9.09,8.13,7.31,8.66,9.71,8.86,9.9,8.44,9.42,9.85,7.24,11.5,9.47,8.16,9.69,9.02,9.85,10.92,9.29,10.83,10.37,10.58,9.33,10.8,9.42,9.0,10.89,11.35,10.68,10.38,10.04,13.28,9.43,11.64,10.82,14.29,9.24,9.38,11.79,11.24,9.41,11.04,12.19,10.81,12.78,8.24,10.95,10.34,11.16,12.9,12.49],"5":[14.08,12.09,11.03,11.69,14.66,12.72,12.2,11.8,11.33,12.88,14.22,13.28,11.8,12.8,12.33,10.97,14.15,11.84,12.81,11.68,12.35,12.47,13.14,11.64,10.99,12.43,12.25,11.87,13.97,15.96,14.97,11.87,15.78,13.69,12.44,13.72,10.7,13.7,15.23,14.84,14.03,14.27,13.48,13.67,14.07,13.1,13.85,13.8,15.1,14.23,12.74,14.42,14.17,12.35,14.09,13.41,14.65,15.6,15.72,13.6,15.39,12.09,15.2,13.95,15.1,15.5,16.31],"6":[17.04,16.41,15.05,15.94,15.37,15.43,16.95,15.29,16.2,15.53,18.11,14.0,13.32,16.92,15.38,16.22,19.79,13.49,15.07,15.03,15.27,14.43,17.02,16.44,16.61,14.35,16.8,14.62,15.56,16.89,15.06,13.81,17.53,17.15,16.47,16.07,17.34,16.37,16.01,15.76,17.2,16.28,15.93,18.27,17.53,17.82,18.31,16.88,16.31,17.29,18.09,16.23,15.65,15.79,17.39,17.15,16.78,18.93,19.04,16.8,17.65,17.85,17.65,19.47,16.64,20.03,20.0],"7":[16.24,16.91,16.38,16.59,18.21,15.5,16.05,18.67,16.39,18.85,16.96,18.9,17.5,17.06,16.69,19.13,20.6,17.63,16.63,18.0,15.91,17.32,18.26,21.9,18.78,18.26,18.07,17.76,16.06,20.72,19.37,19.34,18.49,17.32,21.03,21.06,18.9,18.91,17.27,19.84,17.14,19.52,18.0,19.66,18.12,18.69,22.45,17.25,18.25,18.31,19.96,17.31,17.31,21.32,20.39,18.78,19.3,19.48,22.38,20.61,18.67,19.52,21.45,18.47,18.79,20.57,22.37],"8":[16.05,17.14,15.77,15.59,17.43,16.28,16.16,17.03,16.44,17.63,17.52,17.36,17.02,18.65,16.72,20.39,19.04,16.52,16.3,16.58,17.6,17.95,17.44,19.21,19.3,16.06,15.78,17.26,17.15,18.78,20.49,19.5,17.5,16.89,18.24,21.08,18.24,21.17,18.14,18.46,18.61,19.3,19.19,21.2,19.48,18.12,17.84,17.23,17.86,19.03,17.44,17.8,18.9,19.24,17.11,18.4,19.87,18.01,19.57,19.57,20.86,17.58,21.4,18.42,19.55,19.58,null],"9":[14.44,16.35,13.61,14.02,15.82,13.32,15.14,14.71,15.14,15.59,15.84,15.44,13.07,16.02,13.38,14.93,15.09,14.25,15.44,14.91,16.0,15.77,16.34,15.27,14.96,16.29,12.8,15.35,14.78,16.67,14.81,16.32,14.9,13.5,14.4,15.0,14.95,16.5,16.44,17.4,16.43,14.51,15.92,16.47,16.77,17.07,18.57,15.63,14.84,16.31,15.32,16.99,15.02,15.6,17.34,14.39,18.18,15.04,16.11,16.59,16.51,17.79,15.91,19.56,15.75,15.67,null],"10":[11.23,11.57,11.33,11.47,9.33,11.87,11.48,11.82,13.57,14.06,11.86,12.56,11.88,9.97,7.97,10.63,11.73,12.61,12.77,12.51,9.75,9.26,11.05,11.33,12.27,12.29,12.52,11.44,11.98,13.4,13.27,11.17,8.81,10.03,11.59,14.24,12.81,11.83,11.7,11.85,11.58,14.6,11.92,10.43,12.28,14.52,14.48,11.96,10.89,12.96,11.8,14.15,11.17,13.9,14.32,12.62,12.41,13.83,12.93,12.27,11.99,13.24,14.27,14.05,12.88,12.7,null],"11":[7.79,6.6,6.1,8.83,8.15,5.17,5.92,6.11,7.06,6.29,8.62,6.48,6.58,6.25,7.85,6.6,6.65,7.39,9.14,7.15,6.88,8.16,8.85,8.58,9.57,4.99,8.92,7.03,6.01,7.26,7.94,null,8.37,6.01,11.1,8.72,6.61,9.44,6.61,8.69,7.91,8.22,9.74,9.87,8.99,7.1,9.05,8.02,7.99,9.96,6.61,10.6,7.79,7.74,9.86,10.87,7.2,8.01,9.23,7.22,9.58,7.85,10.25,8.45,8.62,9.54,null],"12":[4.45,3.26,1.81,2.74,4.06,5.06,5.66,4.1,3.14,3.7,4.26,6.91,6.29,5.34,8.21,4.57,2.75,6.66,5.13,6.31,5.82,1.44,5.4,6.34,5.91,7.82,6.56,6.89,7.75,6.97,5.45,5.04,4.76,6.61,7.72,3.8,3.82,7.2,7.0,6.03,7.06,4.79,7.23,6.33,6.19,5.03,7.14,5.97,4.49,4.26,1.65,7.01,6.14,7.09,6.52,11.3,7.06,6.17,8.02,7.15,6.36,7.78,4.91,8.58,7.55,7.49,null]},"ay":2026,"am":7,"part":{"y":2026,"m":8,"days":5,"through":"5 Aug","avg":22.4,"hi":28.0,"lo":16.8},"ann":{"hi":[14.3,15.1,13.3,13.0,14.2,13.7,14.1,14.3,13.8,14.4,14.6,14.7,14.2,14.8,14.4,15.0,15.5,14.1,14.2,13.8,14.2,14.1,15.4,15.6,15.3,14.3,14.2,14.3,14.9,16.7,16.7,14.9,15.3,15.1,15.9,16.6,14.9,16.4,15.6,16.3,15.5,15.4,16.0,16.7,15.9,15.7,16.1,15.8,15.2,15.8,14.8,16.7,15.5,15.3,16.9,16.3,16.2,16.6,17.2,16.7,17.2,15.8,17.2,16.8,16.3,17.1,null],"lo":[7.0,6.8,5.5,5.7,6.7,6.1,6.8,6.8,6.8,6.8,6.8,7.0,6.6,6.5,6.8,6.9,7.2,7.0,6.7,6.2,6.6,6.6,7.0,7.2,6.9,6.3,6.1,6.6,7.1,7.9,7.8,6.9,7.3,7.1,7.8,7.7,6.6,8.0,7.9,8.1,8.0,7.6,8.4,7.9,8.2,7.9,8.5,8.1,7.6,7.7,6.8,8.3,7.4,7.3,8.7,8.2,7.9,8.3,8.4,7.9,8.3,7.8,8.5,8.7,8.7,8.5,null],"avg":[10.6,11.0,9.4,9.4,10.4,9.9,10.5,10.6,10.3,10.6,10.7,10.9,10.4,10.6,10.6,11.0,11.3,10.6,10.5,10.0,10.4,10.3,11.2,11.4,11.1,10.3,10.2,10.5,11.0,12.3,12.2,10.9,11.3,11.1,11.9,12.1,10.7,12.2,11.8,12.2,11.7,11.5,12.2,12.3,12.0,11.8,12.3,12.0,11.4,11.8,10.8,12.5,11.4,11.3,12.8,12.3,12.1,12.4,12.7,12.3,12.8,11.8,12.9,12.7,12.5,12.8,null]}};
-const MONTH_NAMES = ["January","February","March","April","May","June",
-                     "July","August","September","October","November","December"];
-const MMODES = {
-  avg: {label:"daily mean",    color:"var(--hot25)"},
-  hi:  {label:"average high",  color:"var(--hot30)"},
-  lo:  {label:"average low",   color:"var(--night15)"},
-};
-let MMODE = "avg";
-const MSPAN = 4;
-const MIN_PART_DAYS = 5;      // below this a running month is too thin to mean anything
-const wrap12 = m => ((m-1)%12+12)%12+1;
-// The rightmost card is the month we are actually in, once it has enough days to
-// show a "so far" figure. Below that floor it has nothing to say, so the window
-// ends on the last month that finished instead.
-const ANCHOR = (MONTHLY.part && MONTHLY.part.days >= MIN_PART_DAYS)
-  ? MONTHLY.part.m : MONTHLY.am;
-let MWIN = wrap12(ANCHOR - (MSPAN-1));
-const window4 = () => Array.from({length:MSPAN}, (_,i)=>wrap12(MWIN+i));
-
-// The latest year in which `mon` has completed. Seen from February 2027, January's
-// answer is 2027 but December's is 2026 — the calendar has turned over since.
-const latestYearOf = mon => mon <= MONTHLY.am ? MONTHLY.ay : MONTHLY.ay - 1;
-
-function renderMonths(){
-  const host=document.getElementById("months");
-  const mode=MMODES[MMODE];
-  const months=window4();
-  const part=MONTHLY.part;
-  document.getElementById("mrange").textContent =
-    `${MONTH_NAMES[months[0]-1]} – ${MONTH_NAMES[months[MSPAN-1]-1]}`;
-  let out="";
-  months.forEach(mon=>{
-    // On the month currently running, the "so far" row already carries this year.
-    // Highlighting last year beside it would mark two rows and imply last year is
-    // somehow the subject; it is just the most recent finished one.
-    // "running" only once the provisional row will actually show; below the day
-    // floor the month behaves like any other unfinished one and last year leads.
-    const running = !!(part && part.m===mon && part.days>=MIN_PART_DAYS && part[MMODE]!==null);
-    const me = running ? null : latestYearOf(mon);
-    const vals=MONTHLY[MMODE][String(mon)];
-    // a year only ranks once its month is complete
-    const rows=MONTHLY.years.map((y,i)=>({y,v:vals[i]}))
-                            .filter(r=>r.v!==null)
-                            .sort((a,b)=>b.v-a.v||a.y-b.y);
-    const rankOf=v=>1+rows.filter(r=>r.v>v).length;   // ties share a rank
-    // Two decimals, matching the precision the months are ranked on. At one decimal
-    // the ranking looked broken: July 2006 and July 2018 both printed 22.4 and both
-    // came out first, when 0.06 °C separates them. What still shares a rank here
-    // really is level — within 0.01 °C, finer than the daily readings resolve.
-    const fmt=v=>`${v.toFixed(2)}&#8202;°C`;
-    const top=rows.slice(0,10);
-    const meRow=me===null?null:rows.find(r=>r.y===me);
-    const inTop=me!==null && top.some(r=>r.y===me);
-    let body="";
-    top.forEach(r=>{ body+=`<tr class="${r.y===me?'me':''}"><td class="rk">${rankOf(r.v)}</td><td class="ry">${r.y}${r.y===me?' ✷':''}</td><td class="rv">${fmt(r.v)}</td></tr>`; });
-    if(meRow && !inTop){
-      body+=`<tr class="gap"><td colspan="3">⋯</td></tr>`;
-      body+=`<tr class="me"><td class="rk">${rankOf(meRow.v)}</td><td class="ry">${me} ✷</td><td class="rv">${fmt(meRow.v)}</td></tr>`;
-    }
-    // the month still running: shown apart from the ranking, never inside it
-    let foot="";
-    if(running){
-      foot=`<tr class="prov"><td class="rk">—</td><td class="ry">${part.y}<span class="pflag">so far</span></td>`
-         + `<td class="rv">${fmt(part[MMODE])}</td></tr>`
-         + `<tr class="none"><td colspan="3">${part.days} of ${new Date(part.y,part.m,0).getDate()} days, to ${part.through} — provisional, and biased by however the month has run so far</td></tr>`;
-    }
-    out+=`<div class="rcard">
-      <div class="cap">
-        <div class="cap-l"><span class="dot" style="background:${mode.color}"></span>
-          <div><h2 class="mname">${MONTH_NAMES[mon-1]}</h2><span class="sub">${mode.label}</span></div>
-        </div>
-      </div>
-      <table class="rtbl">${body}${foot}</table></div>`;
-  });
-  host.innerHTML=out;
-}
-document.querySelectorAll(".mcar .marrow").forEach(b=>b.addEventListener("click",()=>{
-  MWIN=wrap12(MWIN + (+b.dataset.step));   // slides the whole window; wraps Dec -> Jan
-  renderMonths();
-}));
-renderMonths();
-renderTable();   // needs MONTHLY.ann, so it runs here rather than where it is defined
-
-document.querySelectorAll("#mmodes .hmode-btn").forEach(b=>b.addEventListener("click",()=>{
-  MMODE=b.dataset.mmode;
-  document.querySelectorAll("#mmodes .hmode-btn").forEach(x=>x.classList.toggle("active",x===b));
-  renderMonths();
-}));
-
-document.querySelectorAll(".hmodes:not(#mmodes) .hmode-btn").forEach(b=>b.addEventListener("click",()=>{
-  HISTMODE=b.dataset.hmode;
-  document.querySelectorAll(".hmodes:not(#mmodes) .hmode-btn").forEach(x=>x.classList.toggle("active",x===b));
-  renderCharts(); renderRanks(); renderStreaks();
-}));
-
-// theme toggle
-const btn = document.getElementById("themeBtn");
-btn.addEventListener("click", ()=>{
-  const cur = document.documentElement.getAttribute("data-theme");
-  const sysDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const now = cur ? cur : (sysDark ? "dark" : "light");
-  document.documentElement.setAttribute("data-theme", now==="dark" ? "light" : "dark");
-});
+})();
 </script>
 </body>
 </html>

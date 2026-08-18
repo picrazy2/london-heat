@@ -1,19 +1,65 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="manifest" href="/site.webmanifest">
-<meta name="theme-color" content="#f4f3f7" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0b0b12" media="(prefers-color-scheme: dark)">
-<title>Not found — Weather</title>
-<script>
-(function(){try{var t=localStorage.getItem('theme');
-if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
-</script>
-<style>
+"""The design system: tokens, primitives and chrome, in one place.
+
+The language is the one the budget app speaks (iOS 26 / macOS 26 "Liquid Glass"):
+a tinted canvas with an ambient colour mesh, opaque cards for resting content,
+translucent glass for chrome that floats *over* content, generous radii, and one
+interactive tint. What makes this site a sibling rather than a clone is the
+palette — indigo/teal here against the budget's blue/amber — and a canvas that
+carries a faint violet cast instead of a cool grey one.
+
+Everything downstream references a token. A raw hex in a template is a bug.
+"""
+
+SITE_URL = "https://weather.akguo.com"
+SITE_NAME = "Weather"
+
+# ── Brand -------------------------------------------------------------------
+# The mark is three rising arcs inside a squircle: a horizon, the air above it,
+# and the curve of a trend. It reads at 16px, which is the only size that
+# actually has to work, and it deliberately shares no geometry with the old
+# three-bar ramp — the site is not the same site any more.
+ACCENT, SECONDARY = "#5e5ce6", "#30b0c7"
+
+FAVICON = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="wxmark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6f6dff"/><stop offset="1" stop-color="#2ea8bf"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="url(#wxmark)"/>
+  <g fill="none" stroke="#fff" stroke-linecap="round">
+    <path d="M14 42c6-13 12-19 18-19s12 6 18 19" stroke-width="5"/>
+    <path d="M20 49h24" stroke-width="4.5" stroke-opacity=".55"/>
+    <circle cx="32" cy="30" r="3.5" fill="#fff" stroke="none"/>
+  </g>
+</svg>
+"""
+
+# ── Tokens ------------------------------------------------------------------
+# Light is the base; dark redefines only what changes. Both a media query and an
+# explicit [data-theme] selector are emitted so the toggle can win in either
+# direction — a media-query-only dark theme cannot be turned off by a button.
+_DARK = """
+    --bg:#0b0b12; --bg-tint:#0e0e17;
+    --surface-1:#17171f; --surface-2:#212129; --surface-3:#2c2c36;
+    --glass-thin:rgba(23,23,31,.55); --glass-regular:rgba(25,25,34,.62);
+    --glass-thick:rgba(25,25,34,.78);
+    --glass-highlight:rgba(255,255,255,.10); --glass-shadow-edge:rgba(0,0,0,.5);
+    --border:rgba(255,255,255,.12); --border-strong:rgba(255,255,255,.22);
+    --separator:rgba(255,255,255,.14);
+    --ink:#f4f3f8; --ink-muted:rgba(235,234,245,.62); --ink-faint:rgba(235,234,245,.34);
+    --accent:#7d7bff; --accent-press:#9b99ff; --accent-soft:rgba(125,123,255,.26);
+    --secondary:#40c8e0;
+    --positive:#30d158; --warning:#ffd60a; --negative:#ff453a;
+    --night-1:#6fbcf0; --night-2:#4d92dd; --day-1:#ffab5c; --day-2:#ff6b62;
+    --aqi-1:#4ed16a; --aqi-2:#f2ca5c; --aqi-3:#ff9f4a; --aqi-4:#ff6b62;
+    --aqi-5:#c07ae0; --aqi-6:#d4566f;
+    --shadow-1:0 1px 2px rgba(0,0,0,.5);
+    --shadow-2:0 4px 16px -4px rgba(0,0,0,.6), 0 1px 3px rgba(0,0,0,.4);
+    --shadow-3:0 12px 40px -8px rgba(0,0,0,.7), 0 2px 8px rgba(0,0,0,.4);
+"""
+
+TOKENS = """
   :root {
     /* canvas & surfaces */
     --bg:#f4f3f7; --bg-tint:#edecf4;
@@ -70,45 +116,13 @@ if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)
     --dock-h:60px; --maxw:1100px;
     color-scheme:light;
   }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { color-scheme:dark;
-    --bg:#0b0b12; --bg-tint:#0e0e17;
-    --surface-1:#17171f; --surface-2:#212129; --surface-3:#2c2c36;
-    --glass-thin:rgba(23,23,31,.55); --glass-regular:rgba(25,25,34,.62);
-    --glass-thick:rgba(25,25,34,.78);
-    --glass-highlight:rgba(255,255,255,.10); --glass-shadow-edge:rgba(0,0,0,.5);
-    --border:rgba(255,255,255,.12); --border-strong:rgba(255,255,255,.22);
-    --separator:rgba(255,255,255,.14);
-    --ink:#f4f3f8; --ink-muted:rgba(235,234,245,.62); --ink-faint:rgba(235,234,245,.34);
-    --accent:#7d7bff; --accent-press:#9b99ff; --accent-soft:rgba(125,123,255,.26);
-    --secondary:#40c8e0;
-    --positive:#30d158; --warning:#ffd60a; --negative:#ff453a;
-    --night-1:#6fbcf0; --night-2:#4d92dd; --day-1:#ffab5c; --day-2:#ff6b62;
-    --aqi-1:#4ed16a; --aqi-2:#f2ca5c; --aqi-3:#ff9f4a; --aqi-4:#ff6b62;
-    --aqi-5:#c07ae0; --aqi-6:#d4566f;
-    --shadow-1:0 1px 2px rgba(0,0,0,.5);
-    --shadow-2:0 4px 16px -4px rgba(0,0,0,.6), 0 1px 3px rgba(0,0,0,.4);
-    --shadow-3:0 12px 40px -8px rgba(0,0,0,.7), 0 2px 8px rgba(0,0,0,.4);
-} }
-  :root[data-theme="dark"] { color-scheme:dark;
-    --bg:#0b0b12; --bg-tint:#0e0e17;
-    --surface-1:#17171f; --surface-2:#212129; --surface-3:#2c2c36;
-    --glass-thin:rgba(23,23,31,.55); --glass-regular:rgba(25,25,34,.62);
-    --glass-thick:rgba(25,25,34,.78);
-    --glass-highlight:rgba(255,255,255,.10); --glass-shadow-edge:rgba(0,0,0,.5);
-    --border:rgba(255,255,255,.12); --border-strong:rgba(255,255,255,.22);
-    --separator:rgba(255,255,255,.14);
-    --ink:#f4f3f8; --ink-muted:rgba(235,234,245,.62); --ink-faint:rgba(235,234,245,.34);
-    --accent:#7d7bff; --accent-press:#9b99ff; --accent-soft:rgba(125,123,255,.26);
-    --secondary:#40c8e0;
-    --positive:#30d158; --warning:#ffd60a; --negative:#ff453a;
-    --night-1:#6fbcf0; --night-2:#4d92dd; --day-1:#ffab5c; --day-2:#ff6b62;
-    --aqi-1:#4ed16a; --aqi-2:#f2ca5c; --aqi-3:#ff9f4a; --aqi-4:#ff6b62;
-    --aqi-5:#c07ae0; --aqi-6:#d4566f;
-    --shadow-1:0 1px 2px rgba(0,0,0,.5);
-    --shadow-2:0 4px 16px -4px rgba(0,0,0,.6), 0 1px 3px rgba(0,0,0,.4);
-    --shadow-3:0 12px 40px -8px rgba(0,0,0,.7), 0 2px 8px rgba(0,0,0,.4);
-}
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { color-scheme:dark;__DARK__} }
+  :root[data-theme="dark"] { color-scheme:dark;__DARK__}
+""".replace("__DARK__", _DARK)
 
+
+# ── Base + primitives -------------------------------------------------------
+BASE = """
   *, *::before, *::after { box-sizing:border-box; }
   html, body { margin:0; }
   body {
@@ -310,7 +324,10 @@ if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration:.001ms !important; transition-duration:.001ms !important; }
   }
+"""
 
+# ── Chrome: the page header and the floating dock ---------------------------
+CHROME = """
   .topbar { display:flex; align-items:center; gap:14px; margin-bottom:clamp(20px,3vw,30px); }
   .brand { display:inline-flex; align-items:center; gap:9px; color:var(--ink);
     text-decoration:none; font-size:14.5px; font-weight:680; letter-spacing:-0.01em; }
@@ -346,37 +363,64 @@ if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)
   .dock .lab { font-size:11px; font-weight:560; line-height:1.1; }
   .dock a[aria-current="page"] .lab { font-weight:660; }
   .dock .sep { width:1px; align-self:stretch; margin:6px 4px; background:var(--separator); }
+"""
 
-  .nf { min-height:68vh; display:flex; flex-direction:column; justify-content:center;
-    max-width:44ch; }
-  .nf .code { font-size:13px; font-weight:640; letter-spacing:.1em; color:var(--accent);
-    margin-bottom:10px; }
-  .nf h1 { margin-bottom:12px; }
-  .nf .links { display:flex; gap:10px; flex-wrap:wrap; margin-top:24px; }
-  .nf .links a { display:inline-flex; align-items:center; padding:10px 18px;
-    border-radius:var(--r-full); background:var(--surface-1); box-shadow:var(--shadow-2);
-    color:var(--ink); font-size:14px; font-weight:600; }
-  .nf .links a:hover { text-decoration:none; color:var(--accent); }
-  .nf .links a.primary { background:var(--accent); color:var(--ink-on-accent); }
-</style>
-</head>
-<body>
-<div class="wrap">
-  <header class="topbar"><a class="brand" href="/"><svg class='brand-mark' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="wxmark" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6f6dff"/><stop offset="1" stop-color="#2ea8bf"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#wxmark)"/><g fill="none" stroke="#fff" stroke-linecap="round"><path d="M14 42c6-13 12-19 18-19s12 6 18 19" stroke-width="5"/><path d="M20 49h24" stroke-width="4.5" stroke-opacity=".55"/><circle cx="32" cy="30" r="3.5" fill="#fff" stroke="none"/></g></svg><span>Weather</span></a><span class="spacer"></span><span class="stamp"></span></header>
-  <div class="nf">
-    <p class="code">404</p>
-    <h1>There is no reading here</h1>
-    <p class="lede">That address does not match anything this site publishes. The three
-      pages below are all of it.</p>
-    <div class="links">
-      <a class="primary" href="/">Overview</a>
-      <a href="/london">London</a>
-      <a href="/beijing">Beijing</a>
-    </div>
-  </div>
-</div>
 
-<script>
+def css():
+    """The whole sheet, in cascade order: tokens, primitives, chrome."""
+    return TOKENS + BASE + CHROME
+
+
+# ── Navigation --------------------------------------------------------------
+# Glyphs are inline SVG, not an icon font and not emoji: the budget app can
+# afford to ship a 100KB subset because it is an installed PWA, but this is a
+# page someone opens once from a link, and emoji in chrome is a banned pattern.
+_GLYPHS = {
+    "home": '<path d="M3 10.2 12 3l9 7.2V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+    "london": '<path d="M12 2 4 8v13h5v-6h6v6h5V8zM12 5.6 17 9.3V19h-1v-6H8v6H7V9.3z"/>'
+              '<path d="M11 10h2v2h-2z"/>',
+    "beijing": '<path d="M12 2 3 7h18zM5 9h14v10h2v2H3v-2h2zm4 2v8h2v-8zm4 0v8h2v-8z"/>',
+}
+
+NAV = [("/", "Overview", "home"), ("/london", "London", "london"), ("/beijing", "Beijing", "beijing")]
+
+
+def _glyph(name):
+    return (f'<svg class="glyph" viewBox="0 0 24 24" width="19" height="19" '
+            f'fill="currentColor" aria-hidden="true">{_GLYPHS[name]}</svg>')
+
+
+def dock(here):
+    """The floating tab bar. `here` is the path of the current page, or None."""
+    links = "".join(
+        f'<a href="{href}"{" aria-current=\"page\"" if href == here else ""}>'
+        f'{_glyph(g)}<span class="lab">{label}</span></a>'
+        for href, label, g in NAV)
+    return ('<div class="dockwrap"><nav class="dock" aria-label="Sections">'
+            f'{links}<span class="sep"></span>'
+            '<button id="themeBtn" class="pressable" aria-label="Switch colour theme" title="Theme">'
+            '<svg class="glyph" viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true">'
+            '<path d="M12 3a9 9 0 1 0 0 18zm0 2.2v13.6a6.8 6.8 0 0 1 0-13.6z"/></svg>'
+            '<span class="lab">Theme</span></button></nav></div>')
+
+
+def topbar(stamp_html=""):
+    mark = FAVICON.replace('\n', '').replace('  ', '')
+    return (f'<header class="topbar"><a class="brand" href="/">'
+            f'{mark.replace("<svg ", "<svg class=\'brand-mark\' ", 1)}'
+            f'<span>{SITE_NAME}</span></a>'
+            f'<span class="spacer"></span><span class="stamp">{stamp_html}</span></header>')
+
+
+# The theme toggle is three-state (system → light → dark) and is applied before
+# first paint by a boot script in <head>, so a dark-mode reader never sees a
+# white flash. localStorage is the only state the site keeps.
+THEME_BOOT = """
+(function(){try{var t=localStorage.getItem('theme');
+if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
+"""
+
+THEME_JS = """
 (function(){
   var btn=document.getElementById('themeBtn'); if(!btn) return;
   var root=document.documentElement;
@@ -392,6 +436,4 @@ if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)
     var order=['system','light','dark']; apply(order[(order.indexOf(cur())+1)%3]);
   });
 })();
-</script>
-</body>
-</html>
+"""

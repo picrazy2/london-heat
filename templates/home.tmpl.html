@@ -1,0 +1,149 @@
+<title>Weather — London and Beijing, measured</title>
+<style>
+  .cities { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:clamp(14px,2.5vw,20px); }
+  @media (max-width:740px) { .cities { grid-template-columns:1fr; } }
+
+  /* Each city is one large tappable card. The whole card is the link — a "read
+     more" under a card the reader already wants to press is a wasted row. */
+  .citycard {
+    display:block; text-decoration:none; color:inherit; border-radius:var(--r-lg);
+    padding:clamp(20px,3vw,28px); position:relative; overflow:hidden;
+    transition:transform .22s var(--ease-out), box-shadow .22s var(--ease-out);
+  }
+  .citycard:hover { text-decoration:none; transform:translateY(-3px); }
+  .citycard .name { font-size:clamp(22px,3vw,28px); font-weight:700; letter-spacing:-0.025em; }
+  .citycard .place { font-size:13px; color:var(--ink-muted); margin-top:2px; }
+  .citycard .headline { display:flex; align-items:baseline; gap:10px; margin:clamp(16px,3vw,26px) 0 4px; }
+  .citycard .big { font-size:clamp(46px,8vw,68px); color:var(--tint); }
+  .citycard .unit { font-size:15px; font-weight:640; color:var(--ink-muted); }
+  .citycard .verdict { font-size:15px; font-weight:660; color:var(--tint); }
+  .citycard .sub { font-size:13.5px; color:var(--ink-muted); margin-top:8px; line-height:1.5; }
+  .citycard .sub b { color:var(--ink); font-weight:640; }
+  .citycard .go { display:inline-flex; align-items:center; gap:6px; margin-top:18px;
+    font-size:13.5px; font-weight:640; color:var(--accent); }
+  .citycard .go svg { transition:transform .2s var(--ease-out); }
+  .citycard:hover .go svg { transform:translateX(3px); }
+
+  /* A sparkline of the last two weeks, bled to the card's bottom edge. */
+  .citycard .spark { margin-top:18px; height:56px; }
+  .citycard .spark svg { display:block; width:100%; height:100%; overflow:visible; }
+
+  .facts { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px;
+    margin-top:clamp(20px,3vw,28px); }
+  @media (max-width:860px) { .facts { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  .fact { background:var(--surface-1); border-radius:var(--r-md); box-shadow:var(--shadow-2);
+    padding:16px; }
+  .fact .v { font-size:26px; font-weight:700; letter-spacing:-0.025em;
+    font-variant-numeric:tabular-nums; color:var(--tint,var(--ink)); }
+  .fact .l { font-size:12.5px; color:var(--ink-muted); margin-top:4px; line-height:1.4; }
+
+  .about { margin-top:clamp(28px,4vw,44px); }
+  .about h2 { margin-bottom:10px; }
+  .about .cols { display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:clamp(16px,3vw,28px); margin-top:16px; }
+  @media (max-width:740px) { .about .cols { grid-template-columns:1fr; } }
+  .about h3 { margin-bottom:6px; }
+  .about p { font-size:14px; color:var(--ink-muted); line-height:1.6; }
+  .about p + p { margin-top:8px; }
+</style>
+<div class="wrap">
+  __TOPBAR__
+  <div class="hero">
+    <p class="kicker">Two cities, two instruments</p>
+    <h1>What the thermometers and the monitors actually say</h1>
+    <p class="lede">Long records, taken from the instruments themselves rather than from a
+      forecast: sixty-six years of temperature at London Heathrow, and Beijing's air
+      measured hour by hour by the city's own network. Rebuilt every morning.</p>
+  </div>
+
+  <div class="cities">
+    <a class="citycard glass-card" href="/london" style="--tint:var(__LDN_TINT__)">
+      <div class="name">London</div>
+      <div class="place">Heathrow · __LDN_RANGE__</div>
+      <div class="headline">
+        <span class="big display">__LDN_BIG__</span>
+        <span class="unit">__LDN_UNIT__</span>
+      </div>
+      <div class="verdict">__LDN_VERDICT__</div>
+      <p class="sub">__LDN_SUB__</p>
+      <div class="spark">__LDN_SPARK__</div>
+      <span class="go">Open the record
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
+      </span>
+    </a>
+
+    <a class="citycard glass-card" href="/beijing" style="--tint:__BJ_TINT__">
+      <div class="name">Beijing</div>
+      <div class="place">City monitoring network · live</div>
+      <div class="headline">
+        <span class="big display" id="homeAqi">__BJ_BIG__</span>
+        <span class="unit">US EPA AQI</span>
+      </div>
+      <div class="verdict" id="homeCat">__BJ_VERDICT__</div>
+      <p class="sub" id="homeSub">__BJ_SUB__</p>
+      <div class="spark">__BJ_SPARK__</div>
+      <span class="go">Open air quality
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
+      </span>
+    </a>
+  </div>
+
+  <div class="facts">__FACTS__</div>
+
+  <section class="about">
+    <h2>Where the numbers come from</h2>
+    <div class="cols">
+      <div>
+        <h3>London temperature</h3>
+        <p>__ABOUT_LONDON__</p>
+      </div>
+      <div>
+        <h3>Beijing temperature</h3>
+        <p>__ABOUT_BEIJING_T__</p>
+      </div>
+      <div>
+        <h3>Beijing air quality</h3>
+        <p>__ABOUT_BEIJING_A__</p>
+      </div>
+      <div>
+        <h3>How current it is</h3>
+        <p>__ABOUT_FRESH__</p>
+      </div>
+    </div>
+  </section>
+</div>
+<script>
+/* The Beijing tile shows a baked snapshot immediately and then asks the edge
+   for the current hour. If the fetch fails the reader keeps the snapshot, which
+   is a real reading with a real timestamp — not a spinner and not a zero. */
+(function () {
+  var BP = __US_BP__;
+  function aqi(c) {
+    var cc = Math.floor(c * 10) / 10;
+    for (var i = 0; i < BP.length; i++) {
+      var b = BP[i];
+      if (cc <= b[1]) return { i: Math.round(b[2] + (cc - b[0]) / (b[1] - b[0]) * (b[3] - b[2])), cat: b[4] };
+    }
+    return { i: 500, cat: 5 };
+  }
+  var CATS = __US_CATS__;
+  fetch("/api/live", { headers: { accept: "application/json" } })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (j) {
+      if (!j || !j.beijing || j.beijing.city == null) return;
+      var r = aqi(j.beijing.city), c = CATS[r.cat];
+      var card = document.getElementById("homeAqi").closest(".citycard");
+      card.style.setProperty("--tint",
+        getComputedStyle(document.documentElement).getPropertyValue(c.css).trim());
+      document.getElementById("homeAqi").textContent = r.i;
+      document.getElementById("homeCat").textContent = c.name;
+      document.getElementById("homeSub").innerHTML =
+        "PM2.5 <b>" + j.beijing.city.toFixed(0) + " µg/m³</b> over the last 24 hours, " +
+        "averaged across <b>" + (j.beijing.n || 0) + "</b> stations. " +
+        (j.beijing.time || "");
+    })
+    .catch(function () {});
+})();
+</script>
