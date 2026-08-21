@@ -2,19 +2,22 @@
 <style>
 __TEMP_CSS__
 __AIR_CSS__
-  /* The top-level switch is a wider, quieter control than the view segmented
-     controls beneath it: it changes subject, not view, so it should not look
-     like one more tab in the same row. */
-  .topics { display:inline-flex; gap:6px; padding:5px; border-radius:var(--r-full);
-    margin-bottom:clamp(16px,2.5vw,22px); }
-  .topics button { border:0; background:none; font:inherit; font-size:14.5px;
-    font-weight:600; color:var(--ink-muted); padding:8px 20px; border-radius:var(--r-full);
-    cursor:pointer; display:inline-flex; align-items:center; gap:8px;
+  /* The top-level switch rides in the same row as the view picker, sized to
+     match it: it is the leftmost control because it chooses the subject the
+     picker then chooses a view of, and a control that governs another belongs
+     beside it rather than stacked above in a band of its own. Filled rather
+     than outlined, so the hierarchy still reads left to right. */
+  .topics { display:inline-flex; align-items:center; gap:4px; height:34px;
+    padding:0 4px; border-radius:var(--r-full); }
+  .topics button { border:0; background:none; font:inherit; font-size:13.5px;
+    font-weight:600; color:var(--ink-muted); height:26px; padding:0 14px;
+    border-radius:var(--r-full); cursor:pointer; display:inline-flex;
+    align-items:center; gap:6px; line-height:1;
     transition:all .2s var(--ease-spring); }
   .topics button[aria-selected="true"] { background:var(--accent); color:var(--ink-on-accent);
     box-shadow:var(--shadow-2); }
   .topics button:not([aria-selected="true"]):hover { color:var(--ink); }
-  .topics .badge { font-size:11px; font-weight:700; padding:2px 7px; border-radius:var(--r-full);
+  .topics .badge { font-size:10.5px; font-weight:700; padding:1px 6px; border-radius:var(--r-full);
     background:var(--live-tint,var(--surface-2)); color:#fff; font-variant-numeric:tabular-nums; }
   .topics button[aria-selected="true"] .badge { background:rgba(255,255,255,.22); }
 </style>
@@ -55,17 +58,29 @@ __AIR_JS__
    subtree is work nobody asked for on a page whose headline is the live AQI. */
 (function () {
   var tabs = [].slice.call(document.querySelectorAll(".topics button"));
+  var topics = document.querySelector(".topics");
   function show(name) {
     tabs.forEach(function (t) { t.setAttribute("aria-selected", String(t.dataset.topic === name)); });
     [].forEach.call(document.querySelectorAll("[data-topic]"), function (p) {
       if (p.tagName === "BUTTON") return;
       p.hidden = p.dataset.topic !== name;
     });
-    try { history.replaceState(null, "", name === "air" ? location.pathname : "#heat"); } catch (e) {}
+    // The switch follows the topic into that topic's control row. Only one of
+    // the two rows is ever in the document at a time, so it moves rather than
+    // being duplicated into both and kept in sync.
+    var row = document.querySelector('[data-topic="' + name + '"] .bar-row');
+    if (row && topics.parentNode !== row) row.insertBefore(topics, row.firstChild);
+    // Carry the query string. The views write themselves into it, and dropping
+    // it here would quietly discard whichever view the reader was looking at.
+    try {
+      window.WX.setParam("topic", name, "air");
+    } catch (e) {}
     window.dispatchEvent(new Event("resize"));   // segmented thumbs measure on show
   }
   tabs.forEach(function (t) { t.addEventListener("click", function () { show(t.dataset.topic); }); });
-  if (location.hash === "#heat") show("heat");
+  // #heat is how this page was linked before the topic became a query param.
+  var startTopic = window.WX.param("topic", location.hash === "#heat" ? "heat" : "air");
+  show(startTopic === "heat" ? "heat" : "air");
 
   /* A live badge on the tab itself, so the current index is visible even when
      the reader is looking at the temperature charts. */
