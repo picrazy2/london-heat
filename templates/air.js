@@ -698,7 +698,7 @@
 
   // A line over day-of-period, drawn once per series. `series` is
   // [{lab, css, pts:[{i, v}], n}] and `span` is how many slots the axis holds.
-  function historyChart(series, span, xlab) {
+  function historyChart(series, span, xlab, labelFor) {
     var host = document.getElementById("aqHChart");
     var W = 940, H = 300, m = { t: 16, r: 16, b: 30, l: 38 };
     var pw = W - m.l - m.r, ph = H - m.t - m.b;
@@ -712,18 +712,26 @@
     var svg = el("svg", { viewBox: "0 0 " + W + " " + H, class: "chart chart-in",
       role: "img", "aria-label": "Daily mean PM2.5, " + xlab });
 
+    // Category bands behind the trace, on whichever scale is selected — the same
+    // backdrop the annual chart uses. A line at one threshold could only speak
+    // for one scale; the bands re-judge the same days when the scale changes,
+    // which is the whole argument this page is making.
+    var S = A.scales[SCALE];
+    var prev = 0;
+    S.bp.forEach(function (b) {
+      var hi = Math.min(b[1], max);
+      if (hi <= prev) return;
+      svg.appendChild(el("rect", { x: m.l, y: y(hi), width: pw,
+        height: Math.max(0, y(prev) - y(hi)),
+        fill: catToken(b[4]), "fill-opacity": ".13" }));
+      prev = hi;
+    });
+
     var step = max > 150 ? 50 : max > 60 ? 25 : 10;
     for (var g = 0; g <= max; g += step) {
       svg.appendChild(el("line", { class: "gridline", x1: m.l, x2: m.l + pw, y1: y(g), y2: y(g) }));
       svg.appendChild(txt(el("text", { class: "tick", x: m.l - 5, y: y(g) + 3,
         "text-anchor": "end" }), g));
-    }
-    // The one threshold worth a line here: China's own 24-hour standard, which
-    // is what a day in Beijing is officially measured against. Read off the
-    // breakpoint table rather than typed in, so it cannot drift from the scale.
-    var std = A.scales.cn.bp[1][1];
-    if (std <= max) {
-      svg.appendChild(el("line", { class: "ref", x1: m.l, x2: m.l + pw, y1: y(std), y2: y(std) }));
     }
 
     var ticks = span > 60 ? 12 : span > 20 ? 6 : span;
@@ -755,6 +763,41 @@
           "stroke-opacity": series.length > 4 ? .85 : 1 }));
       });
     });
+
+    /* Hover reads the whole column, not the nearest line. With several years
+       drawn on top of each other the interesting question is what all of them
+       did on the same date, and asking the reader to land on one 1.6px stroke
+       to find out would make the comparison harder than reading it off. */
+    var hit = el("g", {});
+    var colw = pw / Math.max(1, span);
+    var rule = el("line", { class: "gridline", y1: m.t, y2: m.t + ph,
+      "stroke-opacity": ".9", visibility: "hidden" });
+    svg.appendChild(rule);
+    for (var c = 0; c < span; c++) {
+      (function (i) {
+        var r2 = el("rect", { x: x(i) - colw / 2, y: m.t, width: colw, height: ph,
+          fill: "transparent" });
+        r2.addEventListener("mouseenter", function (ev) {
+          var rows = series.map(function (s3) {
+            if (s3.at[i] == null) return null;
+            var q = aqi(s3.at[i]);
+            return "<b>" + s3.at[i].toFixed(1) + "</b> µg/m³ · AQI <b>" + q.i + "</b>" +
+              (s3.lab ? " <span style='opacity:.7'>" + s3.lab + "</span>" : "") +
+              "<br><span style='opacity:.7'>" + catName(q.cat) + "</span>";
+          }).filter(Boolean);
+          if (!rows.length) return;
+          rule.setAttribute("x1", x(i)); rule.setAttribute("x2", x(i));
+          rule.setAttribute("visibility", "visible");
+          showTip(ev, "<span class='k'>" + labelFor(i) + "</span><br>" + rows.join("<br>"));
+        });
+        r2.addEventListener("mousemove", moveTip);
+        r2.addEventListener("mouseleave", function () {
+          rule.setAttribute("visibility", "hidden"); hideTip();
+        });
+        hit.appendChild(r2);
+      })(c);
+    }
+    svg.appendChild(hit);
     host.innerHTML = ""; host.appendChild(svg);
   }
 
@@ -804,7 +847,8 @@
         return { lab: String(y), css: SERIES[i % SERIES.length], at: at,
                  pts: rows.filter(function (r) { return r.v != null; }) };
       });
-      historyChart(series, span, MABBR[HMONTH] + " across years");
+      historyChart(series, span, MABBR[HMONTH] + " across years",
+        function (i) { return (i + 1) + " " + MABBR[HMONTH]; });
       title.textContent = MABBR[HMONTH] + ", " + HPICK.length + " year" +
         (HPICK.length === 1 ? "" : "s") + " overlaid";
       key.innerHTML = series.map(function (s2) {
@@ -852,24 +896,30 @@
       var rows = sliceOf(HYEAR, null);
       var span2 = rows.length;
       var at2 = rows.map(function (r) { return r.v; });
-      historyChart([{ lab: String(HYEAR), css: "--accent", at: at2,
+      historyChart([{ lab: "", css: "--accent", at: at2,
                       pts: rows.filter(function (r) { return r.v != null; }) }],
-                   span2, String(HYEAR));
+                   span2, String(HYEAR),
+                   function (i) {
+                     var r = rows[i];
+                     return r ? r.d + " " + MABBR[r.m] + " " + r.y : "";
+                   });
       title.textContent = HYEAR;
       stat.innerHTML = statLine(rows.filter(function (r) { return r.v != null; }));
-      cap.innerHTML = "Every daily mean in " + HYEAR +
-        ". The dashed line is China's 24-hour standard, 75 µg/m³.";
+      cap.innerHTML = "Every daily mean in " + HYEAR + ". The bands behind the " +
+        "trace are <b>" + A.scales[SCALE].name + "</b> categories — change the scale " +
+        "in the ⋯ menu and the same days are re-judged against the other one.";
     } else {
       var rows3 = sliceOf(HYEAR, HMONTH);
       var at3 = new Array(31).fill(null);
       rows3.forEach(function (r) { if (r.v != null) at3[r.d - 1] = r.v; });
       historyChart([{ lab: "", css: "--accent", at: at3,
                       pts: rows3.filter(function (r) { return r.v != null; }) }],
-                   31, MABBR[HMONTH] + " " + HYEAR);
+                   31, MABBR[HMONTH] + " " + HYEAR,
+                   function (i) { return (i + 1) + " " + MABBR[HMONTH] + " " + HYEAR; });
       title.textContent = MABBR[HMONTH] + " " + HYEAR;
       stat.innerHTML = statLine(rows3.filter(function (r) { return r.v != null; }));
       cap.innerHTML = "Day by day through " + MABBR[HMONTH] + " " + HYEAR +
-        ". The dashed line is China's 24-hour standard, 75 µg/m³.";
+        ", against the <b>" + A.scales[SCALE].name + "</b> categories.";
     }
   }
 
