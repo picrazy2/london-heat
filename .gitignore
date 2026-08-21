@@ -6,3 +6,6 @@ __pycache__/
 *.pyc
 .DS_Store
 tmp/
+
+# `wrangler pages dev` scratch state, for previewing the site locally.
+.wrangler/

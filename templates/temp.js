@@ -101,17 +101,26 @@
     return small;
   }
 
-  var CW = 560, CH = 200, CM = { t: 22, r: 92, b: 26, l: 30 };
+  // The right margin holds nothing but a gutter now. The baseline used to be
+  // labelled inside it, which cost the plot 16% of its width to carry two lines
+  // of static text; that text reads the same in a key under the chart, where it
+  // costs nothing and cannot collide with a bar.
+  var CW = 560, CH = 200, CM = { t: 22, r: 14, b: 26, l: 30 };
   var cpw = CW - CM.l - CM.r, cph = CH - CM.t - CM.b;
+
+  function baselineAvg(v) {
+    var i0 = YEARS.indexOf(T.baseline[0]), i1 = YEARS.indexOf(T.baseline[1]);
+    if (i0 < 0 || i1 < i0) return null;
+    var s = 0; for (var i = i0; i <= i1; i++) s += v[i];
+    return s / (i1 - i0 + 1);
+  }
+  function baselineLabel() {
+    return T.baseline[0] + "–" + String(T.baseline[1]).slice(2) + " avg";
+  }
 
   function annualChart(m, v, partialYr) {
     var max = niceMax(Math.max.apply(null, v));
-    var i0 = YEARS.indexOf(T.baseline[0]), i1 = YEARS.indexOf(T.baseline[1]);
-    var normal = null;
-    if (i0 >= 0 && i1 >= i0) {
-      var s = 0; for (var i = i0; i <= i1; i++) s += v[i];
-      normal = s / (i1 - i0 + 1);
-    }
+    var normal = baselineAvg(v);
     // The record excludes the year still running, so a part-year drawing level
     // with 1976 does not quietly take 1976's name off the label.
     var recVal = -1, recIdx = -1;
@@ -162,11 +171,7 @@
     });
 
     if (normal != null) {
-      svg.appendChild(el("line", { class: "ref", x1: CM.l, x2: CM.l + cpw + 6, y1: y(normal), y2: y(normal) }));
-      svg.appendChild(txt(el("text", { class: "ref-lab", x: CM.l + cpw + 10, y: y(normal) + 3 }),
-        T.baseline[0] + "–" + String(T.baseline[1]).slice(2) + " avg"));
-      svg.appendChild(txt(el("text", { class: "ref-lab", x: CM.l + cpw + 10, y: y(normal) + 14 }),
-        normal.toFixed(1) + " " + m.unit));
+      svg.appendChild(el("line", { class: "ref", x1: CM.l, x2: CM.l + cpw, y1: y(normal), y2: y(normal) }));
     }
     if (recIdx >= 0) {
       svg.appendChild(txt(el("text", { class: "mark-lab", x: x(recIdx), y: y(recVal) - 5, "text-anchor": "middle" }),
@@ -181,12 +186,7 @@
     var i = YEARS.indexOf(PARTIAL);
     M.forEach(function (m) {
       var v = HIST[m.key + "y"], now = i >= 0 ? v[i] : 0;
-      var i0 = YEARS.indexOf(T.baseline[0]), i1 = YEARS.indexOf(T.baseline[1]);
-      var normal = null;
-      if (i0 >= 0 && i1 >= i0) {
-        var s = 0; for (var k = i0; k <= i1; k++) s += v[k];
-        normal = s / (i1 - i0 + 1);
-      }
+      var normal = baselineAvg(v);
       var rank = 1; for (var k2 = 0; k2 < N; k2++) if (v[k2] > now) rank++;
       var d = document.createElement("div");
       d.className = "tile";
@@ -215,6 +215,14 @@
         '<div class="card-head"><h3><span class="swatch"></span>' + m.label + "</h3>" +
         '<span class="sub">' + m.sub + "</span></div>";
       card.appendChild(annualChart(m, v, partialYr));
+      var normal = baselineAvg(v);
+      if (normal != null) {
+        var key = document.createElement("div");
+        key.className = "chartkey";
+        key.innerHTML = "<i></i>" + baselineLabel() + " · <b>" + normal.toFixed(1) +
+          "</b> " + m.unit;
+        card.appendChild(key);
+      }
       var cap = document.createElement("figcaption");
       cap.className = "cap";
       cap.innerHTML = T.captions[m.key] || "";

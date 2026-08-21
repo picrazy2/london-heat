@@ -37,6 +37,12 @@
 .chart-card h3 { font-size:15px; }
 .chart-card .swatch { display:inline-block; width:9px; height:9px; border-radius:3px;
   background:var(--tint); margin-right:7px; vertical-align:1px; }
+/* The baseline, read off the dashed line in the plot. The swatch is that same
+   dash, so the key names the line rather than repeating a number beside it. */
+.chartkey { display:flex; align-items:center; gap:7px; margin-top:7px;
+  font-size:11.5px; color:var(--ink-faint); }
+.chartkey b { color:var(--ink-muted); font-weight:640; }
+.chartkey i { flex:none; width:17px; height:0; border-top:1.25px dashed var(--ink-faint); }
 .chart-card .cap { font-size:12.5px; color:var(--ink-muted); margin-top:8px; line-height:1.45; }
 .chart-card .cap b { color:var(--ink); font-weight:640; }
 

@@ -48,6 +48,8 @@
   function catName(ci, scale) { return A.scales[scale || SCALE].cats[ci].name; }
   function catColor(ci) { return cssVar(A.scales.us.cats[ci].css); }
   function catToken(ci) { return "var(" + A.scales.us.cats[ci].css + ")"; }
+  function catInk(ci) { return "var(" + A.scales.us.cats[ci].css + "-ink)"; }
+  function catHatch(ci) { return "var(" + A.scales.us.cats[ci].css + "-hatch)"; }
 
   /* ── the two-scale ruler ──────────────────────────────────────────────
      Both scales are drawn against the same concentration axis, so the eye reads
@@ -424,6 +426,7 @@
     var Mg = A.monthly;
     // A perceptual ramp keyed to the categories rather than a continuous
     // gradient: the colour a cell takes is the verdict that month's mean earns.
+    var P = Mg.part;
     var html = "<div class='heat'><div class='hh'></div>" +
       MABBR.map(function (mn) { return "<div class='hh'>" + mn[0] + "</div>"; }).join("");
     Mg.years.forEach(function (yr, i) {
@@ -432,18 +435,34 @@
         var v = Mg.v[i][m];
         if (v == null) { html += "<div class='cell'></div>"; continue; }
         var r = aqi(v);
-        html += "<div class='cell' data-v='" + v.toFixed(1) + "' data-y='" + yr +
-          "' data-m='" + m + "' style='background:" + catToken(r.cat) + "'></div>";
+        // The month still running is hatched rather than faded: the same mark
+        // the temperature charts give a part-year, so one reading of the legend
+        // carries across both pages. Colour still says which band it is in.
+        var part = P && P.y === yr && P.m === m;
+        // The number is rounded for the cell and kept whole in the tooltip: a
+        // month mean carries its decimal, but at this size the decimal is noise.
+        html += "<div class='cell" + (part ? " part" : "") + "' data-v='" + v.toFixed(1) +
+          "' data-y='" + yr + "' data-m='" + m + "' style='background-color:" + catToken(r.cat) +
+          ";color:" + catInk(r.cat) + (part ? ";--hatch:" + catHatch(r.cat) : "") +
+          "'><span>" + Math.round(v) + "</span></div>";
       }
     });
     html += "</div>";
+    if (P && P.days) {
+      html += "<div class='heatnote'><i class='hatch'></i>" + MABBR[P.m] + " " + P.y +
+        " is still running — mean of its first <b>" + P.days +
+        (P.days === 1 ? "</b> day, to " : "</b> days, to ") + P.through + ".</div>";
+    }
     host.innerHTML = html;
     [].forEach.call(host.querySelectorAll(".cell[data-v]"), function (c) {
       c.addEventListener("mouseenter", function (ev) {
         var v = +c.dataset.v, r = aqi(v);
         showTip(ev, "<span class='k'>" + MABBR[+c.dataset.m] + " " + c.dataset.y +
+          (c.classList.contains("part") ? " · part-month" : "") +
           "</span><br><b>" + v.toFixed(1) + "</b> µg/m³ · AQI <b>" + r.i + "</b><br>" +
-          "<span style='opacity:.7'>" + catName(r.cat) + "</span>");
+          "<span style='opacity:.7'>" + catName(r.cat) +
+          (c.classList.contains("part") ? " · " + Mg.part.days + " days, to " +
+            Mg.part.through : "") + "</span>");
       });
       c.addEventListener("mousemove", moveTip);
       c.addEventListener("mouseleave", hideTip);

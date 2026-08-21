@@ -98,7 +98,30 @@
   justify-content:flex-end; padding-right:7px; font-variant-numeric:tabular-nums; }
 .heat .hh { color:var(--ink-faint); text-align:center; padding-bottom:3px; }
 .heat .cell { aspect-ratio:1.5; border-radius:3px; background:var(--surface-2);
-  cursor:default; transition:transform .12s var(--ease-out); }
+  cursor:default; transition:transform .12s var(--ease-out);
+  display:flex; align-items:center; justify-content:center;
+  font-variant-numeric:tabular-nums; font-size:11px; font-weight:620;
+  letter-spacing:-.01em; line-height:1; }
+/* Below this the cells are too narrow to hold three digits, so the grid falls
+   back to what it was before: colour alone, with the number in the tooltip. */
+@media (max-width:900px) { .heat .cell span { display:none; } }
+
+/* The month still running. The ring does the work — hatching alone disappears
+   against the yellow band, which is where a Beijing month most often lands —
+   and it rides on currentColor, so it is the same ink the digits already use
+   and inherits their contrast for free. */
+.heat .cell.part { box-shadow:inset 0 0 0 1.5px currentColor;
+  background-image:repeating-linear-gradient(45deg,
+    transparent 0 3px, var(--hatch) 3px 5px); }
+.heatnote { display:flex; align-items:center; gap:7px; margin-top:9px;
+  font-size:11.5px; color:var(--ink-muted); }
+.heatnote b { color:var(--ink); font-weight:640; }
+/* The swatch carries both marks the cell carries, ring included. Showing only
+   the hatch would explain a mark the reader cannot find on the pale bands. */
+.heatnote i { flex:none; width:17px; height:12px; border-radius:3px;
+  box-shadow:inset 0 0 0 1.5px var(--ink-muted);
+  background:var(--surface-3); background-image:repeating-linear-gradient(45deg,
+    transparent 0 3px, var(--ink-faint) 3px 5px); }
 .heat .cell[data-v]:hover { transform:scale(1.18); z-index:2; position:relative; }
 
 /* the distribution */

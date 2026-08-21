@@ -5,6 +5,7 @@ breakpoint tables, and derives every AQI in the browser — which is what makes
 the scale toggle instantaneous and, more to the point, guarantees the two scales
 are judging the same numbers rather than two separately-rounded ones.
 """
+import calendar
 from collections import defaultdict
 from datetime import datetime
 
@@ -90,16 +91,38 @@ def payload(hourly, live, source_html, map_note):
     by_year_days = [{"y": y, "d": [round(v, 1) for v in by_year[y]]}
                     for y in sorted(by_year) if carries_a_mean(y)]
 
-    # Year x month grid.
+    # Year x month grid. Twenty days is the bar for a settled month: below it a
+    # mean says more about which days the feed happened to deliver than about
+    # the month, and the two months that fail it (Apr 2014, May 2017) are week-
+    # long upstream outages, not thin coverage.
     mgrid = defaultdict(lambda: defaultdict(list))
     for d in days:
         mgrid[int(d[:4])][int(d[4:6])].append(daily[d]["mean"])
     myears = sorted(mgrid)
+
+    # The month still running is the one exception. It cannot clear the bar for
+    # most of its life, and "how is this month going" is worth answering, so it
+    # is shown from its first day and marked as unfinished — the same bargain
+    # the annual chart and London's month cards already strike with a part-year.
+    # ...unless the record has reached the last day of it, in which case the
+    # month has finished and the exception no longer applies.
+    py, pm = (int(days[-1][:4]), int(days[-1][4:6])) if days else (None, None)
+    if py is not None and int(days[-1][6:8]) == calendar.monthrange(py, pm)[1]:
+        py, pm = None, None
+
+    def mmean(y, m):
+        vals = mgrid[y].get(m, [])
+        if not vals or (len(vals) < 20 and (y, m) != (py, pm)):
+            return None
+        return round(sum(vals) / len(vals), 1)
+
     monthly = {
         "years": myears,
-        "v": [[round(sum(mgrid[y][m]) / len(mgrid[y][m]), 1)
-               if len(mgrid[y].get(m, [])) >= 20 else None
-               for m in range(1, 13)] for y in myears],
+        "v": [[mmean(y, m) for m in range(1, 13)] for y in myears],
+        "part": None if py is None else {
+            "y": py, "m": pm - 1, "days": len(mgrid[py].get(pm, [])),
+            "through": datetime.strptime(days[-1], "%Y%m%d").strftime("%-d %b"),
+        },
     }
 
     # Seasonal and diurnal profiles, over whole complete years only: a part-year

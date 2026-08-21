@@ -15,14 +15,14 @@
 <meta property="og:title" content="Weather — London and Beijing, measured">
 <meta property="og:description" content="Live air quality in Beijing and the long temperature record in both cities, from the instruments themselves. Updated every day.">
 <meta property="og:url" content="https://weather.akguo.com">
-<meta property="og:image" content="https://weather.akguo.com/social.png?v=20260817">
+<meta property="og:image" content="https://weather.akguo.com/social.png?v=20260820">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Two panels: London&#x27;s hot days per year rising since 1960, and Beijing&#x27;s PM2.5 falling since 2014">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Weather — London and Beijing, measured">
 <meta name="twitter:description" content="Live air quality in Beijing and the long temperature record in both cities, from the instruments themselves. Updated every day.">
-<meta name="twitter:image" content="https://weather.akguo.com/social.png?v=20260817">
+<meta name="twitter:image" content="https://weather.akguo.com/social.png?v=20260820">
 <title>Weather — London and Beijing, measured</title>
 <script>
 (function(){try{var t=localStorage.getItem('theme');
@@ -67,6 +67,19 @@ if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)
     --aqi-1:#39a852; --aqi-2:#d4a017; --aqi-3:#ef8033; --aqi-4:#e0483f;
     --aqi-5:#9c4fbf; --aqi-6:#8c2740;
 
+    /* Ink for text sitting *on* a category fill. Black holds on the first four
+       swatches and white on the last two; the flip happens where the ramp turns
+       purple. Every pairing here clears 4.5:1, checked against both themes. */
+    --aqi-1-ink:#12101a; --aqi-2-ink:#12101a; --aqi-3-ink:#12101a;
+    --aqi-4-ink:#12101a; --aqi-5-ink:#ffffff; --aqi-6-ink:#ffffff;
+
+    /* Hatching for an unfinished month. It runs opposite the ink, never with
+       it: stripes drawn toward the ink drag the fill under the digits and cost
+       contrast, while stripes drawn away from it buy a little. */
+    --aqi-1-hatch:rgba(255,255,255,.38); --aqi-2-hatch:rgba(255,255,255,.38);
+    --aqi-3-hatch:rgba(255,255,255,.38); --aqi-4-hatch:rgba(255,255,255,.38);
+    --aqi-5-hatch:rgba(0,0,0,.34); --aqi-6-hatch:rgba(0,0,0,.34);
+
     /* geometry */
     --r-xs:10px; --r-sm:14px; --r-md:24px; --r-lg:30px; --r-xl:38px; --r-full:9999px;
 
@@ -100,6 +113,11 @@ if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)
     --night-1:#6fbcf0; --night-2:#4d92dd; --day-1:#ffab5c; --day-2:#ff6b62;
     --aqi-1:#4ed16a; --aqi-2:#f2ca5c; --aqi-3:#ff9f4a; --aqi-4:#ff6b62;
     --aqi-5:#c07ae0; --aqi-6:#d4566f;
+    --aqi-1-ink:#12101a; --aqi-2-ink:#12101a; --aqi-3-ink:#12101a;
+    --aqi-4-ink:#12101a; --aqi-5-ink:#12101a; --aqi-6-ink:#12101a;
+    --aqi-1-hatch:rgba(255,255,255,.38); --aqi-2-hatch:rgba(255,255,255,.38);
+    --aqi-3-hatch:rgba(255,255,255,.38); --aqi-4-hatch:rgba(255,255,255,.38);
+    --aqi-5-hatch:rgba(255,255,255,.38); --aqi-6-hatch:rgba(255,255,255,.38);
     --shadow-1:0 1px 2px rgba(0,0,0,.5);
     --shadow-2:0 4px 16px -4px rgba(0,0,0,.6), 0 1px 3px rgba(0,0,0,.4);
     --shadow-3:0 12px 40px -8px rgba(0,0,0,.7), 0 2px 8px rgba(0,0,0,.4);
@@ -119,6 +137,11 @@ if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)
     --night-1:#6fbcf0; --night-2:#4d92dd; --day-1:#ffab5c; --day-2:#ff6b62;
     --aqi-1:#4ed16a; --aqi-2:#f2ca5c; --aqi-3:#ff9f4a; --aqi-4:#ff6b62;
     --aqi-5:#c07ae0; --aqi-6:#d4566f;
+    --aqi-1-ink:#12101a; --aqi-2-ink:#12101a; --aqi-3-ink:#12101a;
+    --aqi-4-ink:#12101a; --aqi-5-ink:#12101a; --aqi-6-ink:#12101a;
+    --aqi-1-hatch:rgba(255,255,255,.38); --aqi-2-hatch:rgba(255,255,255,.38);
+    --aqi-3-hatch:rgba(255,255,255,.38); --aqi-4-hatch:rgba(255,255,255,.38);
+    --aqi-5-hatch:rgba(255,255,255,.38); --aqi-6-hatch:rgba(255,255,255,.38);
     --shadow-1:0 1px 2px rgba(0,0,0,.5);
     --shadow-2:0 4px 16px -4px rgba(0,0,0,.6), 0 1px 3px rgba(0,0,0,.4);
     --shadow-3:0 12px 40px -8px rgba(0,0,0,.7), 0 2px 8px rgba(0,0,0,.4);
@@ -168,6 +191,9 @@ if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)
   h2 { font-size:clamp(21px,3vw,27px); line-height:1.12; }
   h3 { font-size:17px; line-height:1.3; letter-spacing:-0.01em; }
   p { margin:0; }
+  /* figure carries a UA default of `1em 40px`, which quietly inset every chart
+     card by 80px against the tiles above it. */
+  figure, figcaption { margin:0; }
   .lede { font-size:clamp(15.5px,1.9vw,17px); color:var(--ink-muted); max-width:62ch; }
   .muted { color:var(--ink-muted); }
   .faint { color:var(--ink-faint); }
@@ -362,6 +388,29 @@ if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)
   .dock a[aria-current="page"] .lab { font-weight:660; }
   .dock .sep { width:1px; align-self:stretch; margin:6px 4px; background:var(--separator); }
 
+  /* Desktop navigation. Deliberately not styled as a pill: the pages already
+     carry segmented toggles for views and scales, and a third pill in the
+     chrome would read as one more control rather than as where you are. A nav
+     bar underlines the current page and leaves it at that. */
+  .mainnav { display:none; align-items:center; gap:20px; margin-left:8px; }
+  .mainnav a { position:relative; padding:3px 1px; font-size:14px; font-weight:560;
+    color:var(--ink-faint); text-decoration:none; transition:color .15s var(--ease-out); }
+  .mainnav a:hover { color:var(--ink); text-decoration:none; }
+  .mainnav a[aria-current="page"] { color:var(--ink); font-weight:660; }
+  .mainnav a[aria-current="page"]::after { content:""; position:absolute; left:0; right:0;
+    bottom:-7px; height:2px; border-radius:2px; background:var(--accent); }
+  .topbar .theme-btn { display:none; }
+
+  /* One breakpoint decides which navigation the page has, and only one of the
+     two is ever in the document's flow. 1024px is where the budget app makes
+     the same call. */
+  @media (min-width:1024px) {
+    .mainnav { display:flex; }
+    .topbar .theme-btn { display:inline-flex; }
+    .dockwrap { display:none; }
+    .wrap { padding-bottom:clamp(28px,4vw,48px); }
+  }
+
   .cities { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:clamp(14px,2.5vw,20px); }
   @media (max-width:740px) { .cities { grid-template-columns:1fr; } }
 
@@ -411,7 +460,7 @@ if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)
 </head>
 <body>
 <div class="wrap">
-  <header class="topbar"><a class="brand" href="/"><svg class='brand-mark' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="wxmark" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6f6dff"/><stop offset="1" stop-color="#2ea8bf"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#wxmark)"/><g fill="none" stroke="#fff" stroke-linecap="round"><path d="M14 42c6-13 12-19 18-19s12 6 18 19" stroke-width="5"/><path d="M20 49h24" stroke-width="4.5" stroke-opacity=".55"/><circle cx="32" cy="30" r="3.5" fill="#fff" stroke="none"/></g></svg><span>Weather</span></a><span class="spacer"></span><span class="stamp">rebuilt 18 Aug</span></header>
+  <header class="topbar"><a class="brand" href="/"><svg class='brand-mark' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="wxmark" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6f6dff"/><stop offset="1" stop-color="#2ea8bf"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#wxmark)"/><g fill="none" stroke="#fff" stroke-linecap="round"><path d="M14 42c6-13 12-19 18-19s12 6 18 19" stroke-width="5"/><path d="M20 49h24" stroke-width="4.5" stroke-opacity=".55"/><circle cx="32" cy="30" r="3.5" fill="#fff" stroke="none"/></g></svg><span>Weather</span></a><nav class="mainnav" aria-label="Sections"><a href="/" aria-current="page">Overview</a><a href="/london">London</a><a href="/beijing">Beijing</a></nav><span class="spacer"></span><span class="stamp">rebuilt 21 Aug</span><button class="iconbtn pressable theme-btn" aria-label="Switch colour theme" title="Theme"><svg class="glyph" viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18zm0 2.2v13.6a6.8 6.8 0 0 1 0-13.6z"/></svg></button></header>
   <div class="hero">
     <p class="kicker">Two cities, two instruments</p>
     <h1>What the thermometers and the monitors actually say</h1>
@@ -429,8 +478,8 @@ if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)
         <span class="unit">days</span>
       </div>
       <div class="verdict">Very hot days ≥ 30 °C</div>
-      <p class="sub">So far in 2026, to 17 Aug — <b>1st</b> of 67 years on record for the same window.</p>
-      <div class="spark"><svg viewBox="0 0 300 56" preserveAspectRatio="none" aria-hidden="true"><path d="M 0,56 L 0.0,45.4 L 7.7,50.5 L 15.4,14.0 L 23.1,25.0 L 30.8,37.4 L 38.5,38.1 L 46.2,44.0 L 53.8,30.8 L 61.5,18.4 L 69.2,33.7 L 76.9,29.4 L 84.6,45.4 L 92.3,30.1 L 100.0,43.2 L 107.7,33.7 L 115.4,41.8 L 123.1,22.8 L 130.8,36.7 L 138.5,30.8 L 146.2,24.3 L 153.8,52.0 L 161.5,43.2 L 169.2,39.6 L 176.9,32.3 L 184.6,37.4 L 192.3,38.1 L 200.0,30.8 L 207.7,35.2 L 215.4,40.3 L 223.1,32.3 L 230.8,35.2 L 238.5,10.4 L 246.2,30.1 L 253.8,19.9 L 261.5,39.6 L 269.2,20.6 L 276.9,25.7 L 284.6,35.2 L 292.3,14.8 L 300.0,6.0 L 300,56 Z" fill="var(--day-1)" fill-opacity=".14"/><path d="M 0.0,45.4 L 7.7,50.5 L 15.4,14.0 L 23.1,25.0 L 30.8,37.4 L 38.5,38.1 L 46.2,44.0 L 53.8,30.8 L 61.5,18.4 L 69.2,33.7 L 76.9,29.4 L 84.6,45.4 L 92.3,30.1 L 100.0,43.2 L 107.7,33.7 L 115.4,41.8 L 123.1,22.8 L 130.8,36.7 L 138.5,30.8 L 146.2,24.3 L 153.8,52.0 L 161.5,43.2 L 169.2,39.6 L 176.9,32.3 L 184.6,37.4 L 192.3,38.1 L 200.0,30.8 L 207.7,35.2 L 215.4,40.3 L 223.1,32.3 L 230.8,35.2 L 238.5,10.4 L 246.2,30.1 L 253.8,19.9 L 261.5,39.6 L 269.2,20.6 L 276.9,25.7 L 284.6,35.2 L 292.3,14.8 L 300.0,6.0" fill="none" stroke="var(--day-1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg></div>
+      <p class="sub">So far in 2026, to 20 Aug — <b>1st</b> of 67 years on record for the same window.</p>
+      <div class="spark"><svg viewBox="0 0 300 56" preserveAspectRatio="none" aria-hidden="true"><path d="M 0,56 L 0.0,45.6 L 7.7,50.6 L 15.4,15.2 L 23.1,25.8 L 30.8,37.8 L 38.5,38.6 L 46.2,44.2 L 53.8,31.5 L 61.5,19.4 L 69.2,34.3 L 76.9,30.1 L 84.6,45.6 L 92.3,30.8 L 100.0,43.5 L 107.7,34.3 L 115.4,42.1 L 123.1,23.7 L 130.8,37.1 L 138.5,31.5 L 146.2,25.1 L 153.8,52.0 L 161.5,43.5 L 169.2,40.0 L 176.9,32.9 L 184.6,37.8 L 192.3,38.6 L 200.0,31.5 L 207.7,35.7 L 215.4,40.7 L 223.1,32.9 L 230.8,35.7 L 238.5,11.7 L 246.2,30.8 L 253.8,20.9 L 261.5,40.0 L 269.2,21.6 L 276.9,26.5 L 284.6,35.7 L 292.3,15.9 L 300.0,6.0 L 300,56 Z" fill="var(--day-1)" fill-opacity=".14"/><path d="M 0.0,45.6 L 7.7,50.6 L 15.4,15.2 L 23.1,25.8 L 30.8,37.8 L 38.5,38.6 L 46.2,44.2 L 53.8,31.5 L 61.5,19.4 L 69.2,34.3 L 76.9,30.1 L 84.6,45.6 L 92.3,30.8 L 100.0,43.5 L 107.7,34.3 L 115.4,42.1 L 123.1,23.7 L 130.8,37.1 L 138.5,31.5 L 146.2,25.1 L 153.8,52.0 L 161.5,43.5 L 169.2,40.0 L 176.9,32.9 L 184.6,37.8 L 192.3,38.6 L 200.0,31.5 L 207.7,35.7 L 215.4,40.7 L 223.1,32.9 L 230.8,35.7 L 238.5,11.7 L 246.2,30.8 L 253.8,20.9 L 261.5,40.0 L 269.2,21.6 L 276.9,26.5 L 284.6,35.7 L 292.3,15.9 L 300.0,6.0" fill="none" stroke="var(--day-1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg></div>
       <span class="go">Open the record
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
@@ -441,11 +490,11 @@ if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)
       <div class="name">Beijing</div>
       <div class="place">City monitoring network · live</div>
       <div class="headline">
-        <span class="big display" id="homeAqi">58</span>
+        <span class="big display" id="homeAqi">94</span>
         <span class="unit">US EPA AQI</span>
       </div>
       <div class="verdict" id="homeCat">Moderate</div>
-      <p class="sub" id="homeSub">PM2.5 <b>13 µg/m³</b> over the last 24 hours, averaged across <b>23</b> stations. 18 Aug, 21:00</p>
+      <p class="sub" id="homeSub">PM2.5 <b>32 µg/m³</b> over the last 24 hours, averaged across <b>23</b> stations. 22 Aug, 03:00</p>
       <div class="spark"><svg viewBox="0 0 300 56" preserveAspectRatio="none" aria-hidden="true"><path d="M 0,56 L 0.0,6.0 L 25.0,10.8 L 50.0,17.5 L 75.0,27.5 L 100.0,33.2 L 125.0,40.4 L 150.0,43.7 L 175.0,46.9 L 200.0,49.8 L 225.0,46.6 L 250.0,49.1 L 275.0,52.0 L 300.0,51.0 L 300,56 Z" fill="var(--aqi-1)" fill-opacity=".14"/><path d="M 0.0,6.0 L 25.0,10.8 L 50.0,17.5 L 75.0,27.5 L 100.0,33.2 L 125.0,40.4 L 150.0,43.7 L 175.0,46.9 L 200.0,49.8 L 225.0,46.6 L 250.0,49.1 L 275.0,52.0 L 300.0,51.0" fill="none" stroke="var(--aqi-1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg></div>
       <span class="go">Open air quality
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -461,7 +510,7 @@ if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)
     <div class="cols">
       <div>
         <h3>London temperature</h3>
-        <p>Official Met Office daily figures for Heathrow via <b>ECA&amp;D</b> (KNMI) through <b>30 Jun 2026</b>; the days after that are derived from the airport's own <b>METAR</b> reports via the Iowa Environmental Mesonet, current to <b>17 Aug 2026</b>. METAR-derived maxima run a little below the official figures on the hottest days — half-hourly sampling misses a brief afternoon peak — so this year's tail is a close estimate, not the final count.</p>
+        <p>Official Met Office daily figures for Heathrow via <b>ECA&amp;D</b> (KNMI) through <b>30 Jun 2026</b>; the days after that are derived from the airport's own <b>METAR</b> reports via the Iowa Environmental Mesonet, current to <b>20 Aug 2026</b>. METAR-derived maxima run a little below the official figures on the hottest days — half-hourly sampling misses a brief afternoon peak — so this year's tail is a close estimate, not the final count.</p>
       </div>
       <div>
         <h3>Beijing temperature</h3>
@@ -511,22 +560,24 @@ if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)
     .catch(function () {});
 })();
 </script>
-<div class="dockwrap"><nav class="dock" aria-label="Sections"><a href="/" aria-current="page"><svg class="glyph" viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true"><path d="M3 10.2 12 3l9 7.2V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span class="lab">Overview</span></a><a href="/london"><svg class="glyph" viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true"><path d="M12 2 4 8v13h5v-6h6v6h5V8zM12 5.6 17 9.3V19h-1v-6H8v6H7V9.3z"/><path d="M11 10h2v2h-2z"/></svg><span class="lab">London</span></a><a href="/beijing"><svg class="glyph" viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true"><path d="M12 2 3 7h18zM5 9h14v10h2v2H3v-2h2zm4 2v8h2v-8zm4 0v8h2v-8z"/></svg><span class="lab">Beijing</span></a><span class="sep"></span><button id="themeBtn" class="pressable" aria-label="Switch colour theme" title="Theme"><svg class="glyph" viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18zm0 2.2v13.6a6.8 6.8 0 0 1 0-13.6z"/></svg><span class="lab">Theme</span></button></nav></div>
+<div class="dockwrap"><nav class="dock" aria-label="Sections"><a href="/" aria-current="page"><svg class="glyph" viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true"><path d="M3 10.2 12 3l9 7.2V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span class="lab">Overview</span></a><a href="/london"><svg class="glyph" viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true"><path d="M12 2 4 8v13h5v-6h6v6h5V8zM12 5.6 17 9.3V19h-1v-6H8v6H7V9.3z"/><path d="M11 10h2v2h-2z"/></svg><span class="lab">London</span></a><a href="/beijing"><svg class="glyph" viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true"><path d="M12 2 3 7h18zM5 9h14v10h2v2H3v-2h2zm4 2v8h2v-8zm4 0v8h2v-8z"/></svg><span class="lab">Beijing</span></a><span class="sep"></span><button class="pressable theme-btn" aria-label="Switch colour theme" title="Theme"><svg class="glyph" viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18zm0 2.2v13.6a6.8 6.8 0 0 1 0-13.6z"/></svg><span class="lab">Theme</span></button></nav></div>
 <script>
 (function(){
-  var btn=document.getElementById('themeBtn'); if(!btn) return;
+  var btns=[].slice.call(document.querySelectorAll('.theme-btn')); if(!btns.length) return;
   var root=document.documentElement;
   function cur(){ try{ return localStorage.getItem('theme')||'system'; }catch(e){ return 'system'; } }
   function apply(v){
     if(v==='system') root.removeAttribute('data-theme'); else root.setAttribute('data-theme',v);
     try{ v==='system'? localStorage.removeItem('theme') : localStorage.setItem('theme',v); }catch(e){}
-    btn.title='Theme: '+v;
-    btn.setAttribute('aria-label','Colour theme: '+v+'. Click to change.');
+    btns.forEach(function(b){
+      b.title='Theme: '+v;
+      b.setAttribute('aria-label','Colour theme: '+v+'. Click to change.');
+    });
   }
   apply(cur());
-  btn.addEventListener('click',function(){
+  btns.forEach(function(b){ b.addEventListener('click',function(){
     var order=['system','light','dark']; apply(order[(order.indexOf(cur())+1)%3]);
-  });
+  }); });
 })();
 </script>
 </body>

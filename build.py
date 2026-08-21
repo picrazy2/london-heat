@@ -340,7 +340,7 @@ def main():
           .replace("__TEMP_JS__", temp_js)
           .replace("__TEMP_DATA__", render.j(ldn))
           .replace("__FIRSTYEAR__", str(ldn_rec.years[0]))
-          .replace("__TOPBAR__", design.topbar(f"through {fmt_short(ldn_last)}")))
+          .replace("__TOPBAR__", design.topbar(f"through {fmt_short(ldn_last)}", "/london")))
     render.emit(SITE, "london.html", t, path="/london", stamp=stamp, image="social.png")
 
     # ── /beijing ──
@@ -349,7 +349,7 @@ def main():
           .replace("__TEMP_HTML__", temp_html).replace("__AIR_HTML__", air_html)
           .replace("__TEMP_JS__", temp_js).replace("__AIR_JS__", air_js)
           .replace("__TEMP_DATA__", render.j(bjt)).replace("__AIR_DATA__", render.j(air))
-          .replace("__TOPBAR__", design.topbar(f"through {fmt_short(bj_rec.cur_date)}")))
+          .replace("__TOPBAR__", design.topbar(f"through {fmt_short(bj_rec.cur_date)}", "/beijing")))
     render.emit(SITE, "beijing.html", t, path="/beijing", stamp=stamp,
                 image="social-beijing.png",
                 head_extra='<link rel="stylesheet" href="/vendor/leaflet/leaflet.css">\n',
@@ -482,7 +482,7 @@ def home_page(ldn_rec, ldn, bj_rec, air, hourly):
         f'<div class="l">{l}</div></div>' for c, v, l in facts[:4])
 
     ldn_yrs = ldn_rec.years
-    return (t.replace("__TOPBAR__", design.topbar(f"rebuilt {date.today().strftime('%-d %b')}"))
+    return (t.replace("__TOPBAR__", design.topbar(f"rebuilt {date.today().strftime('%-d %b')}", "/"))
              .replace("__LDN_TINT__", best_m.css)
              .replace("__LDN_RANGE__", f"{ldn_yrs[0]}–{ldn_yrs[-1]}")
              .replace("__LDN_BIG__", str(best_now))

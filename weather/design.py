@@ -54,6 +54,11 @@ _DARK = """
     --night-1:#6fbcf0; --night-2:#4d92dd; --day-1:#ffab5c; --day-2:#ff6b62;
     --aqi-1:#4ed16a; --aqi-2:#f2ca5c; --aqi-3:#ff9f4a; --aqi-4:#ff6b62;
     --aqi-5:#c07ae0; --aqi-6:#d4566f;
+    --aqi-1-ink:#12101a; --aqi-2-ink:#12101a; --aqi-3-ink:#12101a;
+    --aqi-4-ink:#12101a; --aqi-5-ink:#12101a; --aqi-6-ink:#12101a;
+    --aqi-1-hatch:rgba(255,255,255,.38); --aqi-2-hatch:rgba(255,255,255,.38);
+    --aqi-3-hatch:rgba(255,255,255,.38); --aqi-4-hatch:rgba(255,255,255,.38);
+    --aqi-5-hatch:rgba(255,255,255,.38); --aqi-6-hatch:rgba(255,255,255,.38);
     --shadow-1:0 1px 2px rgba(0,0,0,.5);
     --shadow-2:0 4px 16px -4px rgba(0,0,0,.6), 0 1px 3px rgba(0,0,0,.4);
     --shadow-3:0 12px 40px -8px rgba(0,0,0,.7), 0 2px 8px rgba(0,0,0,.4);
@@ -97,6 +102,19 @@ TOKENS = """
        still reads as the one people know. */
     --aqi-1:#39a852; --aqi-2:#d4a017; --aqi-3:#ef8033; --aqi-4:#e0483f;
     --aqi-5:#9c4fbf; --aqi-6:#8c2740;
+
+    /* Ink for text sitting *on* a category fill. Black holds on the first four
+       swatches and white on the last two; the flip happens where the ramp turns
+       purple. Every pairing here clears 4.5:1, checked against both themes. */
+    --aqi-1-ink:#12101a; --aqi-2-ink:#12101a; --aqi-3-ink:#12101a;
+    --aqi-4-ink:#12101a; --aqi-5-ink:#ffffff; --aqi-6-ink:#ffffff;
+
+    /* Hatching for an unfinished month. It runs opposite the ink, never with
+       it: stripes drawn toward the ink drag the fill under the digits and cost
+       contrast, while stripes drawn away from it buy a little. */
+    --aqi-1-hatch:rgba(255,255,255,.38); --aqi-2-hatch:rgba(255,255,255,.38);
+    --aqi-3-hatch:rgba(255,255,255,.38); --aqi-4-hatch:rgba(255,255,255,.38);
+    --aqi-5-hatch:rgba(0,0,0,.34); --aqi-6-hatch:rgba(0,0,0,.34);
 
     /* geometry */
     --r-xs:10px; --r-sm:14px; --r-md:24px; --r-lg:30px; --r-xl:38px; --r-full:9999px;
@@ -167,6 +185,9 @@ BASE = """
   h2 { font-size:clamp(21px,3vw,27px); line-height:1.12; }
   h3 { font-size:17px; line-height:1.3; letter-spacing:-0.01em; }
   p { margin:0; }
+  /* figure carries a UA default of `1em 40px`, which quietly inset every chart
+     card by 80px against the tiles above it. */
+  figure, figcaption { margin:0; }
   .lede { font-size:clamp(15.5px,1.9vw,17px); color:var(--ink-muted); max-width:62ch; }
   .muted { color:var(--ink-muted); }
   .faint { color:var(--ink-faint); }
@@ -363,6 +384,29 @@ CHROME = """
   .dock .lab { font-size:11px; font-weight:560; line-height:1.1; }
   .dock a[aria-current="page"] .lab { font-weight:660; }
   .dock .sep { width:1px; align-self:stretch; margin:6px 4px; background:var(--separator); }
+
+  /* Desktop navigation. Deliberately not styled as a pill: the pages already
+     carry segmented toggles for views and scales, and a third pill in the
+     chrome would read as one more control rather than as where you are. A nav
+     bar underlines the current page and leaves it at that. */
+  .mainnav { display:none; align-items:center; gap:20px; margin-left:8px; }
+  .mainnav a { position:relative; padding:3px 1px; font-size:14px; font-weight:560;
+    color:var(--ink-faint); text-decoration:none; transition:color .15s var(--ease-out); }
+  .mainnav a:hover { color:var(--ink); text-decoration:none; }
+  .mainnav a[aria-current="page"] { color:var(--ink); font-weight:660; }
+  .mainnav a[aria-current="page"]::after { content:""; position:absolute; left:0; right:0;
+    bottom:-7px; height:2px; border-radius:2px; background:var(--accent); }
+  .topbar .theme-btn { display:none; }
+
+  /* One breakpoint decides which navigation the page has, and only one of the
+     two is ever in the document's flow. 1024px is where the budget app makes
+     the same call. */
+  @media (min-width:1024px) {
+    .mainnav { display:flex; }
+    .topbar .theme-btn { display:inline-flex; }
+    .dockwrap { display:none; }
+    .wrap { padding-bottom:clamp(28px,4vw,48px); }
+  }
 """
 
 
@@ -390,6 +434,11 @@ def _glyph(name):
             f'fill="currentColor" aria-hidden="true">{_GLYPHS[name]}</svg>')
 
 
+_THEME_GLYPH = ('<svg class="glyph" viewBox="0 0 24 24" width="19" height="19" '
+                'fill="currentColor" aria-hidden="true">'
+                '<path d="M12 3a9 9 0 1 0 0 18zm0 2.2v13.6a6.8 6.8 0 0 1 0-13.6z"/></svg>')
+
+
 def dock(here):
     """The floating tab bar. `here` is the path of the current page, or None."""
     links = "".join(
@@ -398,18 +447,23 @@ def dock(here):
         for href, label, g in NAV)
     return ('<div class="dockwrap"><nav class="dock" aria-label="Sections">'
             f'{links}<span class="sep"></span>'
-            '<button id="themeBtn" class="pressable" aria-label="Switch colour theme" title="Theme">'
-            '<svg class="glyph" viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true">'
-            '<path d="M12 3a9 9 0 1 0 0 18zm0 2.2v13.6a6.8 6.8 0 0 1 0-13.6z"/></svg>'
+            '<button class="pressable theme-btn" aria-label="Switch colour theme" title="Theme">'
+            f'{_THEME_GLYPH}'
             '<span class="lab">Theme</span></button></nav></div>')
 
 
-def topbar(stamp_html=""):
+def topbar(stamp_html="", here=None):
     mark = FAVICON.replace('\n', '').replace('  ', '')
+    nav = "".join(
+        f'<a href="{href}"{" aria-current=\"page\"" if href == here else ""}>{label}</a>'
+        for href, label, _ in NAV)
     return (f'<header class="topbar"><a class="brand" href="/">'
             f'{mark.replace("<svg ", "<svg class=\'brand-mark\' ", 1)}'
             f'<span>{SITE_NAME}</span></a>'
-            f'<span class="spacer"></span><span class="stamp">{stamp_html}</span></header>')
+            f'<nav class="mainnav" aria-label="Sections">{nav}</nav>'
+            f'<span class="spacer"></span><span class="stamp">{stamp_html}</span>'
+            f'<button class="iconbtn pressable theme-btn" aria-label="Switch colour theme" '
+            f'title="Theme">{_THEME_GLYPH}</button></header>')
 
 
 # The theme toggle is three-state (system → light → dark) and is applied before
@@ -422,18 +476,20 @@ if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)
 
 THEME_JS = """
 (function(){
-  var btn=document.getElementById('themeBtn'); if(!btn) return;
+  var btns=[].slice.call(document.querySelectorAll('.theme-btn')); if(!btns.length) return;
   var root=document.documentElement;
   function cur(){ try{ return localStorage.getItem('theme')||'system'; }catch(e){ return 'system'; } }
   function apply(v){
     if(v==='system') root.removeAttribute('data-theme'); else root.setAttribute('data-theme',v);
     try{ v==='system'? localStorage.removeItem('theme') : localStorage.setItem('theme',v); }catch(e){}
-    btn.title='Theme: '+v;
-    btn.setAttribute('aria-label','Colour theme: '+v+'. Click to change.');
+    btns.forEach(function(b){
+      b.title='Theme: '+v;
+      b.setAttribute('aria-label','Colour theme: '+v+'. Click to change.');
+    });
   }
   apply(cur());
-  btn.addEventListener('click',function(){
+  btns.forEach(function(b){ b.addEventListener('click',function(){
     var order=['system','light','dark']; apply(order[(order.indexOf(cur())+1)%3]);
-  });
+  }); });
 })();
 """
