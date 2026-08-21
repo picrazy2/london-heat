@@ -7,7 +7,7 @@ are judging the same numbers rather than two separately-rounded ones.
 """
 import calendar
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from .. import aqi
 from ..sources import pm25
@@ -86,11 +86,6 @@ def payload(hourly, live, source_html, map_note):
         annual.append({"y": y, "mean": round(sum(vals) / len(vals), 1),
                        "n": len(vals), "partial": y == cur_year})
 
-    # Every daily mean, grouped by year, so the browser can re-band them on the
-    # fly when the scale changes. ~4,600 numbers; smaller than one chart's JS.
-    by_year_days = [{"y": y, "d": [round(v, 1) for v in by_year[y]]}
-                    for y in sorted(by_year) if carries_a_mean(y)]
-
     # Year x month grid. Twenty days is the bar for a settled month: below it a
     # mean says more about which days the feed happened to deliver than about
     # the month, and the two months that fail it (Apr 2014, May 2017) are week-
@@ -125,16 +120,42 @@ def payload(hourly, live, source_html, map_note):
         },
     }
 
-    # Seasonal and diurnal profiles, over whole complete years only: a part-year
-    # contributes its winter but not its autumn, which tilts every average.
-    whole = {y for y in by_year if len(by_year[y]) >= 330}
-    whole_hourly = {d: v for d, v in hourly.items() if int(d[:4]) in whole}
-    season_acc = defaultdict(list)
-    for d in days:
-        if int(d[:4]) in whole:
-            season_acc[int(d[4:6])].append(daily[d]["mean"])
-    season = [round(sum(season_acc[m]) / len(season_acc[m]), 1) if season_acc[m] else None
-              for m in range(1, 13)]
+    # One dated series, one slot per calendar day from the first reading to the
+    # last, null where the feed gave us nothing usable. Every other daily-grained
+    # thing the page draws — the band chart, the histogram, the seasonal profile,
+    # the history explorer — is a filter over this, so there is one array to keep
+    # honest instead of four that can disagree.
+    first_d = datetime.strptime(days[0], "%Y%m%d").date()
+    last_d = datetime.strptime(days[-1], "%Y%m%d").date()
+    span = (last_d - first_d).days + 1
+    dseries = []
+    for i in range(span):
+        k = (first_d + timedelta(days=i)).strftime("%Y%m%d")
+        dseries.append(daily[k]["mean"] if k in daily else None)
+
+    # The diurnal shape, per year, so the page can be asked about a window of
+    # years rather than only about the whole record. Weighting by the day count
+    # recovers the pooled profile to within rounding: hour coverage inside a
+    # year is near-uniform, since a day that survives the 18-hour rule brings
+    # nearly all of its hours with it.
+    # A year is eligible when every month of it carries a fortnight or more.
+    # Counting days over the whole year instead would conflate two different
+    # things: 2017 lost a week of May to an outage and lands five days under a
+    # 330-day bar, but it is a finished year covering all twelve months, and its
+    # shape is sound. A year still running fails this on its empty months, which
+    # is the case the rule is actually for — a part-year brings its winter but
+    # not its autumn, and that tilts a seasonal profile.
+    whole = {y for y in mgrid
+             if all(len(mgrid[y].get(m, [])) >= 15 for m in range(1, 13))}
+    diurnal_years = {}
+    for y in sorted(whole):
+        hy = {d: v for d, v in hourly.items() if int(d[:4]) == y}
+        rel_days = sum(1 for v in hy.values()
+                       if len([x for x in v if x is not None]) >= 20)
+        diurnal_years[str(y)] = {
+            "all": pm25.diurnal(hy), "rel": pm25.diurnal_relative(hy),
+            "n": len(hy), "nr": rel_days,
+        }
 
     # The last three days of hourly readings, for the live trace. Built as one
     # flat run of (label, value, is_midnight) and then trimmed, so the axis marks
@@ -172,12 +193,9 @@ def payload(hourly, live, source_html, map_note):
     return {
         "scales": aqi.js_payload(),
         "annual": annual,
-        "byYear": by_year_days,
+        "daily": {"start": days[0], "v": dseries},
         "monthly": monthly,
-        "season": season,
-        "diurnal": {"all": pm25.diurnal(whole_hourly or hourly),
-                    "rel": pm25.diurnal_relative(whole_hourly or hourly)},
-        "allDaily": [daily[d]["mean"] for d in days],
+        "diurnalYears": diurnal_years,
         "recent": {"t": recent_t, "v": recent_v, "marks": marks},
         "live": live_block,
         "source": source_html,

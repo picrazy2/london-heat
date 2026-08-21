@@ -6,13 +6,102 @@
    than showing a different measurement. */
 (function () {
   "use strict";
-  var A = window.AIR;
-  if (!A) return;
+  var A = window.AIR, WX = window.WX;
+  if (!A || !WX) return;
+
+  // Chrome behaviour is shared with the temperature page; see design.CHROME_JS.
+  // Every control that changes what is on screen writes itself into the query
+  // string, so a view someone arrives at is a view they can send on. Aliased at
+  // the top because the history explorer wires its pickers further up the file
+  // than the view wiring runs.
+  var param = WX.param, setParam = WX.setParam, picker = WX.picker;
 
   var NS = "http://www.w3.org/2000/svg";
   var MABBR = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   var SCALE = "us";
   var tip = document.getElementById("tip");
+
+  /* ── the daily series ───────────────────────────────────────────────────
+     The build ships one contiguous run of daily means with a start date and a
+     null for every day the feed could not carry. Dates are recovered by walking
+     from the start rather than stored per day: 4,600 date strings would cost
+     more than the readings themselves, and the run has no gaps by construction.
+     Everything daily-grained on this page is a filter over DAYS. */
+  var DAYS = (function () {
+    var out = [], v = A.daily.v, s = A.daily.start;
+    var t = new Date(Date.UTC(+s.slice(0, 4), +s.slice(4, 6) - 1, +s.slice(6, 8)));
+    for (var i = 0; i < v.length; i++) {
+      out.push({ y: t.getUTCFullYear(), m: t.getUTCMonth(), d: t.getUTCDate(), v: v[i] });
+      t.setUTCDate(t.getUTCDate() + 1);
+    }
+    return out;
+  })();
+
+  // Years the record can speak for. `annual` is already filtered to the years
+  // complete enough to carry a mean, so it is the authority on which years the
+  // charts are allowed to draw rather than a second, drifting rule here.
+  var FULL_YEARS = A.annual.map(function (a) { return a.y; });
+  var LAST_YEAR = FULL_YEARS[FULL_YEARS.length - 1];
+
+  /* ── the comparison window ──────────────────────────────────────────────
+     The rhythm profiles ask what a day and a year look like, and the answer has
+     moved: averaging 2014 in with 2025 describes a city that no longer exists.
+     Only complete years are eligible — a part-year brings its winter but not
+     its autumn, which tilts a seasonal profile more than any window choice. */
+  var WHOLE_YEARS = Object.keys(A.diurnalYears).map(Number)
+    .sort(function (a, b) { return a - b; });
+  var WINDOWS = [
+    { k: "3",    lab: "Last 3 years",  pick: function () { return WHOLE_YEARS.slice(-3); } },
+    { k: "5",    lab: "Last 5 years",  pick: function () { return WHOLE_YEARS.slice(-5); } },
+    { k: "10",   lab: "Last 10 years", pick: function () { return WHOLE_YEARS.slice(-10); } },
+    // Not an arbitrary count: the enforcement of the 2013 action plan had worked
+    // through by 2017, and the record either side of it is two different cities.
+    { k: "2017", lab: "Since 2017",
+      pick: function () { return WHOLE_YEARS.filter(function (y) { return y >= 2017; }); } },
+    { k: "all",  lab: "Whole record",  pick: function () { return WHOLE_YEARS.slice(); } }
+  ];
+  var WIN = "5";
+  function windowDef() {
+    for (var i = 0; i < WINDOWS.length; i++) if (WINDOWS[i].k === WIN) return WINDOWS[i];
+    return WINDOWS[1];
+  }
+  function windowYears() {
+    var ys = windowDef().pick();
+    return ys.length ? ys : WHOLE_YEARS.slice();
+  }
+  function windowLabel() {
+    var ys = windowYears();
+    if (!ys.length) return "";
+    return ys.length === 1 ? String(ys[0]) : ys[0] + "–" + ys[ys.length - 1];
+  }
+
+  function daysIn(years) {
+    var keep = {};
+    years.forEach(function (y) { keep[y] = 1; });
+    return DAYS.filter(function (r) { return r.v != null && keep[r.y]; });
+  }
+  function valuesIn(years) {
+    return daysIn(years).map(function (r) { return r.v; });
+  }
+  // Twelve monthly means over a set of years, pooled across days rather than
+  // averaged over per-year monthly means: a month with more surviving days
+  // should count for more, which averaging the averages would throw away.
+  function seasonIn(years) {
+    var sum = new Array(12).fill(0), n = new Array(12).fill(0);
+    daysIn(years).forEach(function (r) { sum[r.m] += r.v; n[r.m]++; });
+    return sum.map(function (t, i) { return n[i] ? +(t / n[i]).toFixed(1) : null; });
+  }
+  // The diurnal shape over a set of years, recombined from the per-year
+  // profiles by day count. `key` is "all" or "rel".
+  function diurnalIn(years, key) {
+    var sum = new Array(24).fill(0), n = new Array(24).fill(0);
+    years.forEach(function (y) {
+      var p = A.diurnalYears[y]; if (!p) return;
+      var w = key === "rel" ? p.nr : p.n;
+      p[key].forEach(function (v, h) { if (v != null) { sum[h] += v * w; n[h] += w; } });
+    });
+    return sum.map(function (t, i) { return n[i] ? +(t / n[i]).toFixed(1) : null; });
+  }
 
   function el(n, a) {
     var e = document.createElementNS(NS, n);
@@ -353,7 +442,11 @@
      yellow, and the reader can watch the verdict move without the air moving. */
   function renderBands() {
     var host = document.getElementById("aqBands");
-    var years = A.byYear;
+    var grouped = {};
+    daysIn(FULL_YEARS).forEach(function (r) {
+      (grouped[r.y] || (grouped[r.y] = [])).push(r.v);
+    });
+    var years = FULL_YEARS.map(function (y) { return { y: y, d: grouped[y] || [] }; });
     var W = 940, H = 300, m = { t: 14, r: 20, b: 28, l: 36 };
     var pw = W - m.l - m.r, ph = H - m.t - m.b;
     var svg = el("svg", { viewBox: "0 0 " + W + " " + H, class: "chart chart-in",
@@ -506,7 +599,12 @@
   }
 
   function renderRhythm() {
-    var rel = A.diurnal.rel;
+    var ys = windowYears(), span = windowLabel();
+    var season = seasonIn(ys);
+    [].forEach.call(document.querySelectorAll("[data-win-label]"), function (n) {
+      n.textContent = span;
+    });
+    var rel = diurnalIn(ys, "rel");
     var hours = rel.map(function (_, i) { return i + "h"; });
     divergingChart("aqDiurnal", rel, hours,
       "PM2.5 by hour of day in Beijing, relative to each day's own average");
@@ -521,13 +619,14 @@
       " percentage points</b> — far less than the swing between seasons, which is why " +
       "a bad day in Beijing is usually a bad week.";
 
-    profileChart("aqSeason", A.season, MABBR, "month", "Mean PM2.5 by month in Beijing");
-    var worst = A.season.indexOf(Math.max.apply(null, A.season));
-    var best = A.season.indexOf(Math.min.apply(null, A.season));
+    profileChart("aqSeason", season, MABBR, "month",
+      "Mean PM2.5 by month in Beijing, " + span);
+    var worst = season.indexOf(Math.max.apply(null, season));
+    var best = season.indexOf(Math.min.apply(null, season));
     document.getElementById("aqSeasonCap").innerHTML =
       "<b>" + MABBR[worst] + "</b> is the worst month and <b>" + MABBR[best] +
-      "</b> the cleanest, a range of <b>" + (Math.max.apply(null, A.season) -
-      Math.min.apply(null, A.season)).toFixed(0) + " µg/m³</b>. Winter heating and still, " +
+      "</b> the cleanest, a range of <b>" + (Math.max.apply(null, season) -
+      Math.min.apply(null, season)).toFixed(0) + " µg/m³</b>. Winter heating and still, " +
       "cold air do most of that.";
 
     renderHist();
@@ -576,9 +675,211 @@
     host.innerHTML = ""; host.appendChild(svg);
   }
 
+  /* ── the history explorer ───────────────────────────────────────────────
+     One chart with three questions behind it: a year, a month, or one month
+     drawn from several years at once. All three are slices of DAYS, so none of
+     them can disagree with the trend view about what a day was. */
+  var HMODE = "year", HMONTH = 0, HYEAR = 0, HPICK = [];
+  // Distinct hues for overlaid years. Not the AQI ramp: these identify a series,
+  // they do not judge it, and reusing the ramp would imply a verdict.
+  var SERIES = ["--accent", "--secondary", "--positive", "--warning", "--aqi-3",
+                "--aqi-5", "--night-1", "--day-1"];
+
+  function histYears() {
+    var seen = {}, out = [];
+    DAYS.forEach(function (r) { if (r.v != null && !seen[r.y]) { seen[r.y] = 1; out.push(r.y); } });
+    return out;
+  }
+  function sliceOf(year, month) {
+    return DAYS.filter(function (r) {
+      return r.y === year && (month == null || r.m === month);
+    });
+  }
+
+  // A line over day-of-period, drawn once per series. `series` is
+  // [{lab, css, pts:[{i, v}], n}] and `span` is how many slots the axis holds.
+  function historyChart(series, span, xlab) {
+    var host = document.getElementById("aqHChart");
+    var W = 940, H = 300, m = { t: 16, r: 16, b: 30, l: 38 };
+    var pw = W - m.l - m.r, ph = H - m.t - m.b;
+    var vals = [];
+    series.forEach(function (s2) { s2.pts.forEach(function (p) { vals.push(p.v); }); });
+    if (!vals.length) { host.innerHTML = "<p class='cap'>Nothing recorded here.</p>"; return; }
+    var top = Math.max.apply(null, vals);
+    var max = Math.max(20, Math.ceil(top / 25) * 25);
+    var x = function (i) { return m.l + (span < 2 ? .5 : i / (span - 1)) * pw; };
+    var y = function (v) { return m.t + ph - Math.min(v, max) / max * ph; };
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, class: "chart chart-in",
+      role: "img", "aria-label": "Daily mean PM2.5, " + xlab });
+
+    var step = max > 150 ? 50 : max > 60 ? 25 : 10;
+    for (var g = 0; g <= max; g += step) {
+      svg.appendChild(el("line", { class: "gridline", x1: m.l, x2: m.l + pw, y1: y(g), y2: y(g) }));
+      svg.appendChild(txt(el("text", { class: "tick", x: m.l - 5, y: y(g) + 3,
+        "text-anchor": "end" }), g));
+    }
+    // The one threshold worth a line here: China's own 24-hour standard, which
+    // is what a day in Beijing is officially measured against. Read off the
+    // breakpoint table rather than typed in, so it cannot drift from the scale.
+    var std = A.scales.cn.bp[1][1];
+    if (std <= max) {
+      svg.appendChild(el("line", { class: "ref", x1: m.l, x2: m.l + pw, y1: y(std), y2: y(std) }));
+    }
+
+    var ticks = span > 60 ? 12 : span > 20 ? 6 : span;
+    for (var k = 0; k < ticks; k++) {
+      var idx = Math.round(k * (span - 1) / Math.max(1, ticks - 1));
+      svg.appendChild(txt(el("text", { class: "tick", x: x(idx), y: H - 10,
+        "text-anchor": "middle" }), span > 60 ? MABBR[Math.min(11, Math.floor(idx / 30.5))] : idx + 1));
+    }
+
+    series.forEach(function (s2) {
+      // Gaps stay gaps: a line drawn straight through a fortnight the feed never
+      // delivered would invent a fortnight of clean air.
+      var runs = [], cur = [];
+      for (var i = 0; i < span; i++) {
+        var hit = s2.at[i];
+        if (hit == null) { if (cur.length) { runs.push(cur); cur = []; } }
+        else cur.push(x(i) + "," + y(hit));
+      }
+      if (cur.length) runs.push(cur);
+      runs.forEach(function (r) {
+        if (r.length === 1) {
+          var xy = r[0].split(",");
+          svg.appendChild(el("circle", { cx: xy[0], cy: xy[1], r: 1.8, fill: "var(" + s2.css + ")" }));
+          return;
+        }
+        svg.appendChild(el("polyline", { points: r.join(" "), fill: "none",
+          stroke: "var(" + s2.css + ")", "stroke-width": series.length > 1 ? 1.6 : 1.9,
+          "stroke-linejoin": "round", "stroke-linecap": "round",
+          "stroke-opacity": series.length > 4 ? .85 : 1 }));
+      });
+    });
+    host.innerHTML = ""; host.appendChild(svg);
+  }
+
+  function renderHistory() {
+    var years = histYears();
+    var modeSel = document.getElementById("aqHMode");
+    var monthSel = document.getElementById("aqHMonth");
+    var yearSel = document.getElementById("aqHYear");
+    if (!modeSel) return;
+
+    if (!yearSel.options.length) {
+      yearSel.innerHTML = years.map(function (y) {
+        return "<option value='" + y + "'>" + y + "</option>";
+      }).join("");
+      monthSel.innerHTML = MABBR.map(function (mn, i) {
+        return "<option value='" + i + "'>" + mn + "</option>";
+      }).join("");
+    }
+    if (!HYEAR) HYEAR = years[years.length - 1];
+    yearSel.value = HYEAR; monthSel.value = HMONTH; modeSel.value = HMODE;
+    document.getElementById("aqHMonthWrap").hidden = HMODE === "year";
+    document.getElementById("aqHYearWrap").hidden = HMODE === "compare";
+    document.getElementById("aqHYearsCard").hidden = HMODE !== "compare";
+
+    var key = document.getElementById("aqHKey");
+    var title = document.getElementById("aqHTitle");
+    var stat = document.getElementById("aqHStat");
+    var cap = document.getElementById("aqHCap");
+
+    function statLine(rows) {
+      var v = rows.map(function (r) { return r.v; });
+      if (!v.length) return "no readings";
+      var mean = v.reduce(function (a, b) { return a + b; }, 0) / v.length;
+      return "<b>" + mean.toFixed(1) + "</b> µg/m³ mean · <b>" +
+        Math.max.apply(null, v).toFixed(0) + "</b> worst day · <b>" + v.length + "</b> days";
+    }
+
+    if (HMODE === "compare") {
+      HPICK = HPICK.filter(function (y) {
+        return sliceOf(y, HMONTH).some(function (r) { return r.v != null; });
+      });
+      if (!HPICK.length) HPICK = years.slice(-3);
+      var span = 31;
+      var series = HPICK.map(function (y, i) {
+        var rows = sliceOf(y, HMONTH), at = new Array(span).fill(null);
+        rows.forEach(function (r) { if (r.v != null) at[r.d - 1] = r.v; });
+        return { lab: String(y), css: SERIES[i % SERIES.length], at: at,
+                 pts: rows.filter(function (r) { return r.v != null; }) };
+      });
+      historyChart(series, span, MABBR[HMONTH] + " across years");
+      title.textContent = MABBR[HMONTH] + ", " + HPICK.length + " year" +
+        (HPICK.length === 1 ? "" : "s") + " overlaid";
+      key.innerHTML = series.map(function (s2) {
+        return "<span><i style='background:var(" + s2.css + ")'></i>" + s2.lab + "</span>";
+      }).join("");
+      var means = series.map(function (s2) {
+        var v = s2.pts.map(function (r) { return r.v; });
+        return { y: s2.lab, m: v.length ? v.reduce(function (a, b) { return a + b; }, 0) / v.length : null };
+      }).filter(function (r) { return r.m != null; });
+      means.sort(function (a, b) { return a.m - b.m; });
+      stat.innerHTML = "";
+      cap.innerHTML = means.length < 2 ? "Pick a second year to compare against." :
+        "Cleanest <b>" + means[0].y + "</b> at <b>" + means[0].m.toFixed(1) +
+        "</b> µg/m³, dirtiest <b>" + means[means.length - 1].y + "</b> at <b>" +
+        means[means.length - 1].m.toFixed(1) + "</b>. Same month, same city, " +
+        (means[means.length - 1].m / means[0].m).toFixed(1) + "× apart.";
+
+      var host = document.getElementById("aqHYears");
+      host.innerHTML = years.map(function (y) {
+        var i = HPICK.indexOf(y);
+        var css = i < 0 ? null : SERIES[i % SERIES.length];
+        // A year the record does not reach in this month is offered as nothing
+        // to choose. Letting it be picked would draw an empty line and leave
+        // the reader wondering which of the two things had gone wrong.
+        var has = sliceOf(y, HMONTH).some(function (r) { return r.v != null; });
+        return "<button type='button' aria-pressed='" + (i >= 0) + "' data-y='" + y + "'" +
+          (has ? "" : " disabled title='No readings in " + MABBR[HMONTH] + " " + y + "'") +
+          ">" + (css ? "<i style='background:var(" + css + ")'></i>" : "") + y + "</button>";
+      }).join("");
+      [].forEach.call(host.querySelectorAll("button"), function (b) {
+        b.addEventListener("click", function () {
+          var y = +b.dataset.y, i = HPICK.indexOf(y);
+          if (i >= 0) HPICK.splice(i, 1); else HPICK.push(y);
+          HPICK.sort(function (a, b2) { return a - b2; });
+          setParam("years", HPICK.join(","), "");
+          renderHistory();
+        });
+      });
+      return;
+    }
+
+    key.innerHTML = "";
+    stat.innerHTML = "";
+    if (HMODE === "year") {
+      var rows = sliceOf(HYEAR, null);
+      var span2 = rows.length;
+      var at2 = rows.map(function (r) { return r.v; });
+      historyChart([{ lab: String(HYEAR), css: "--accent", at: at2,
+                      pts: rows.filter(function (r) { return r.v != null; }) }],
+                   span2, String(HYEAR));
+      title.textContent = HYEAR;
+      stat.innerHTML = statLine(rows.filter(function (r) { return r.v != null; }));
+      cap.innerHTML = "Every daily mean in " + HYEAR +
+        ". The dashed line is China's 24-hour standard, 75 µg/m³.";
+    } else {
+      var rows3 = sliceOf(HYEAR, HMONTH);
+      var at3 = new Array(31).fill(null);
+      rows3.forEach(function (r) { if (r.v != null) at3[r.d - 1] = r.v; });
+      historyChart([{ lab: "", css: "--accent", at: at3,
+                      pts: rows3.filter(function (r) { return r.v != null; }) }],
+                   31, MABBR[HMONTH] + " " + HYEAR);
+      title.textContent = MABBR[HMONTH] + " " + HYEAR;
+      stat.innerHTML = statLine(rows3.filter(function (r) { return r.v != null; }));
+      cap.innerHTML = "Day by day through " + MABBR[HMONTH] + " " + HYEAR +
+        ". The dashed line is China's 24-hour standard, 75 µg/m³.";
+    }
+  }
+
+  picker("aqHMode", function (v) { HMODE = v; setParam("hmode", v, "year"); renderHistory(); });
+  picker("aqHMonth", function (v) { HMONTH = +v; setParam("month", v, "0"); renderHistory(); });
+  picker("aqHYear", function (v) { HYEAR = +v; setParam("year", v, ""); renderHistory(); });
+
   function renderHist() {
     var host = document.getElementById("aqHist");
-    var all = A.allDaily;
+    var all = valuesIn(windowYears());
     var W = 900, H = 220, m = { t: 14, r: 14, b: 30, l: 38 };
     var pw = W - m.l - m.r, ph = H - m.t - m.b;
     var BIN = 10, NB = 26;                       // 0-250+, in 10 µg/m³ bins
@@ -654,24 +955,73 @@
     if (VIEW === "now") { renderNow(); renderRecent(); renderStations(); renderMap(); }
     if (VIEW === "trend") { renderAnnual(); renderBands(); renderHeat(); }
     if (VIEW === "rhythm") renderRhythm();
+    if (VIEW === "history") renderHistory();
   }
 
-  segment("aqViews", function (d) {
-    VIEW = d.view;
+  function showView(v, fromUrl) {
+    var known = ["now", "trend", "rhythm", "history"];
+    if (known.indexOf(v) < 0) v = "now";
+    VIEW = v;
     [].forEach.call(document.querySelectorAll("#aq > section"), function (s) {
-      s.hidden = s.dataset.view !== d.view;
+      s.hidden = s.dataset.view !== v;
     });
+    var sel = document.getElementById("aqViewSel");
+    if (sel && sel.value !== v) sel.value = v;
+    if (!fromUrl) setParam("view", v, "now");
     renderView();
     // Leaflet measures its container on creation; a map built while hidden has
     // zero size and renders as a grey box until told to look again.
-    if (VIEW === "now" && map) setTimeout(function () { map.invalidateSize(); }, 30);
+    if (v === "now" && map) setTimeout(function () { map.invalidateSize(); }, 30);
+  }
+
+  picker("aqViewSel", function (v) { showView(v); });
+  segment("aqScale", function (d) {
+    SCALE = d.scale; setParam("scale", d.scale, "us"); renderView();
   });
-  segment("aqScale", function (d) { SCALE = d.scale; renderView(); });
+
+  WX.overflow("aqMore", "aqMoreBtn", "aqMoreMenu");
+
+  /* ── the rhythm window ── */
+  (function () {
+    var sel = document.getElementById("aqWinSel");
+    if (!sel) return;
+    sel.innerHTML = WINDOWS.map(function (w) {
+      return "<option value='" + w.k + "'>" + w.lab + "</option>";
+    }).join("");
+    var want = param("win", WIN);
+    if (WINDOWS.some(function (w) { return w.k === want; })) WIN = want;
+    sel.value = WIN;
+    sel.addEventListener("change", function () {
+      WIN = sel.value; setParam("win", WIN, "5");
+      if (VIEW === "rhythm") renderRhythm();
+    });
+  })();
 
   document.getElementById("aqSource").innerHTML = A.source;
   document.getElementById("aqMapNote").innerHTML = A.mapNote;
 
-  renderView();
+  // Driving the control rather than setting the flag: the segment moves its own
+  // thumb on click, and reaching past it would leave the marker behind.
+  if (param("scale", "us") === "cn") {
+    var cnBtn = document.querySelector('#aqScale button[data-scale="cn"]');
+    if (cnBtn) cnBtn.click();
+  }
+  // History state from the URL, before the first render so a linked-to slice
+  // paints once rather than flashing the default and correcting itself.
+  (function () {
+    var years = histYears();
+    var hm = param("hmode", "year");
+    if (["year", "month", "compare"].indexOf(hm) >= 0) HMODE = hm;
+    var mo = parseInt(param("month", ""), 10);
+    if (mo >= 0 && mo <= 11) HMONTH = mo;
+    var yr = parseInt(param("year", ""), 10);
+    if (years.indexOf(yr) >= 0) HYEAR = yr;
+    var pick = (param("years", "") || "").split(",")
+      .map(function (v) { return parseInt(v, 10); })
+      .filter(function (v) { return years.indexOf(v) >= 0; });
+    if (pick.length) HPICK = pick;
+  })();
+  showView(param("view", "now"), true);
 
   /* ── the live refresh ──────────────────────────────────────────────────
      The build bakes in a snapshot so the page is never empty, then asks the

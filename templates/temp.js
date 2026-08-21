@@ -5,8 +5,8 @@
    colours and labels are written down. */
 (function () {
   "use strict";
-  var T = window.TEMP;
-  if (!T) return;
+  var T = window.TEMP, WX = window.WX;
+  if (!T || !WX) return;
 
   var NS = "http://www.w3.org/2000/svg";
   var MABBR = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -519,17 +519,29 @@
     }).join("") +
     "<span><i class='hatched' style='background:var(--ink-faint)'></i>part-year, counted only to " + HIST.ytd + "</span>";
 
-  var placeViews = segment("tmViews", function (d) {
+  // Chrome behaviour is shared with the Beijing air page; see design.CHROME_JS.
+  function showView(v, fromUrl) {
+    var known = ["record", "rankings", "explorer"];
+    if (known.indexOf(v) < 0) v = "record";
     [].forEach.call(document.querySelectorAll(".tm-views > section"), function (s) {
-      s.hidden = s.dataset.view !== d.view;
+      s.hidden = s.dataset.view !== v;
     });
-    document.getElementById("tmWindow").hidden = d.view === "explorer";
-    if (d.view === "rankings") renderRankings();
-    if (d.view === "explorer") renderYear(sel.value);
+    // The counting window is the only thing in the overflow, and it means
+    // nothing to the explorer, which draws whole years by construction.
+    document.getElementById("tmMore").hidden = v === "explorer";
+    var vs = document.getElementById("tmViewSel");
+    if (vs && vs.value !== v) vs.value = v;
+    if (!fromUrl) WX.setParam("view", v, "record");
+    if (v === "rankings") renderRankings();
+    if (v === "explorer") renderYear(sel.value);
     window.dispatchEvent(new Event("resize"));   // segmented thumbs re-measure
-  });
+  }
+  WX.picker("tmViewSel", function (v) { showView(v); });
+  WX.overflow("tmMore", "tmMoreBtn", "tmMoreMenu");
+
   segment("tmWindow", function (d) {
     WIN = d.win;
+    WX.setParam("win", d.win, "full");
     renderRecord();
     if (!document.querySelector("[data-view=rankings]").hidden) renderRankings();
   });
@@ -551,7 +563,9 @@
     var o = document.createElement("option"); o.value = y; o.textContent = y; sel.appendChild(o);
   });
   sel.value = EYEARS.indexOf(String(PARTIAL)) >= 0 ? String(PARTIAL) : EYEARS[EYEARS.length - 1];
-  sel.addEventListener("change", function () { renderYear(sel.value); });
+  sel.addEventListener("change", function () {
+    WX.setParam("year", sel.value, ""); renderYear(sel.value);
+  });
   document.getElementById("tmPrev").addEventListener("click", function () {
     var i = EYEARS.indexOf(sel.value); if (i > 0) { sel.value = EYEARS[i-1]; renderYear(sel.value); }
   });
@@ -560,6 +574,14 @@
     if (i < EYEARS.length - 1) { sel.value = EYEARS[i+1]; renderYear(sel.value); }
   });
 
+  // State from the URL before the first paint, so a linked-to view renders once
+  // rather than showing the default and correcting itself.
+  var wantYear = WX.param("year", "");
+  if (EYEARS.indexOf(wantYear) >= 0) sel.value = wantYear;
+  if (WX.param("win", "full") === "ytd") {
+    var ytdBtn = document.querySelector('#tmWindow button[data-win="ytd"]');
+    if (ytdBtn) ytdBtn.click();     // drive the control so its thumb follows
+  }
   renderRecord();
-  window.addEventListener("resize", placeViews);
+  showView(WX.param("view", "record"), true);
 })();

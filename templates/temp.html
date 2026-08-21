@@ -1,18 +1,32 @@
 <div class="tm" id="tm">
   <div class="bar-row" style="margin-bottom:18px">
-    <div class="seg" id="tmViews" role="radiogroup" aria-label="Temperature view"
-         style="grid-template-columns:repeat(3,1fr)">
-      <span class="thumb" aria-hidden="true"></span>
-      <button role="radio" data-view="record"   aria-checked="true">Record</button>
-      <button role="radio" data-view="rankings" aria-checked="false">Rankings</button>
-      <button role="radio" data-view="explorer" aria-checked="false">Explorer</button>
-    </div>
     <span class="spacer"></span>
-    <div class="seg" id="tmWindow" role="radiogroup" aria-label="Counting window"
-         style="grid-template-columns:repeat(2,1fr)">
-      <span class="thumb" aria-hidden="true"></span>
-      <button role="radio" data-win="full" aria-checked="true">Full year</button>
-      <button role="radio" data-win="ytd"  aria-checked="false">To <span id="tmYtd"></span></button>
+    <label class="picker">
+      <span class="sr-only">Temperature view</span>
+      <select id="tmViewSel">
+        <option value="record">Record</option>
+        <option value="rankings">Rankings</option>
+        <option value="explorer">Explorer</option>
+      </select>
+    </label>
+    <div class="overflow" id="tmMore">
+      <button class="iconbtn pressable" id="tmMoreBtn" aria-haspopup="true"
+              aria-expanded="false" aria-label="More options" title="More options">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true">
+          <circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/>
+          <circle cx="19" cy="12" r="1.8"/></svg>
+      </button>
+      <div class="menu" id="tmMoreMenu" hidden>
+        <div class="mgroup">
+          <div class="mlab">Counting window</div>
+          <div class="seg" id="tmWindow" role="radiogroup" aria-label="Counting window"
+               style="grid-template-columns:repeat(2,1fr)">
+            <span class="thumb" aria-hidden="true"></span>
+            <button role="radio" data-win="full" aria-checked="true">Full year</button>
+            <button role="radio" data-win="ytd"  aria-checked="false">To <span id="tmYtd"></span></button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 

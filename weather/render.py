@@ -104,6 +104,7 @@ def document(fragment, path=None, stamp="", image="social.png", head_extra="", b
         '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
         f'{HEAD_ICONS}{social(path, stamp, image)}{title_html}'
         f'<script>{design.THEME_BOOT}</script>\n'
+        f'<script>{design.CHROME_JS}</script>\n'
         f'<style>{design.css()}{page_css}</style>\n{head_extra}'
         f'</head>\n<body>{body}\n'
         f'<script>{design.THEME_JS}</script>\n{body_extra}</body>\n</html>\n'

@@ -267,6 +267,46 @@ BASE = """
   .row .grow { flex:1; min-width:0; }
   .row .val { font-variant-numeric:tabular-nums; font-weight:640; }
 
+  /* Visually gone, still announced. The pickers carry their own labels for a
+     screen reader without putting a second caption next to a control whose
+     current value already says what it is. */
+  .sr-only { position:absolute; width:1px; height:1px; margin:-1px; padding:0;
+    overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; border:0; }
+
+  /* ── picker ──
+     A native select, restyled. The page has more state than a row of segmented
+     controls can hold without becoming a wall of pills, and a select collapses
+     a list of any length to one line while keeping the platform's own keyboard
+     handling, which a div-and-listbox reimplementation would have to earn back. */
+  .picker { position:relative; display:inline-flex; align-items:center; }
+  .picker select { appearance:none; -webkit-appearance:none; font:inherit;
+    font-size:13.5px; font-weight:600; color:var(--ink); cursor:pointer;
+    background:var(--surface-2); border:0; border-radius:var(--r-full);
+    padding:8px 32px 8px 14px; box-shadow:var(--shadow-1); }
+  .picker select:hover { background:var(--surface-3); }
+  .picker select:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .picker::after { content:""; position:absolute; right:13px; width:8px; height:8px;
+    border-right:1.6px solid var(--ink-muted); border-bottom:1.6px solid var(--ink-muted);
+    transform:translateY(-2px) rotate(45deg); pointer-events:none; }
+  .picker.compact select { font-size:12.5px; padding:6px 28px 6px 11px; }
+  .picker.compact::after { right:11px; width:6.5px; height:6.5px; }
+
+  /* ── overflow menu ──
+     Where the controls that modify a reading live, rather than the ones that
+     choose it. Keeping them behind a button is what lets the view picker be the
+     only thing competing for attention in the bar. */
+  .overflow { position:relative; display:inline-flex; }
+  .overflow > .menu { position:absolute; top:calc(100% + 8px); right:0; z-index:40;
+    min-width:210px; padding:10px; border-radius:var(--r-sm);
+    background:var(--surface-1); box-shadow:var(--shadow-3);
+    border:1px solid var(--border); }
+  .overflow > .menu[hidden] { display:none; }
+  .menu .mlab { font-size:11px; font-weight:660; letter-spacing:.04em;
+    text-transform:uppercase; color:var(--ink-faint); margin:2px 2px 6px; }
+  .menu .mgroup + .mgroup { margin-top:12px; padding-top:12px;
+    border-top:1px solid var(--separator); }
+  .menu .seg { background:var(--surface-2); }
+
   /* ── segmented control ── */
   .seg { position:relative; display:grid; background:var(--surface-2);
     border-radius:var(--r-full); padding:4px; user-select:none; }
@@ -472,6 +512,53 @@ def topbar(stamp_html="", here=None):
 THEME_BOOT = """
 (function(){try{var t=localStorage.getItem('theme');
 if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
+"""
+
+# Chrome behaviour both page scripts need. Shared rather than copied: the two
+# pages now carry the same view picker, the same overflow menu and the same
+# habit of keeping their state in the query string, and two copies of that would
+# be two things to keep in step.
+CHROME_JS = """
+window.WX = (function () {
+  function param(k, def) {
+    return new URLSearchParams(location.search).get(k) || def;
+  }
+  // replaceState, not pushState: these are settings on one page, and filling
+  // the back button with them would break the way back out of the page.
+  function setParam(k, v, def) {
+    var q = new URLSearchParams(location.search);
+    if (v == null || v === "" || v === def) q.delete(k); else q.set(k, v);
+    var t = q.toString();
+    history.replaceState(null, "", location.pathname + (t ? "?" + t : "") + location.hash);
+  }
+  function picker(id, onChange) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener("change", function () { onChange(el.value); });
+    return el;
+  }
+  function overflow(wrapId, btnId, menuId) {
+    var wrap = document.getElementById(wrapId),
+        btn = document.getElementById(btnId),
+        menu = document.getElementById(menuId);
+    if (!wrap || !btn || !menu) return;
+    function close() { menu.hidden = true; btn.setAttribute("aria-expanded", "false"); }
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var open = menu.hidden;
+      menu.hidden = !open;
+      btn.setAttribute("aria-expanded", String(open));
+    });
+    // Anywhere outside, and Escape. A menu that only its own button can close
+    // is a menu people leave open by accident.
+    document.addEventListener("click", function (e) {
+      if (!menu.hidden && !wrap.contains(e.target)) close();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && !menu.hidden) { close(); btn.focus(); }
+    });
+  }
+  return { param: param, setParam: setParam, picker: picker, overflow: overflow };
+})();
 """
 
 THEME_JS = """

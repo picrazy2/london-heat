@@ -124,5 +124,21 @@
     transparent 0 3px, var(--ink-faint) 3px 5px); }
 .heat .cell[data-v]:hover { transform:scale(1.18); z-index:2; position:relative; }
 
+/* the year chips in the history explorer */
+.yearpick { display:flex; flex-wrap:wrap; gap:7px; }
+.yearpick button { font:inherit; font-size:12.5px; font-weight:600; cursor:pointer;
+  border:0; border-radius:var(--r-full); padding:6px 13px;
+  background:var(--surface-2); color:var(--ink-muted);
+  transition:background .15s var(--ease-out), color .15s var(--ease-out); }
+.yearpick button:hover { background:var(--surface-3); color:var(--ink); }
+/* On rather than merely hovered. The series colour rides in a swatch instead of
+   the fill: several of the eight are too light to hold text on one theme or the
+   other, and a legend that fails contrast is not a legend. */
+.yearpick button { display:inline-flex; align-items:center; gap:7px; }
+.yearpick button[aria-pressed="true"] { background:var(--surface-3); color:var(--ink); }
+.yearpick button i { width:9px; height:9px; border-radius:3px; flex:none; }
+.yearpick button[disabled] { opacity:.35; cursor:not-allowed; }
+.yearpick button[disabled]:hover { background:var(--surface-2); color:var(--ink-muted); }
+
 /* the distribution */
 .hist-lab { fill:var(--ink-faint); font-size:9.5px; }

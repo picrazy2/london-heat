@@ -1,18 +1,33 @@
 <div class="aq" id="aq">
   <div class="bar-row">
-    <div class="seg" id="aqViews" role="radiogroup" aria-label="Air quality view"
-         style="grid-template-columns:repeat(3,1fr)">
-      <span class="thumb" aria-hidden="true"></span>
-      <button role="radio" data-view="now"    aria-checked="true">Right now</button>
-      <button role="radio" data-view="trend"  aria-checked="false">The long trend</button>
-      <button role="radio" data-view="rhythm" aria-checked="false">Rhythm</button>
-    </div>
     <span class="spacer"></span>
-    <div class="seg" id="aqScale" role="radiogroup" aria-label="Air quality index scale"
-         style="grid-template-columns:repeat(2,1fr)">
-      <span class="thumb" aria-hidden="true"></span>
-      <button role="radio" data-scale="us" aria-checked="true">US EPA</button>
-      <button role="radio" data-scale="cn" aria-checked="false">China</button>
+    <label class="picker">
+      <span class="sr-only">Air quality view</span>
+      <select id="aqViewSel">
+        <option value="now">Right now</option>
+        <option value="trend">The long trend</option>
+        <option value="rhythm">Rhythm</option>
+        <option value="history">Full history</option>
+      </select>
+    </label>
+    <div class="overflow" id="aqMore">
+      <button class="iconbtn pressable" id="aqMoreBtn" aria-haspopup="true"
+              aria-expanded="false" aria-label="More options" title="More options">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true">
+          <circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/>
+          <circle cx="19" cy="12" r="1.8"/></svg>
+      </button>
+      <div class="menu" id="aqMoreMenu" hidden>
+        <div class="mgroup">
+          <div class="mlab">Index scale</div>
+          <div class="seg" id="aqScale" role="radiogroup" aria-label="Air quality index scale"
+               style="grid-template-columns:repeat(2,1fr)">
+            <span class="thumb" aria-hidden="true"></span>
+            <button role="radio" data-scale="us" aria-checked="true">US EPA</button>
+            <button role="radio" data-scale="cn" aria-checked="false">China</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -87,8 +102,16 @@
     <div>
       <h2>The shape of a polluted day</h2>
       <p class="lede" style="margin-top:8px">Air quality has a daily and a yearly
-        rhythm, and neither is obvious from an annual average. These are averaged over
-        the whole record.</p>
+        rhythm, and neither is obvious from an annual average. Averaged over
+        <b data-win-label>—</b> — the city changed enough over the record that
+        averaging all of it describes somewhere that no longer exists.</p>
+    </div>
+    <div class="bar-row">
+      <span class="spacer"></span>
+      <label class="picker compact">
+        <span class="sr-only">Years to average over</span>
+        <select id="aqWinSel"></select>
+      </label>
     </div>
     <div class="grid-2">
       <div class="aq-card">
@@ -97,16 +120,61 @@
         <p class="cap" id="aqDiurnalCap"></p>
       </div>
       <div class="aq-card">
-        <div class="card-head"><h3>By month</h3><span class="sub">whole record</span></div>
+        <div class="card-head"><h3>By month</h3><span class="sub" data-win-label>—</span></div>
         <div id="aqSeason" style="margin-top:12px"></div>
         <p class="cap" id="aqSeasonCap"></p>
       </div>
     </div>
     <div class="aq-card">
       <div class="card-head"><h3>How often each level happens</h3>
-        <span class="sub">daily means, whole record</span></div>
+        <span class="sub">daily means, <span data-win-label>—</span></span></div>
       <div id="aqHist" style="margin-top:12px"></div>
       <p class="cap" id="aqHistCap"></p>
+    </div>
+  </section>
+
+  <!-- ── Full history ──────────────────────────────────────────────────── -->
+  <section data-view="history" class="stack" hidden>
+    <div>
+      <h2>The whole record, one slice at a time</h2>
+      <p class="lede" style="margin-top:8px">Every daily mean since December 2013,
+        cut however you want to look at it: a year at a time, a month at a time, or
+        the same month from several years drawn on top of each other.</p>
+    </div>
+
+    <div class="bar-row">
+      <label class="picker compact">
+        <span class="sr-only">What to show</span>
+        <select id="aqHMode">
+          <option value="year">A single year</option>
+          <option value="month">A single month</option>
+          <option value="compare">One month, across years</option>
+        </select>
+      </label>
+      <label class="picker compact" id="aqHMonthWrap" hidden>
+        <span class="sr-only">Month</span>
+        <select id="aqHMonth"></select>
+      </label>
+      <label class="picker compact" id="aqHYearWrap">
+        <span class="sr-only">Year</span>
+        <select id="aqHYear"></select>
+      </label>
+      <span class="spacer"></span>
+      <span class="sub" id="aqHStat"></span>
+    </div>
+
+    <div class="aq-card">
+      <div class="card-head"><h3 id="aqHTitle">—</h3>
+        <span class="sub">daily mean, µg/m³</span></div>
+      <div id="aqHChart" style="margin-top:12px"></div>
+      <div class="bandkey" id="aqHKey"></div>
+      <p class="cap" id="aqHCap"></p>
+    </div>
+
+    <div class="aq-card" id="aqHYearsCard" hidden>
+      <div class="card-head"><h3>Years to draw</h3>
+        <span class="sub">any combination</span></div>
+      <div class="yearpick" id="aqHYears" style="margin-top:10px"></div>
     </div>
   </section>
 
