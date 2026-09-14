@@ -9,8 +9,9 @@ static site at **[weather.akguo.com](https://weather.akguo.com)**.
   **PM2.5** from the city's monitoring network, judged on both the US EPA and the
   Chinese scale, with a live map of every station.
 
-Cloudflare Pages serves `public/` and deploys on every push to `main`. One
-Pages Function, `/api/live`, gives the pages a current reading.
+Cloudflare Pages serves `public/` and deploys on every push to `main`. Two
+Pages Functions: `/api/live` gives the pages a current reading, and
+`/api/forecast` gathers the inputs for the PM2.5 forecast.
 
 ## The one command
 
@@ -34,6 +35,19 @@ GitHub Action run with no secrets at all.
 pass at 13:25 UTC for Beijing readings that arrive late, then commits and lets
 Pages redeploy.
 
+## The PM2.5 forecast
+
+`/beijing/forecast` is a seven-day PM2.5 outlook that runs **in the browser**:
+gradient-boosted trees trained in `ml/` on twelve years of the city's readings
+against the weather, exported to `data/pm25_model.json` and evaluated by
+`templates/pm25model.js`. The page fetches `/api/forecast` — the current
+Open-Meteo forecast (with 925/850/700 hPa levels), the last week of CNEMC hours,
+and the surrounding cities' latest readings, cached ten minutes at the edge —
+and recomputes on every view, so it is hourly-fresh without a scheduler, a
+commit, or a key. The daily build only supplies the emissions baseline
+(`level365`) and the analysis figures. `ml/README.md` has the modelling story;
+the page itself explains the skill and what the model learned.
+
 ## Data sources
 
 Every one of them is keyless.
@@ -47,6 +61,7 @@ Every one of them is keyless.
 | Beijing PM2.5 history | **CNEMC** hourly publication, mirrored daily at `quotsoft.net` | 35 city stations, hourly, µg/m³, from Dec 2013 |
 | Beijing PM2.5 live | **CNEMC** real-time feed, `air.cnemc.cn` | 23 stations with coordinates; drives the map |
 | London live temperature | **Open-Meteo** | Only for the overview tile, not the record |
+| Beijing forecast inputs | **Open-Meteo** forecast · CNEMC mirror · twenty surrounding cities | Fetched by `/api/forecast`, computed in the browser |
 
 ### Why Beijing's temperature is spliced, and where
 
@@ -130,7 +145,9 @@ weather/
 └── pages/               city.py (temperature payload + prose) · air.py (air payload)
 templates/               temp.{css,html,js} · air.{css,html,js} · the four page shells
 data/                    the cached series — committed, and what the site is built from
-functions/api/live.js    the Cloudflare Pages Function behind /api/live
+functions/api/           live.js (/api/live) · forecast.js (/api/forecast) · _lib/mirror.js
+ml/                      the PM2.5 model: data pulls, training, analysis, model export
+templates/pm25model.js   the model, evaluated in the browser; forecast.* the outlook; analysis.js the figures
 assets/leaflet/          vendored Leaflet 1.9.4, copied into public/ at build
 public/                  generated. Do not edit by hand.
 ```

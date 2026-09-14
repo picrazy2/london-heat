@@ -59,6 +59,22 @@ def _en(name):
     return f"{district} {site}".strip()
 
 
+def level365(hourly):
+    """The forecast model's emissions baseline: mean log1p(PM2.5) over the year
+    ending a month before the last day of the record. The same quantity, on the
+    same window, that ml/dataset.py trained the model with (`level365`)."""
+    import math
+    days = sorted(hourly)
+    if len(days) < 220:
+        return None
+    end = datetime.strptime(days[-1], "%Y%m%d") - timedelta(days=30)
+    start = end - timedelta(days=365)
+    vals = [math.log1p(v) for d in days
+            if start <= datetime.strptime(d, "%Y%m%d") < end
+            for v in hourly[d] if v is not None]
+    return round(sum(vals) / len(vals), 6) if len(vals) >= 24 * 180 else None
+
+
 def payload(hourly, live, source_html, map_note):
     daily = pm25.daily_stats(hourly)
     days = sorted(daily)
@@ -192,6 +208,7 @@ def payload(hourly, live, source_html, map_note):
 
     return {
         "scales": aqi.js_payload(),
+        "level365": level365(hourly),
         "annual": annual,
         "daily": {"start": days[0], "v": dseries},
         "monthly": monthly,

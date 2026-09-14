@@ -19,33 +19,17 @@
  * failed response: the page already holds a baked snapshot and keeps showing it.
  */
 
+import { MIRROR, UA, excluded, num, mean, parseMirrorDay } from "../_lib/mirror.js";
+
 const CNEMC =
   "https://air.cnemc.cn:18007/CityData/GetAQIDataPublishLive?cityName=%E5%8C%97%E4%BA%AC%E5%B8%82";
-const MIRROR = "https://quotsoft.net/air/data/beijing_all_";
 
-// The city's designated clean-air control site and its regional background site
-// measure something other than Beijing's air; the published city average omits
-// them and so does this one.
-const EXCLUDE = ["定陵", "京东南区域"];
-const excluded = (name) => EXCLUDE.some((x) => (name || "").includes(x));
 
 const LONDON =
   "https://api.open-meteo.com/v1/forecast?latitude=51.4775&longitude=-0.4614" +
   "&current=temperature_2m,relative_humidity_2m,weather_code&timezone=Europe%2FLondon";
 
 const TTL = 600; // seconds at the edge
-const UA = { "User-Agent": "weather.akguo.com" };
-
-const num = (v) => {
-  if (v === null || v === undefined) return null;
-  const s = String(v).trim();
-  if (!s || s === "NA" || s === "—" || s === "-") return null;
-  const n = Number(s);
-  return Number.isFinite(n) ? n : null;
-};
-
-const mean = (xs) =>
-  xs.length ? Math.round((xs.reduce((a, b) => a + b, 0) / xs.length) * 10) / 10 : null;
 
 function beijingTime(d) {
   return new Intl.DateTimeFormat("en-GB", {
@@ -85,29 +69,6 @@ async function beijingDirect() {
     time: t && !Number.isNaN(+t) ? beijingTime(t) : null,
     stations,
   };
-}
-
-/** One mirror day -> [{hour, values:{station: pm25}}], ascending. */
-function parseMirrorDay(text) {
-  const lines = text.trim().split(/\r?\n/);
-  if (lines.length < 2) return [];
-  const cols = lines[0].split(",").slice(3);
-  const keep = cols.map((c, i) => (excluded(c) ? -1 : i)).filter((i) => i >= 0);
-  const out = [];
-  for (let i = 1; i < lines.length; i++) {
-    const p = lines[i].split(",");
-    if (p.length < 4 || p[2] !== "PM2.5") continue;
-    const hr = parseInt(p[1], 10);
-    if (!Number.isInteger(hr) || hr < 0 || hr > 23) continue;
-    const vals = p.slice(3), rec = {};
-    for (const j of keep) {
-      const v = num(vals[j]);
-      if (v !== null && v >= 0 && v <= 1500) rec[cols[j]] = v;
-    }
-    if (Object.keys(rec).length >= 5) out.push({ hour: hr, values: rec });
-  }
-  out.sort((a, b) => a.hour - b.hour);
-  return out;
 }
 
 /**

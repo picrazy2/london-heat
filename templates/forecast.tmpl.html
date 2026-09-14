@@ -1,0 +1,208 @@
+<title>Beijing — the week ahead</title>
+<style>
+__AIR_CSS__
+__FORECAST_CSS__
+  .an { display:flex; flex-direction:column; gap:clamp(18px,3vw,26px); }
+  .an h2 { margin-top:clamp(10px,2vw,18px); }
+  .an .prose { max-width:68ch; }
+  .an .prose p { font-size:15px; line-height:1.6; color:var(--ink); margin:0 0 12px; }
+  .an .prose p b { font-weight:640; }
+  .an-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
+  .an-small { padding:14px 14px 8px; }
+  .an-small h3 { font-size:13.5px; }
+  .an table { width:100%; border-collapse:collapse; font-size:14px; margin-top:8px; }
+  .an th, .an td { text-align:left; padding:8px 8px; border-bottom:1px solid var(--separator); vertical-align:top; }
+  .an th { font-size:11.5px; font-weight:640; color:var(--ink-muted); letter-spacing:.03em; text-transform:uppercase; }
+  .an td.n, .an th.n { text-align:right; font-variant-numeric:tabular-nums; }
+  .an .key { display:flex; flex-wrap:wrap; gap:6px 16px; font-size:12px; color:var(--ink-muted); margin-top:8px; }
+  .an .key span { display:inline-flex; align-items:center; gap:6px; }
+  .an .key i { display:inline-block; width:16px; height:3px; border-radius:2px; }
+  .an .key i.dash { background:repeating-linear-gradient(90deg,var(--ink-faint) 0 4px,transparent 4px 7px); }
+  .fc-full #fcChart { margin-top:12px; }
+</style>
+<div class="wrap">
+  __TOPBAR__
+  <div class="hero">
+    <p class="kicker">Beijing · air quality forecast</p>
+    <h1>The week ahead, from the weather</h1>
+    <p class="lede">A model trained on twelve years of the city's own PM2.5 readings against the
+      weather that produced them, run in your browser on the current forecast. Below it: how
+      good the forecast is, and what the model learned about wind, rain and season along the way.</p>
+  </div>
+
+  <div class="an">
+    <div class="aq-card fc-full" id="fcRoot" data-mode="full">
+      <div class="card-head"><h3>PM2.5, measured and forecast</h3>
+        <span class="sub">µg/m³ · hourly city mean · Beijing time</span></div>
+      <div id="fcChart"></div>
+      <div class="fc-key"><span><i style="background:var(--ink)"></i>measured</span>
+        <span><i style="background:var(--accent);opacity:.55"></i>what the weather alone explains</span>
+        <span><i style="background:var(--accent)"></i>forecast, corrected from the latest readings</span></div>
+      <div class="fc-days" id="fcDays"></div>
+      <p class="fc-why" id="fcWhy"></p>
+      <p class="footnote" id="fcStamp" style="margin-top:8px"></p>
+      <p class="cap">The forecast run is Open-Meteo's best-match model for central Beijing; the readings
+        are the CNEMC city mean via its mirror; the upwind cities are the same publication. Everything
+        is fetched fresh, so the page is never more than about ten minutes behind the network.</p>
+    </div>
+
+    <div class="prose">
+      <h2>How good is it</h2>
+      <p>The model has two parts. A <b>weather model</b> maps the hour's weather and its previous
+        72 hours — wind at the surface, at 100 m and at 925/850/700 hPa, boundary-layer height,
+        humidity, rain, the inversion, the season and the city's emissions baseline over the trailing
+        year — to PM2.5. A <b>residual model</b> then learns how far the city's latest reading sits
+        from what the weather alone would give, and how quickly that gap decays with lead time,
+        with the upwind cities' latest readings as a hint of what is coming.</p>
+      <p>It was fitted on December 2013 – 2022 and judged on 2024 – September 2026, years it never
+        saw and whose air was half as dirty as the years it learned from. The honest test uses the
+        weather forecasts that were <b>actually issued</b> one to seven days earlier over that period:
+        the same model run on reanalysis instead — a perfect forecast — separates its own error from
+        the weather forecast's.</p>
+    </div>
+    <div class="aq-card">
+      <div class="card-head"><h3>Forecast skill by lead time</h3><span class="sub">R² on log PM2.5, hourly, 2024 – Sep 2026</span></div>
+      <div id="anLead" style="margin-top:10px"></div>
+      <div class="key"><span><i style="background:var(--accent)"></i>perfect weather forecast (reanalysis)</span>
+        <span><i style="background:var(--aqi-4)"></i>real weather forecast, as issued</span>
+        <span><i style="background:var(--ink-faint)"></i>persistence</span>
+        <span><i class="dash"></i>climatology: season × hour × trailing level</span></div>
+      <p class="cap">The model's own ceiling is flat at about 0.7 whatever the lead. Beyond two days
+        almost all of the growing error is the weather forecast's: the 100 m northerly wind, the model's
+        most important input, agrees with what happened at 0.85 one day out and 0.40 at seven.</p>
+    </div>
+    <div class="grid-2">
+      <div class="aq-card">
+        <div class="card-head"><h3>Daily means, real forecast</h3><span class="sub">2024 – Sep 2026</span></div>
+        <table><thead><tr><th>Lead</th><th class="n">R²</th><th class="n">MAE µg/m³</th><th class="n">"over 35" right</th></tr></thead>
+          <tbody id="anDaily"></tbody></table>
+        <p class="cap">MAE against a mean of 29 µg/m³. The last column is whether the day was correctly
+          called above or below China's 24-hour standard.</p>
+      </div>
+      <div class="aq-card">
+        <div class="card-head"><h3>Models tried, same test years</h3><span class="sub">hourly, forward split</span></div>
+        <table><thead><tr><th>Model or inputs</th><th class="n">R² log</th><th class="n">R²</th><th class="n">MAE</th></tr></thead>
+          <tbody id="anModels"></tbody></table>
+        <p class="cap">Gradient boosting and a recurrent net land in the same place, so the ceiling is the
+          inputs, not the model. Upwind readings are worth a great deal for six hours and nothing after two days,
+          which is why the forecast leans on them early and on the weather later.</p>
+      </div>
+    </div>
+
+    <div class="prose">
+      <h2>Wind is most of it</h2>
+      <p>Wind history carries half of the model's explanatory power, and its single most important input is
+        the northerly component of the 100 m wind averaged over the past 24 hours — not the wind now, and
+        not its speed. A steady wind at 6 m/s leaves 13 µg/m³ if it comes from the north-west and 57 if it
+        comes from the south, and a <b>stronger</b> southerly is worse: it is importing the Hebei plain's air.
+        Above the rooftops the signal is cleaner still: the northerly wind at 925 hPa, from the radiosonde,
+        is the strongest single correlate of PM2.5 in the whole dataset.</p>
+    </div>
+    <div class="aq-card">
+      <div class="card-head"><h3>Predicted PM2.5 after 24 h of steady wind</h3><span class="sub">µg/m³ · by direction the wind comes from, and speed</span></div>
+      <div class="yearpick" id="anRoseSeg" style="margin-top:10px" role="group" aria-label="Season"></div>
+      <div id="anRose" style="margin-top:10px"></div>
+      <p class="cap">Everything else held at its observed value, averaged over 20,000 hours. Calm is bad in every
+        direction; the north-west is clean at any speed; the south gets dirtier as it blows harder.</p>
+    </div>
+    <div class="aq-card">
+      <div class="card-head"><h3>Measured PM2.5 around a strong north-wind onset</h3><span class="sub">µg/m³, mean across onsets · hour 0 is the first hour of ≥ 5 m/s from the north</span></div>
+      <div id="anOnset" style="margin-top:10px"></div>
+      <div class="key"><span><i style="background:var(--night-2)"></i>winter</span><span><i style="background:var(--day-1)"></i>spring</span>
+        <span><i style="background:repeating-linear-gradient(90deg,var(--day-1) 0 4px,transparent 4px 7px)"></i>spring, dust reported</span>
+        <span><i style="background:var(--positive)"></i>summer</span><span><i style="background:var(--aqi-2)"></i>autumn</span></div>
+      <p class="cap">The air clears within six hours, bottoms out at +6 to +12 h at about a third of the level
+        before the front, and takes two days to climb back. Spring is the exception when the wind brings dust:
+        in those 29 onsets PM2.5 <b>rose</b> first.</p>
+    </div>
+
+    <div class="prose">
+      <h2>Rain, holding everything else still</h2>
+      <p><b>Washout is real and scales with amount.</b> Take every hour with rain in the past 24 h, ask the
+        model to predict it, then zero every precipitation input with wind, humidity, boundary layer and
+        season left exactly as they were: the prediction drops 17% for a trace-to-2 mm day, 24% at 2–5 mm,
+        46% at 20–50 mm, 60% above 50 mm. A model-free comparison of wet and dry hours in the same month,
+        wind sector, wind speed and time of day agrees: −25%.</p>
+      <p><b>But rain arrives wet.</b> Humidity is the strongest non-wind lever the model has — 31 µg/m³ at
+        10% RH, 60 at 100% — because particles swell in humid air and a saturated, stagnant airmass is the
+        recipe for haze. Compared with a genuinely dry day at that month's typical humidity, light rain is
+        net-neutral; the day comes out cleaner only past about 20 mm. In winter it flips outright: snowy and
+        drizzly days are stagnant, humid, southerly days, so January's wet hours run far <b>dirtier</b> than
+        its dry ones.</p>
+    </div>
+    <div class="aq-card">
+      <div class="card-head"><h3>Effect of rain in the past 24 h on predicted PM2.5</h3><span class="sub">% change · by ERA5 precipitation total</span></div>
+      <div id="anRain" style="margin-top:10px"></div>
+      <div class="key"><span><i style="background:var(--accent)"></i>rain removed, humidity kept (washout only)</span>
+        <span><i style="background:var(--secondary)"></i>rain removed and humidity set to a dry day (net)</span></div>
+    </div>
+    <div class="grid-2">
+      <div class="aq-card">
+        <div class="card-head"><h3>Wet vs dry hours, same weather cell, by month</h3><span class="sub">% difference · no model involved</span></div>
+        <div id="anRainMonth" style="margin-top:10px"></div>
+        <p class="cap">≥ 2 mm in the past 24 h against none in the past 48 h, within month × wind sector × wind-speed
+          tercile × 6 h block × era. January rests on few wet hours: read it as "large and positive".</p>
+      </div>
+      <div class="aq-card">
+        <div class="card-head"><h3>Washout effect by time since the rain</h3><span class="sub">% change when a 6 h rain block is removed</span></div>
+        <div id="anRainTiming" style="margin-top:10px"></div>
+        <p class="cap">Still −18% two days later. Beijing's air takes about as long to re-load after rain as after a
+          north wind.</p>
+      </div>
+    </div>
+
+    <div class="prose">
+      <h2>The rest of the weather</h2>
+      <p>Each panel varies one input across its range for the same 20,000 sampled hours, holding everything
+        else fixed. Season keeps its shape even after wind, humidity and boundary layer are accounted for.
+        Below a 100 m boundary layer the model reads 56 µg/m³, above 800 m about 35, and then it saturates.
+        Wind speed on its own is non-monotonic — calm is bad, 4 m/s is the clean point, and 8–10 m/s is worse
+        again because at those speeds the model is seeing strong southerlies and dust. Hour of day goes nearly
+        flat once the boundary layer is an input; weekday is exactly flat — Beijing has no weekend effect.</p>
+    </div>
+    <div class="an-grid" id="anPdp"></div>
+
+    <div class="prose">
+      <h2>Weather did not clean the air</h2>
+      <p>Hold the emissions baseline at 2014's and give the model each later year's actual weather: it
+        predicts 78–87 µg/m³ every year. The fall from 87 to 27 is emissions, with the weather of 2017 and
+        2025 somewhat kinder and 2023–24 somewhat harsher than average.</p>
+    </div>
+    <div class="aq-card">
+      <div class="card-head"><h3>Annual mean PM2.5, measured and with the weather of that year on the 2014 city</h3><span class="sub">µg/m³</span></div>
+      <div id="anAnnual" style="margin-top:10px"></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="aq-card">
+        <div class="card-head"><h3>What can't be substituted</h3><span class="sub">test R² lost when a group of inputs is removed</span></div>
+        <table><thead><tr><th>Inputs removed</th><th class="n">R² loss</th></tr></thead><tbody id="anAblation"></tbody></table>
+        <p class="cap">Small numbers for humidity, boundary layer and hour of day mean they are interchangeable —
+          a night hour, high humidity and a shallow lid all say "stagnant" — not that they don't matter.</p>
+      </div>
+      <div class="aq-card">
+        <div class="card-head"><h3>How it is built</h3><span class="sub">and what was deliberately left out</span></div>
+        <p class="cap" style="margin-top:8px">Target: hourly city-mean PM2.5 as <code>log1p</code>. Inputs: Capital Airport METARs,
+          ERA5 reanalysis for central Beijing, the Nanjiao radiosonde, twenty surrounding cities' PM2.5 and PM10, and the
+          calendar as sine/cosine pairs. Gradient-boosted trees; the year is not an input — networks extrapolated the
+          2013–22 decline as a line — the trailing-year mean stands in for it.<br><br>
+          Left out on purpose because they are what PM2.5 <b>looks like</b>, not what causes it: visibility, the haze and
+          mist codes, and whether the METAR carried a cloud group at all (a report is CAVOK only when visibility is
+          10 km or more — it was the third most important feature until it was caught).<br><br>
+          Sources: CNEMC via quotsoft.net · IEM METAR · Open-Meteo ERA5 (pinned to <code>models=era5</code>) and forecast
+          archive · NOAA IGRA v2. Code and every number on this page: <code>ml/</code> in the repository.</p>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="tip" id="tip"></div>
+<script>window.AIR = __AIR_MIN__; window.ANALYSIS = __ANALYSIS_DATA__;</script>
+<script>
+__PM25MODEL_JS__
+</script>
+<script>
+__FORECAST_JS__
+</script>
+<script>
+__ANALYSIS_JS__
+</script>

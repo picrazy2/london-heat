@@ -332,6 +332,9 @@ def main():
     stamp = ldn_last
     temp_css, temp_html, temp_js = read("templates", "temp.css"), read("templates", "temp.html"), read("templates", "temp.js")
     air_css, air_html, air_js = read("templates", "air.css"), read("templates", "air.html"), read("templates", "air.js")
+    fc_css, fc_html, fc_js = read("templates", "forecast.css"), read("templates", "forecast.html"), read("templates", "forecast.js")
+    model_js, analysis_js = read("templates", "pm25model.js"), read("templates", "analysis.js")
+    air_html = air_html.replace("__FORECAST_HTML__", fc_html)
 
     # ── /london ──
     t = read("templates", "london.tmpl.html")
@@ -348,12 +351,31 @@ def main():
     t = (t.replace("__TEMP_CSS__", temp_css).replace("__AIR_CSS__", air_css)
           .replace("__TEMP_HTML__", temp_html).replace("__AIR_HTML__", air_html)
           .replace("__TEMP_JS__", temp_js).replace("__AIR_JS__", air_js)
+          .replace("__FORECAST_CSS__", fc_css).replace("__PM25MODEL_JS__", model_js).replace("__FORECAST_JS__", fc_js)
           .replace("__TEMP_DATA__", render.j(bjt)).replace("__AIR_DATA__", render.j(air))
           .replace("__TOPBAR__", design.topbar(f"through {fmt_short(bj_rec.cur_date)}", "/beijing")))
     render.emit(SITE, "beijing.html", t, path="/beijing", stamp=stamp,
                 image="social-beijing.png",
                 head_extra='<link rel="stylesheet" href="/vendor/leaflet/leaflet.css">\n',
                 body_extra='<script defer src="/vendor/leaflet/leaflet.js"></script>\n')
+
+    # ── /beijing/forecast ──
+    # The page carries the breakpoint tables and the emissions baseline the
+    # browser-side model needs, the analysis figures, and nothing else of the
+    # air payload: the forecast is computed live, the analysis is baked.
+    air_min = {"scales": air["scales"], "level365": air["level365"]}
+    analysis = json.loads(read("data", "pm25_analysis.json"))
+    t = read("templates", "forecast.tmpl.html")
+    t = (t.replace("__AIR_CSS__", air_css).replace("__FORECAST_CSS__", fc_css)
+          .replace("__PM25MODEL_JS__", model_js).replace("__FORECAST_JS__", fc_js).replace("__ANALYSIS_JS__", analysis_js)
+          .replace("__AIR_MIN__", render.j(air_min)).replace("__ANALYSIS_DATA__", render.j(analysis))
+          .replace("__TOPBAR__", design.topbar("recomputed hourly", "/beijing")))
+    render.emit(SITE, os.path.join("beijing", "forecast.html"), t, path="/beijing/forecast", stamp=stamp,
+                image="social-beijing.png")
+    # The model's trees, served as a static file the page fetches once and
+    # caches for a day; it only changes when ml/export_model.py is re-run.
+    os.makedirs(os.path.join(SITE, "model"), exist_ok=True)
+    shutil.copyfile(P("data", "pm25_model.json"), os.path.join(SITE, "model", "pm25.json"))
 
     # ── / ──
     render.emit(SITE, "index.html", home_page(ldn_rec, ldn, bj_rec, air, hourly),
@@ -382,6 +404,7 @@ def main():
                 "  Referrer-Policy: strict-origin-when-cross-origin\n"
                 "  Cache-Control: public, max-age=300, must-revalidate\n\n"
                 "/vendor/*\n  Cache-Control: public, max-age=31536000, immutable\n\n"
+                "/model/*\n  Cache-Control: public, max-age=86400\n\n"
                 "/*.png\n  Cache-Control: public, max-age=86400\n\n"
                 "/favicon.svg\n  Cache-Control: public, max-age=86400\n")
     with open(os.path.join(SITE, "robots.txt"), "w") as f:
@@ -390,7 +413,7 @@ def main():
     with open(os.path.join(SITE, "sitemap.xml"), "w") as f:
         urls = "".join(
             f"<url><loc>{design.SITE_URL}{'' if p == '/' else p}</loc>"
-            f"<lastmod>{today_iso}</lastmod></url>" for p in ("/", "/london", "/beijing"))
+            f"<lastmod>{today_iso}</lastmod></url>" for p in ("/", "/london", "/beijing", "/beijing/forecast"))
         f.write('<?xml version="1.0" encoding="UTF-8"?>'
                 f'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>\n')
 
@@ -420,8 +443,8 @@ def main():
         print(f"Beijing PM2.5 {air['first']}..{air['last']}: {a['y']} mean "
               f"{a['mean']} µg/m³ (US AQI {aqi.us_aqi(a['mean'])[0]}, "
               f"CN {aqi.cn_aqi(a['mean'])[0]})")
-    print("wrote public/: index.html, london.html, beijing.html, 404.html, "
-          "icons, social cards, _redirects, sitemap.xml, vendor/leaflet")
+    print("wrote public/: index.html, london.html, beijing.html, beijing/forecast.html, "
+          "model/pm25.json, 404.html, icons, social cards, _redirects, sitemap.xml, vendor/leaflet")
 
 
 def home_page(ldn_rec, ldn, bj_rec, air, hourly):

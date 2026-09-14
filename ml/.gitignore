@@ -1,0 +1,15 @@
+.venv/
+data/*.csv
+data/*.log
+out/*.parquet
+out/*.txt
+out/*.pt
+out/*.png
+out/train*.log
+__pycache__/
+data/cities/
+data/igra/
+out/*.json
+!out/report_data.json
+!out/forecast.json
+out/report.html

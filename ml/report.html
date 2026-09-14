@@ -1,0 +1,432 @@
+<title>What Moves Beijing's PM2.5</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f4f3f7; --surface:#ffffff; --surface-2:#eceaf3; --line:#dcdae6; --grid:#e9e8f0;
+  --ink:#15131f; --ink-2:#4f4c63; --ink-3:#8a879c;
+  --accent:#5e5ce6; --accent-soft:rgba(94,92,230,.12);
+  --clean:#1d9db4; --dirty:#d4566f; --mid:#b9b7c6;
+  --s-djf:#2a78d6; --s-mam:#eb6834; --s-jja:#1baf7a; --s-son:#eda100;
+  --seq-0:#eeedf8; --seq-1:#c9c7f0; --seq-2:#9f9ce8; --seq-3:#7371df; --seq-4:#4b48c7; --seq-5:#2d2b8f;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0b0b12; --surface:#17171f; --surface-2:#212129; --line:#2e2e3a; --grid:#232330;
+    --ink:#f4f3f8; --ink-2:#b8b6c8; --ink-3:#7d7b90;
+    --accent:#7d7bff; --accent-soft:rgba(125,123,255,.2);
+    --clean:#22a9c2; --dirty:#e0667e; --mid:#55536a;
+    --s-djf:#3987e5; --s-mam:#d95926; --s-jja:#199e70; --s-son:#c98500;
+    --seq-0:#1d1d2c; --seq-1:#2f2e5a; --seq-2:#46449a; --seq-3:#6360d0; --seq-4:#8a88f2; --seq-5:#b9b7ff;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0b0b12; --surface:#17171f; --surface-2:#212129; --line:#2e2e3a; --grid:#232330;
+  --ink:#f4f3f8; --ink-2:#b8b6c8; --ink-3:#7d7b90;
+  --accent:#7d7bff; --accent-soft:rgba(125,123,255,.2);
+  --clean:#22a9c2; --dirty:#e0667e; --mid:#55536a;
+  --s-djf:#3987e5; --s-mam:#d95926; --s-jja:#199e70; --s-son:#c98500;
+  --seq-0:#1d1d2c; --seq-1:#2f2e5a; --seq-2:#46449a; --seq-3:#6360d0; --seq-4:#8a88f2; --seq-5:#b9b7ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;padding-inline:20px;padding-block:40px 80px}
+.wrap{max-width:920px;margin:0 auto}
+.prose{max-width:680px}
+h1{font-size:clamp(30px,5vw,44px);line-height:1.1;font-weight:600;letter-spacing:-.02em;margin:0 0 14px;text-wrap:balance}
+h2{font-size:24px;font-weight:600;letter-spacing:-.01em;margin:64px 0 10px;text-wrap:balance}
+h3{font-size:17px;font-weight:600;margin:28px 0 6px}
+p{margin:0 0 14px;color:var(--ink);}
+p.lede{font-size:19px;color:var(--ink-2);margin-bottom:24px}
+.eyebrow{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:10px}
+a{color:var(--accent)}
+code,.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-size:.92em}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:28px 0 8px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.tile .k{font-size:12px;color:var(--ink-3);letter-spacing:.04em;text-transform:uppercase;font-family:"IBM Plex Mono",monospace}
+.tile .v{font-size:30px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.15;margin-top:4px}
+.tile .s{font-size:13px;color:var(--ink-2);margin-top:2px}
+figure{margin:20px 0 6px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 16px 10px;position:relative}
+figure .t{font-weight:600;font-size:15px;margin:0 0 2px}
+figure .st{font-size:13px;color:var(--ink-2);margin:0 0 10px}
+figure svg{width:100%;height:auto;display:block;overflow:visible}
+figcaption{font-size:13px;color:var(--ink-3);margin-top:8px;line-height:1.45}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--ink-2);margin:6px 0 4px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:14px;height:3px;border-radius:2px;display:inline-block}
+.legend i.dash{background:repeating-linear-gradient(90deg,currentColor 0 4px,transparent 4px 7px)}
+.seg{display:flex;gap:4px;flex-wrap:wrap;margin:0 0 10px}
+.seg button{font:inherit;font-size:13px;padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.grid2 figure{margin:0}
+.smalls{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:20px}
+.smalls figure{margin:0;padding:12px 12px 6px}
+table{border-collapse:collapse;width:100%;font-size:14px;margin:16px 0}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:500;color:var(--ink-3);font-size:12px;letter-spacing:.04em;text-transform:uppercase;font-family:"IBM Plex Mono",monospace}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;font-family:"IBM Plex Mono",monospace}
+tr.hi td{font-weight:600}
+.axis text{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11px;fill:var(--ink-3)}
+.axis line,.axis path{stroke:var(--line)}
+.gridl line{stroke:var(--grid)}
+.lbl{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11px;fill:var(--ink-2)}
+.lbl.b{font-weight:500;fill:var(--ink)}
+.cell-t{font-family:"IBM Plex Mono",monospace;font-size:11px;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+#tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12px;line-height:1.4;padding:6px 9px;border-radius:6px;font-family:"IBM Plex Mono",monospace;white-space:nowrap;z-index:10;transform:translate(-50%,calc(-100% - 10px));opacity:0;transition:opacity .08s}
+#tip.on{opacity:1}
+.note{background:var(--surface-2);border-radius:10px;padding:14px 16px;font-size:14px;color:var(--ink-2);margin:18px 0}
+ul{padding-left:20px;margin:0 0 14px}li{margin-bottom:6px}
+.foot{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-3)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div id="tip" role="status"></div>
+<div class="wrap">
+<div class="prose">
+<div class="eyebrow">Beijing · Dec 2013 – Sep 2026 · 109,285 hourly city means</div>
+<h1>What moves Beijing's PM2.5, hour by hour</h1>
+<p class="lede">A model fed only the weather — the airport's METARs, ERA5 reanalysis, and the calendar — explains three-quarters of the hourly variance in the city's PM2.5 two years past the end of its training data. Here is what it learned, and what it says about wind, rain and season once everything else is held still.</p>
+</div>
+
+<div class="tiles">
+  <div class="tile"><div class="k">Test R², log scale</div><div class="v">0.79</div><div class="s">2024 – Sep 2026, unseen</div></div>
+  <div class="tile"><div class="k">Mean abs. error</div><div class="v">8.5 <span style="font-size:16px;font-weight:400">µg/m³</span></div><div class="s">against a 2024–26 mean of 29</div></div>
+  <div class="tile"><div class="k">Daily-mean R²</div><div class="v">0.78</div><div class="s">winter 0.86 · summer 0.58</div></div>
+  <div class="tile"><div class="k">Inputs</div><div class="v">102</div><div class="s">weather now, its 72 h history, time</div></div>
+</div>
+
+<div class="prose">
+<h2>The model</h2>
+<p>The target is hourly city-mean PM2.5 (the site's own CNEMC series, 33 stations), modelled as <code>log1p</code> because a distribution with a median of 31 and a maximum of 641 needs it. Inputs are the ZBAA METAR (temperature, dewpoint, humidity, wind vector, gusts, pressure, present-weather codes for rain, snow and dust), ERA5 reanalysis for central Beijing (real precipitation amounts, boundary-layer height, 100 m wind, cloud, radiation, soil moisture), rolling 3–72 h means and sums of each, and the calendar as sine/cosine pairs for hour, day of year and weekday, plus a Chinese New Year window.</p>
+<p>Training runs Dec 2013 – 2022, 2023 is held for early stopping, and <strong>2024 – Sep 2026 is never touched until scoring</strong>. That split is the hard version of the problem, because 2024's Beijing (annual mean 31 µg/m³) is not 2016's (74). The year itself is <em>not</em> an input: neural nets extrapolated the 2013–22 decline as a straight line and predicted 2025 cleaner than it was. Instead each hour sees the city's mean PM2.5 over the trailing year, lagged a month — an emissions baseline that carries no weather.</p>
+<p>Three things were deliberately kept out because they are what PM2.5 <em>looks like</em>, not what causes it: visibility, the haze/mist/smoke codes, and — found the hard way — whether the METAR carried a cloud group at all, since a report is <code>CAVOK</code> only when visibility is at least 10 km.</p>
+</div>
+
+<table>
+<thead><tr><th>Model, same 102 inputs</th><th class="n">R² (log)</th><th class="n">R²</th><th class="n">MAE µg/m³</th></tr></thead>
+<tbody id="modeltab"></tbody>
+</table>
+<div class="prose"><p style="font-size:14px;color:var(--ink-2)">Gradient boosting and the recurrent net land in the same place, which suggests the ceiling is in the inputs rather than the model class. The GRU is handed raw hourly weather for the past 120 hours and no hand-built rolling features at all; it rediscovers the same lag structure. Persistence (last hour's value) scores R² 0.98 at one hour ahead and −0.16 at 24 h, so the weather model is a different kind of object: it knows nothing about yesterday's air.</p></div>
+
+<figure id="f-series"><p class="t">Three weeks of the test period, hour by hour</p><p class="st" id="series-st"></p><div class="legend"><span><i style="background:var(--ink)"></i>Measured</span><span><i style="background:var(--accent)"></i>Weather-only model</span></div><div class="chart"></div><figcaption>Late February to mid March 2025, chosen as the most variable three weeks in the test set. Episodes build and clear on the model's schedule; peak heights are where it errs, the usual price of a log target.</figcaption></figure>
+
+<div class="prose">
+<h2>Wind is most of it</h2>
+<p>Wind history carries 54% of the model's gain and the single most important input is the northerly component of the 100 m wind averaged over the past 24 hours — not the wind now, and not its speed. Speed alone is the wrong variable. A steady 24 h wind at 6 m/s leaves 13 µg/m³ if it comes from the north-west and 57 if it comes from the south, and a <em>stronger</em> southerly is worse: at 9 m/s the model reads 68, because that wind is importing Hebei's air up the plain.</p>
+</div>
+<figure id="f-rose"><p class="t">Predicted PM2.5 after 24 h of steady wind, by direction and speed</p><p class="st">µg/m³ · every other input held at its observed value, averaged over 20,000 hours</p><div class="seg" id="rose-seg" role="group" aria-label="Season"></div><div class="chart"></div><figcaption>Direction is where the wind comes from. The north-west quadrant is clean at any speed; calm is bad everywhere; the south is dirty and gets dirtier with speed. Switch season: winter is the extreme case, summer the muted one.</figcaption></figure>
+
+<div class="prose">
+<h3>The 24 hours after the north wind starts</h3>
+<p>Taking every onset of a strong north wind (≥ 5 m/s from within 45° of north, after 12 quiet hours) and averaging the measured PM2.5 around it: the air clears within six hours, bottoms out at +6 to +12 h at roughly a third of the pre-frontal level, and takes two full days to climb back. The shape is the same in every season; only the height differs.</p>
+<p>Spring is where your instinct about sandstorms holds. In the 29 onsets where the METAR reported dust in the following day, PM2.5 <em>rose</em> from 69 to 79 six hours in, before falling. Without dust — 339 onsets — spring behaves like every other season.</p>
+</div>
+<figure id="f-onset"><p class="t">Measured PM2.5 around a strong north-wind onset</p><p class="st">µg/m³, mean across onsets · hour 0 is the first hour of strong northerly wind</p><div class="legend"><span><i style="background:var(--s-djf)"></i>Winter (447)</span><span><i style="background:var(--s-mam)"></i>Spring (368)</span><span style="color:var(--s-mam)"><i class="dash"></i><span style="color:var(--ink-2)">Spring, dust reported (29)</span></span><span><i style="background:var(--s-jja)"></i>Summer (333)</span><span><i style="background:var(--s-son)"></i>Autumn (348)</span></div><div class="chart"></div></figure>
+
+<div class="prose">
+<h2>Rain, controlling for everything else</h2>
+<p>This is the question the model was built for, and the answer has two halves that pull in opposite directions.</p>
+<p><strong>Washout is real and scales with amount.</strong> Take every hour with rain in the past 24 h, ask the model to predict it, then zero every precipitation input and predict again with wind, humidity, boundary layer, season and hour all left exactly as they were. Rain alone lowers the prediction by 17% for a trace-to-2 mm day, 24% at 2–5 mm, 46% at 20–50 mm and 60% above 50 mm. A model-free check agrees: comparing wet and dry hours inside the same month × wind sector × wind speed × time-of-day × era cell gives −25% across 1,065 cells.</p>
+<p><strong>But rain arrives wet.</strong> Relative humidity is the model's strongest non-wind lever — it moves the prediction from 31 µg/m³ at 10% RH to 60 at 100% — because hygroscopic particles swell and a saturated stagnant airmass is the recipe for haze. Compare a rainy day not with "the same day without rain" but with a genuinely dry day at that month's typical humidity, and light rain is net-neutral to slightly positive; the day comes out cleaner only past about 20 mm.</p>
+</div>
+<figure id="f-rain"><p class="t">Effect of rain in the past 24 h on predicted PM2.5</p><p class="st">% change · by ERA5 precipitation total</p><div class="legend"><span><i style="background:var(--accent)"></i>Rain removed, humidity kept (washout only)</span><span><i style="background:var(--clean)"></i>Rain removed and humidity set to a dry day (net)</span></div><div class="chart"></div><figcaption>Counts per bin: 6,902 · 4,530 · 3,447 · 2,645 · 1,751 · 338 hours.</figcaption></figure>
+
+<div class="prose">
+<p><strong>Winter flips the sign.</strong> The model-free comparison by month shows precipitation hours running 23–45% cleaner than dry hours from March to November, then +19% in December and +84% in January. Winter precipitation in Beijing is snow or drizzle out of a moist southerly airmass under a low boundary layer: the exact conditions that build a haze episode. The rain is still washing — the model's washout-only estimate for winter is −26% — but the weather it comes with is worth more than that, so a snowy day is a bad-air day.</p>
+</div>
+<figure id="f-rainm"><p class="t">Wet hours vs dry hours, within the same weather cell, by month</p><p class="st">% difference in PM2.5 · ≥ 2 mm in the past 24 h vs none in the past 48 h · no model involved</p><div class="chart"></div><figcaption>Each bar is a weighted mean over cells of month × wind sector × wind-speed tercile × 6 h block × era. January rests on few wet hours and should be read as "large and positive", not as 84 exactly.</figcaption></figure>
+
+<div class="prose">
+<p><strong>The effect lingers.</strong> Removing a six-hour block of rain from the model's inputs changes its prediction by 28–30% while the rain is falling or just finished, 24% a day later and still 18% two days later. Beijing's air takes about as long to re-load after rain as after a north wind.</p>
+</div>
+<figure id="f-timing"><p class="t">Washout effect by time since the rain</p><p class="st">% change in prediction when a 6 h rain block is removed, by hours since it ended</p><div class="chart"></div></figure>
+
+<div class="prose">
+<h2>The rest of the weather</h2>
+<p>Partial dependence: each panel varies one input (and its rolling copies) across its range for the same 20,000 sampled hours, holding everything else fixed, and reports the mean prediction.</p>
+</div>
+<div class="smalls" id="smalls"></div>
+<div class="prose">
+<ul style="margin-top:16px">
+<li><strong>Season</strong> is the shape you know — but note this is the seasonal effect <em>after</em> wind, humidity and boundary layer are accounted for. March still peaks; what remains there is dust and heating-season carry-over the weather inputs don't name.</li>
+<li><strong>Boundary layer height</strong>: below 100 m the model reads 56 µg/m³, above 800 m about 35, and it saturates — once the lid is off, more height adds nothing.</li>
+<li><strong>Wind speed on its own</strong> is non-monotonic: calm is bad (52), 4 m/s is the clean point (30), and 8–10 m/s is worse again (40) because at those speeds the model is seeing strong southerlies and dust.</li>
+<li><strong>Hour of day</strong> is almost flat once the boundary layer is an input; the familiar night-time hump is the boundary layer collapsing, not the clock. <strong>Weekday</strong> is exactly flat — there is no weekend effect in Beijing's PM2.5, in any year.</li>
+</ul>
+</div>
+
+<div class="prose">
+<h2>Weather did not clean the air</h2>
+<p>Hold the emissions baseline at 2014's and give the model each subsequent year's actual weather. It predicts 78–87 µg/m³ every year: the 2013–25 decline from 87 to 27 is essentially all emissions, with the weather of 2017 and 2025 somewhat kinder and 2023–24 somewhat harsher than average. This is a coarse counterfactual — the model has only seen each weather regime paired with its own era — but the gap is too large to be a modelling artefact.</p>
+</div>
+<figure id="f-annual"><p class="t">Annual mean PM2.5: measured, and the same weather applied to the 2014 city</p><p class="st">µg/m³</p><div class="legend"><span><i style="background:var(--accent)"></i>Measured</span><span style="color:var(--ink-3)"><i class="dash"></i><span style="color:var(--ink-2)">Weather of that year, 2014 emissions</span></span></div><div class="chart"></div></figure>
+
+
+<div class="prose">
+<h2>More data: what's overhead, and what's upwind</h2>
+<p>Two more keyless sources were added after the first pass. Beijing's radiosonde (station 54511, from NOAA's IGRA archive) goes up twice a day and reports what the surface can't see: whether there is a lid, and which way the air is moving above the rooftops. The northerly wind at 925 hPa — about 750 m up — turns out to be the single strongest correlate of PM2.5 in the whole dataset (r = −0.51, against −0.36 for the airport's surface wind), and the 850 hPa-minus-surface temperature difference, the inversion, is the strongest non-wind one (+0.38). Adding the soundings takes the forward-test score from 0.748 to 0.762.</p>
+<p>The second is the rest of the CNEMC network: hourly PM2.5 and PM10 for twenty cities around Beijing, grouped by direction. The south group (Baoding, Shijiazhuang, Langfang…) is the Hebei plain the south wind blows in from; the north-west group (Zhangjiakou, Hohhot, Xilingol…) is the steppe the dust comes from. Their <em>current</em> readings lift the score to 0.875 and cut the error to 6.4 µg/m³ — but the reading from thirty kilometres away is partly the same air, so that number is a nowcast, not an explanation. Lag the upwind readings and the benefit decays: half of it is gone after 12 hours, all of it after about two days.</p>
+</div>
+<table>
+<thead><tr><th>Inputs</th><th class="n">R² (log)</th><th class="n">R²</th><th class="n">MAE µg/m³</th></tr></thead>
+<tbody id="modeltab2"></tbody>
+</table>
+<figure id="f-lag"><p class="t">What the upwind cities are worth, by how old their reading is</p><p class="st">Forward-test R² (log) · same weather model with upwind PM2.5/PM10 lagged by the stated hours</p><div class="chart"></div><figcaption>The dashed line is the same model with no upwind data. Upwind readings are a genuine advance signal for roughly a day, and a strong one for six hours.</figcaption></figure>
+
+<div class="prose">
+<h2>Forecasting the week ahead</h2>
+<p>The forecast has two parts. A <strong>weather model</strong> trained only on inputs a forecast can supply — ERA5-style surface fields, boundary-layer height, and the sounding features re-derived from 925/850/700 hPa forecast levels — scores 0.711 on the test years when driven by reanalysis; that is the ceiling. A <strong>residual model</strong> then learns how the weather model's error at issue time persists: it takes the lead time, Beijing's own latest reading relative to what the weather alone would give, the upwind cities' latest readings, and what the wind and rain do between now and then. Each training row draws a random lead so one model covers the whole horizon and learns its own decay — persistence at one hour, weather-only by two days.</p>
+<p>The honest test uses Open-Meteo's archive of what the forecast <em>actually said</em> one to seven days earlier, over 2024–26. Running the same model on the real forecast and on reanalysis separates the two sources of error: whatever the reanalysis-driven run gets wrong is ours, and the gap to the forecast-driven run belongs to the weather forecast.</p>
+</div>
+<figure id="f-lead"><p class="t">Forecast skill by lead time, 2024 – Sep 2026</p><p class="st">R² on log PM2.5, hourly · all inputs available at issue time</p><div class="legend"><span><i style="background:var(--accent)"></i>Perfect weather forecast (reanalysis)</span><span><i style="background:var(--dirty)"></i>Real weather forecast, as issued</span><span><i style="background:var(--ink-3)"></i>Persistence</span><span style="color:var(--ink-3)"><i class="dash"></i><span style="color:var(--ink-2)">Climatology (season × hour × trailing level)</span></span></div><div class="chart"></div><figcaption>Beyond day two almost all of the growing error is the weather forecast's: the 100 m northerly wind, the model's most important input, correlates 0.85 with reanalysis at one day out and 0.40 at seven. The real-forecast curve is slightly pessimistic — the archive lacks boundary-layer height and pressure levels, which the live forecast has.</figcaption></figure>
+<table>
+<thead><tr><th>Daily mean, real forecast</th><th class="n">R²</th><th class="n">MAE µg/m³</th><th class="n">"Over 35" called right</th></tr></thead>
+<tbody id="dailytab"></tbody>
+</table>
+
+<div class="prose">
+<h2>This week's outlook</h2>
+<p id="outlook-p"></p>
+</div>
+<figure id="f-outlook"><p class="t">Beijing PM2.5: the past week and the next</p><p class="st" id="outlook-st"></p><div class="legend"><span><i style="background:var(--ink)"></i>Measured</span><span><i style="background:var(--accent)"></i>Weather model on the past week's analysis</span><span><i style="background:var(--dirty)"></i>Forecast, with nowcast correction</span></div><div class="chart"></div><figcaption>For the past week the weather model runs on the forecast model's analysis of the weather that occurred (not ERA5), so that line checks the PM2.5 model, not the forecast. Daily means are printed above each forecast day. Re-run <code>ml/forecast.py</code> to refresh; it fetches the current forecast, the last week of CNEMC readings and the upwind cities, fits nothing, and writes <code>out/forecast.json</code>.</figcaption></figure>
+
+<div class="prose">
+<h2>Where it still comes up short</h2>
+<ul>
+<li><strong>Summer</strong> scores R² 0.58 against 0.86 in winter. At 20 µg/m³ the residual is secondary aerosol chemistry — photochemistry, ozone, regional sulfate — which no surface-weather input describes.</li>
+<li><strong>Spring dust</strong> is still the largest source of big misses. North-west PM10 now gives a day's warning when the plume is already over Inner Mongolia; a satellite dust product would give two.</li>
+<li><strong>Beyond two days</strong> the limit is the weather forecast, not this model. An ensemble forecast (several members rather than one deterministic run) would at least put honest error bars on days 3–7.</li>
+<li><strong>The worst hours</strong> are under-predicted (mean 80 vs 102 above 75 µg/m³). A quantile or Tweedie objective, or a classification head for episode days, would trade a little average skill for better peaks.</li>
+</ul>
+<p>Everything here is reproducible from <code>ml/</code> in the repo: the <code>fetch_*.py</code> scripts pull METAR, ERA5, the archived forecasts and the upwind cities, <code>parse_igra.py</code> the soundings; <code>dataset.py</code> builds the table, <code>train.py</code> runs the forward split, <code>cv.py</code> the blocked cross-validation, <code>analyze.py</code> the counterfactuals, <code>train_lead.py</code> and <code>eval_realfc.py</code> the forecast skill, <code>forecast.py</code> the outlook.</p>
+</div>
+
+<div class="foot">Data: CNEMC hourly PM2.5 via quotsoft.net (city mean of 33 stations, excluding the Dingling and regional background sites; twenty surrounding cities from the same publication) · ZBAA METAR via Iowa Environmental Mesonet · ERA5 via Open-Meteo archive, pinned to <code>models=era5</code> · radiosonde 54511 via NOAA IGRA v2 · forecasts and archived forecasts via Open-Meteo. Boundary-layer height is missing Jan–Jun 2024 in that archive and is flagged, not filled.</div>
+</div>
+
+<script id="data" type="application/json">__DATA__</script>
+<script>
+const D = JSON.parse(document.getElementById('data').textContent);
+const NS = 'http://www.w3.org/2000/svg';
+const tip = document.getElementById('tip');
+function el(n, a = {}, parent) { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); if (parent) parent.appendChild(e); return e; }
+function fmt(v, d = 0) { return v == null ? '—' : Number(v).toLocaleString('en', { maximumFractionDigits: d, minimumFractionDigits: d }); }
+function showTip(html, x, y) { tip.innerHTML = html; tip.style.left = x + 'px'; tip.style.top = y + 'px'; tip.classList.add('on'); }
+function hideTip() { tip.classList.remove('on'); }
+function scaleL(d0, d1, r0, r1) { const f = v => r0 + (v - d0) / (d1 - d0) * (r1 - r0); f.inv = p => d0 + (p - r0) / (r1 - r0) * (d1 - d0); return f; }
+function niceTicks(lo, hi, n = 5) { const span = hi - lo, raw = span / n, p = Math.pow(10, Math.floor(Math.log10(raw))); const s = [1, 2, 2.5, 5, 10].map(m => m * p).find(s => span / s <= n) || p * 10; const t = []; for (let v = Math.ceil(lo / s) * s; v <= hi + 1e-9; v += s) t.push(+v.toFixed(6)); return t; }
+function frame(fig, W, H, m) { const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img' }); fig.querySelector('.chart').appendChild(svg); return svg; }
+function yAxis(svg, y, ticks, x0, x1, unit) { const g = el('g', { class: 'gridl' }, svg), a = el('g', { class: 'axis' }, svg); const dec = ticks.length > 1 && Math.abs(ticks[1] - ticks[0]) < 1 ? 2 : 0; ticks.forEach((t, i) => { el('line', { x1: x0, x2: x1, y1: y(t), y2: y(t) }, g); const tx = el('text', { x: x0 - 6, y: y(t) + 4, 'text-anchor': 'end' }, a); tx.textContent = fmt(t, dec) + (unit && i === ticks.length - 1 ? unit : ''); }); }
+function xAxis(svg, x, ticks, y0, labelFn) { const a = el('g', { class: 'axis' }, svg); el('line', { x1: x(ticks[0]), x2: x(ticks[ticks.length - 1]), y1: y0, y2: y0 }, a); ticks.forEach(t => { const tx = el('text', { x: x(t), y: y0 + 16, 'text-anchor': 'middle' }, a); tx.textContent = labelFn ? labelFn(t) : t; }); }
+function path(pts) { return pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(''); }
+
+// ── model table
+const tb = document.getElementById('modeltab');
+D.models.forEach((m, i) => { const tr = document.createElement('tr'); if (i === D.models.length - 1) tr.className = 'hi'; tr.innerHTML = `<td>${m.model}</td><td class="n">${fmt(m.r2_log, 3)}</td><td class="n">${fmt(m.r2, 3)}</td><td class="n">${fmt(m.mae, 1)}</td>`; tb.appendChild(tr); });
+
+// ── time series
+(function () {
+  const fig = document.getElementById('f-series'), W = 900, H = 300, L = 44, R = 12, T = 10, B = 30;
+  const a = D.series.actual, p = D.series.ensemble, n = a.length, start = new Date(D.series.start.replace(' ', 'T'));
+  document.getElementById('series-st').textContent = `From ${start.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })} · R² (log) over this window ${D.series_r2}`;
+  const svg = frame(fig, W, H);
+  const ymax = Math.max(...a.filter(v => v != null), ...p) * 1.05;
+  const x = scaleL(0, n - 1, L, W - R), y = scaleL(0, ymax, H - B, T);
+  yAxis(svg, y, niceTicks(0, ymax, 5), L, W - R);
+  const days = []; for (let i = 0; i < n; i += 72) days.push(i);
+  xAxis(svg, x, days, H - B, i => { const d = new Date(start.getTime() + i * 3600e3); return d.getDate() + ' ' + d.toLocaleString('en', { month: 'short' }); });
+  const segs = []; let cur = []; a.forEach((v, i) => { if (v == null) { if (cur.length) segs.push(cur); cur = []; } else cur.push([x(i), y(v)]); }); if (cur.length) segs.push(cur);
+  segs.forEach(s => el('path', { d: path(s), fill: 'none', stroke: 'var(--ink)', 'stroke-width': 1.5, 'stroke-opacity': .85 }, svg));
+  el('path', { d: path(p.map((v, i) => [x(i), y(v)])), fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2 }, svg);
+  const cross = el('line', { y1: T, y2: H - B, stroke: 'var(--ink-3)', 'stroke-dasharray': '3 3', opacity: 0 }, svg);
+  const hit = el('rect', { x: L, y: T, width: W - L - R, height: H - T - B, fill: 'transparent' }, svg);
+  hit.addEventListener('mousemove', e => { const r = svg.getBoundingClientRect(); const px = (e.clientX - r.left) / r.width * W; const i = Math.round(Math.min(n - 1, Math.max(0, x.inv(px)))); cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.setAttribute('opacity', 1); const d = new Date(start.getTime() + i * 3600e3); showTip(`${d.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}<br>measured ${fmt(a[i])} · model ${fmt(p[i])}`, e.clientX, e.clientY); });
+  hit.addEventListener('mouseleave', () => { cross.setAttribute('opacity', 0); hideTip(); });
+})();
+
+// ── wind rose heatmap
+(function () {
+  const fig = document.getElementById('f-rose'), seg = document.getElementById('rose-seg');
+  const dirs = D.pdp_wind_rose.dirs, speeds = [1, 3, 6, 9], names = { all: 'All year', DJF: 'Winter', MAM: 'Spring', JJA: 'Summer', SON: 'Autumn' };
+  const compass = d => ({ 0: 'N', 30: 'NNE', 60: 'ENE', 90: 'E', 120: 'ESE', 150: 'SSE', 180: 'S', 210: 'SSW', 240: 'WSW', 270: 'W', 300: 'WNW', 330: 'NNW' })[d];
+  const W = 900, H = 250, L = 64, R = 12, T = 28, B = 34, cw = (W - L - R) / dirs.length, ch = (H - T - B) / speeds.length;
+  let vmax = 0; Object.keys(names).forEach(k => speeds.forEach(s => D.pdp_wind_rose[k][s].forEach(v => vmax = Math.max(vmax, v))));
+  const ramp = ['--seq-0', '--seq-1', '--seq-2', '--seq-3', '--seq-4', '--seq-5'];
+  const svg = frame(fig, W, H); const g = el('g', {}, svg);
+  function draw(k) {
+    g.innerHTML = '';
+    speeds.forEach((s, r) => dirs.forEach((d, c) => {
+      const v = D.pdp_wind_rose[k][s][c], t = v / vmax, step = Math.min(5, Math.floor(t * 6));
+      const rc = el('rect', { x: L + c * cw + 1, y: T + r * ch + 1, width: cw - 2, height: ch - 2, rx: 4, fill: `var(${ramp[step]})` }, g);
+      const tx = el('text', { x: L + c * cw + cw / 2, y: T + r * ch + ch / 2, class: 'cell-t', fill: step >= 3 ? 'var(--bg)' : 'var(--ink)' }, g); tx.textContent = Math.round(v);
+      rc.addEventListener('mousemove', e => showTip(`${compass(d)} at ${s} m/s for 24 h → ${Math.round(v)} µg/m³`, e.clientX, e.clientY)); rc.addEventListener('mouseleave', hideTip);
+    }));
+  }
+  const ax = el('g', { class: 'axis' }, svg);
+  dirs.forEach((d, c) => { const t = el('text', { x: L + c * cw + cw / 2, y: T - 8, 'text-anchor': 'middle' }, ax); t.textContent = compass(d); });
+  speeds.forEach((s, r) => { const t = el('text', { x: L - 8, y: T + r * ch + ch / 2 + 4, 'text-anchor': 'end' }, ax); t.textContent = s + ' m/s'; });
+  const lg = el('text', { x: L, y: H - 8, class: 'lbl' }, svg); lg.textContent = 'from calm to strong ↓ · wind direction (from) →';
+  Object.keys(names).forEach((k, i) => { const b = document.createElement('button'); b.textContent = names[k]; b.id = 'rose-' + k; b.setAttribute('aria-pressed', i === 0); b.onclick = () => { seg.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', 'false')); b.setAttribute('aria-pressed', 'true'); draw(k); }; seg.appendChild(b); });
+  draw('all');
+})();
+
+// ── onset event study
+(function () {
+  const fig = document.getElementById('f-onset'), W = 900, H = 320, L = 44, R = 120, T = 12, B = 30;
+  const lags = D.wind_onset.lags, S = D.wind_onset.seasons;
+  const series = [['DJF', 'var(--s-djf)', S.DJF.mean, 'Winter'], ['MAM', 'var(--s-mam)', S.MAM.mean, 'Spring'], ['MAMd', 'var(--s-mam)', D.wind_onset.MAM_with_dust.mean, 'Spring + dust', '5 4'], ['JJA', 'var(--s-jja)', S.JJA.mean, 'Summer'], ['SON', 'var(--s-son)', S.SON.mean, 'Autumn']];
+  const ymax = Math.max(...series.flatMap(s => s[2])) * 1.08;
+  const svg = frame(fig, W, H); const x = scaleL(-24, 48, L, W - R), y = scaleL(0, ymax, H - B, T);
+  yAxis(svg, y, niceTicks(0, ymax, 5), L, W - R);
+  xAxis(svg, x, [-24, -12, 0, 12, 24, 36, 48], H - B, t => (t > 0 ? '+' : '') + t + ' h');
+  el('line', { x1: x(0), x2: x(0), y1: T, y2: H - B, stroke: 'var(--ink-3)', 'stroke-dasharray': '2 3' }, svg);
+  const ends = [];
+  series.forEach(s => { const pts = lags.map((l, i) => [x(l), y(s[2][i])]); const a = { d: path(pts), fill: 'none', stroke: s[1], 'stroke-width': 2, 'stroke-linejoin': 'round' }; if (s[4]) a['stroke-dasharray'] = s[4]; el('path', a, svg); ends.push({ y: pts[pts.length - 1][1], t: s[3] + ' ' + Math.round(s[2][s[2].length - 1]), c: s[1] }); });
+  ends.sort((a, b) => a.y - b.y); for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 13) ends[i].y = ends[i - 1].y + 13;
+  ends.forEach(e => { const t = el('text', { x: W - R + 8, y: e.y + 4, class: 'lbl b' }, svg); t.textContent = e.t; });
+  const cross = el('line', { y1: T, y2: H - B, stroke: 'var(--ink-3)', opacity: 0 }, svg);
+  const hit = el('rect', { x: L, y: T, width: W - L - R, height: H - T - B, fill: 'transparent' }, svg);
+  hit.addEventListener('mousemove', e => { const r = svg.getBoundingClientRect(); const l = Math.round(x.inv((e.clientX - r.left) / r.width * W)); const i = l + 24; if (i < 0 || i >= lags.length) return; cross.setAttribute('x1', x(l)); cross.setAttribute('x2', x(l)); cross.setAttribute('opacity', .6); showTip(`${l > 0 ? '+' : ''}${l} h<br>` + series.map(s => `${s[3]} ${fmt(s[2][i])}`).join(' · '), e.clientX, e.clientY); });
+  hit.addEventListener('mouseleave', () => { cross.setAttribute('opacity', 0); hideTip(); });
+})();
+
+// ── grouped bars helper
+function bars(fig, cats, series, opts) {
+  const W = 900, H = opts.h || 280, L = 48, R = 12, T = 14, B = 34;
+  const all = series.flatMap(s => s.v); const lo = Math.min(0, ...all), hi = Math.max(0, ...all);
+  const pad = (hi - lo) * .12; const svg = frame(fig, W, H);
+  const y = scaleL(lo - (lo < 0 ? pad : 0), hi + (hi > 0 ? pad : 0), H - B, T), x = scaleL(0, cats.length, L, W - R);
+  yAxis(svg, y, niceTicks(lo - (lo < 0 ? pad : 0), hi + (hi > 0 ? pad : 0), 5), L, W - R, opts.unit);
+  el('line', { x1: L, x2: W - R, y1: y(0), y2: y(0), stroke: 'var(--ink-3)' }, svg);
+  const gw = (W - L - R) / cats.length, bw = Math.min(40, (gw - 10) / series.length - 2);
+  cats.forEach((c, i) => {
+    const t = el('text', { x: x(i) + gw / 2, y: H - B + 16, class: 'lbl', 'text-anchor': 'middle' }, svg); t.textContent = c;
+    series.forEach((s, j) => { const v = s.v[i]; const bx = x(i) + gw / 2 - (series.length * (bw + 2)) / 2 + j * (bw + 2); const y0 = y(0), y1 = y(v); const r = el('rect', { x: bx, y: Math.min(y0, y1), width: bw, height: Math.abs(y1 - y0), rx: 3, fill: s.color ? s.color : (v < 0 ? 'var(--clean)' : 'var(--dirty)') }, svg); const lb = el('text', { x: bx + bw / 2, y: v < 0 ? y1 + 12 : y1 - 4, class: 'lbl', 'text-anchor': 'middle' }, svg); lb.textContent = (v > 0 && opts.signed ? '+' : '') + Math.round(v) + (opts.unit || ''); r.addEventListener('mousemove', e => showTip(`${s.name ? s.name + '<br>' : ''}${c}: ${fmt(v, 1)}${opts.unit || ''}${s.n ? ' · n ' + fmt(s.n[i]) : ''}`, e.clientX, e.clientY)); r.addEventListener('mouseleave', hideTip); });
+  });
+}
+bars(document.getElementById('f-rain'), ['0.5–2 mm', '2–5', '5–10', '10–20', '20–50', '>50 mm'],
+  [{ name: 'Washout only', v: D.precip_counterfactual.map(r => r.effect_pct), color: 'var(--accent)', n: D.precip_counterfactual.map(r => r.n) },
+   { name: 'Net vs a dry day', v: D.precip_counterfactual_dry_day.map(r => r.effect_pct), color: 'var(--clean)' }], { unit: '%', signed: true });
+const mn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+bars(document.getElementById('f-rainm'), mn, [{ v: mn.map((_, i) => D.precip_stratified_by_month_pct[i + 1]) }], { unit: '%', signed: true });
+bars(document.getElementById('f-timing'), Object.keys(D.precip_timing).map(k => k === '0' ? 'while raining' : '+' + k + ' h'), [{ v: Object.values(D.precip_timing).map(r => r.effect_pct), color: 'var(--accent)', n: Object.values(D.precip_timing).map(r => r.n) }], { unit: '%', signed: true, h: 240 });
+
+// ── small multiples
+(function () {
+  const host = document.getElementById('smalls');
+  const panels = [
+    ['Month of year', D.pdp_month.grid, D.pdp_month.pred, g => mn[g - 1][0], 'µg/m³'],
+    ['Relative humidity', D.pdp_rh.grid, D.pdp_rh.pred, g => g + '%'],
+    ['Boundary-layer height', D.pdp_blh.grid, D.pdp_blh.pred, g => g + ' m', null, true],
+    ['24 h mean wind speed', D.pdp_wspd24.grid, D.pdp_wspd24.pred, g => g + ' m/s'],
+    ['Hour of day', D.pdp_hour.grid, D.pdp_hour.pred, g => g + ':00'],
+    ['Day of week', D.pdp_dow.grid, D.pdp_dow.pred, g => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][g]],
+  ];
+  panels.forEach(([title, grid, pred, lab, unit, logx]) => {
+    const fig = document.createElement('figure'); fig.innerHTML = `<p class="t">${title}</p><div class="chart"></div>`; host.appendChild(fig);
+    const W = 300, H = 170, L = 34, R = 10, T = 10, B = 26; const svg = frame(fig, W, H);
+    const xs = logx ? grid.map(Math.log10) : grid; const x = scaleL(xs[0], xs[xs.length - 1], L, W - R), y = scaleL(0, 80, H - B, T);
+    yAxis(svg, y, [0, 20, 40, 60, 80], L, W - R);
+    const ax = el('g', { class: 'axis' }, svg); el('line', { x1: L, x2: W - R, y1: H - B, y2: H - B }, ax);
+    const tk = grid.length > 5 ? grid.filter((_, i) => i % Math.ceil(grid.length / 5) === 0 || i === grid.length - 1) : grid;
+    tk.forEach(g => { const t = el('text', { x: x(logx ? Math.log10(g) : g), y: H - B + 14, 'text-anchor': 'middle' }, ax); t.textContent = lab(g); });
+    const pts = grid.map((g, i) => [x(xs[i]), y(pred[i])]);
+    el('path', { d: path(pts) + `L${pts[pts.length - 1][0]} ${y(0)}L${pts[0][0]} ${y(0)}Z`, fill: 'var(--accent-soft)' }, svg);
+    el('path', { d: path(pts), fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2, 'stroke-linejoin': 'round' }, svg);
+    pts.forEach((p, i) => { const c = el('circle', { cx: p[0], cy: p[1], r: 8, fill: 'transparent' }, svg); c.addEventListener('mousemove', e => showTip(`${lab(grid[i])}: ${fmt(pred[i])} µg/m³`, e.clientX, e.clientY)); c.addEventListener('mouseleave', hideTip); });
+    const lo = pred.indexOf(Math.min(...pred)), hi = pred.indexOf(Math.max(...pred));
+    [lo, hi].forEach(i => { el('circle', { cx: pts[i][0], cy: pts[i][1], r: 3.5, fill: 'var(--accent)', stroke: 'var(--surface)', 'stroke-width': 2 }, svg); const t = el('text', { x: Math.min(W - R - 10, Math.max(L + 10, pts[i][0])), y: pts[i][1] - 8, class: 'lbl b', 'text-anchor': 'middle' }, svg); t.textContent = Math.round(pred[i]); });
+  });
+})();
+
+// ── annual
+(function () {
+  const fig = document.getElementById('f-annual'), W = 900, H = 280, L = 44, R = 150, T = 12, B = 30;
+  const rows = D.annual.filter(r => r.year >= 2014); const yrs = rows.map(r => r.year);
+  const svg = frame(fig, W, H); const x = scaleL(yrs[0], yrs[yrs.length - 1], L, W - R), y = scaleL(0, 100, H - B, T);
+  yAxis(svg, y, [0, 20, 40, 60, 80, 100], L, W - R); xAxis(svg, x, yrs.filter(v => v % 2 === 0), H - B);
+  const a = rows.map(r => [x(r.year), y(r.actual)]), w = rows.map(r => [x(r.year), y(r.weather_only_2014_city)]);
+  el('path', { d: path(w), fill: 'none', stroke: 'var(--ink-3)', 'stroke-width': 2, 'stroke-dasharray': '5 4' }, svg);
+  el('path', { d: path(a), fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2.5 }, svg);
+  rows.forEach((r, i) => { [a, w].forEach((s, k) => { const c = el('circle', { cx: s[i][0], cy: s[i][1], r: 9, fill: 'transparent' }, svg); c.addEventListener('mousemove', e => showTip(`${r.year}${r.year === 2026 ? ' (to Sep)' : ''}<br>measured ${fmt(r.actual, 1)} · 2014 city ${fmt(r.weather_only_2014_city, 1)}`, e.clientX, e.clientY)); c.addEventListener('mouseleave', hideTip); }); });
+  const t1 = el('text', { x: W - R + 8, y: a[a.length - 1][1] + 4, class: 'lbl b' }, svg); t1.textContent = 'measured ' + Math.round(rows[rows.length - 1].actual);
+  const t2 = el('text', { x: W - R + 8, y: w[w.length - 1][1] + 4, class: 'lbl b' }, svg); t2.textContent = '2014 city ' + Math.round(rows[rows.length - 1].weather_only_2014_city);
+})();
+// ── second model table, daily table
+(function () {
+  const tb = document.getElementById('modeltab2');
+  D.models2.forEach(m => { const tr = document.createElement('tr'); tr.innerHTML = `<td>${m.model}</td><td class="n">${fmt(m.r2_log, 3)}</td><td class="n">${fmt(m.r2, 3)}</td><td class="n">${fmt(m.mae, 1)}</td>`; tb.appendChild(tr); });
+  const td = document.getElementById('dailytab');
+  D.daily_real.forEach(m => { const tr = document.createElement('tr'); tr.innerHTML = `<td>${m.d} day${m.d > 1 ? 's' : ''} ahead</td><td class="n">${fmt(m.r2, 2)}</td><td class="n">${fmt(m.mae, 1)}</td><td class="n">${Math.round(m.hit * 100)}%</td>`; td.appendChild(tr); });
+})();
+
+// ── upwind lag
+(function () {
+  const fig = document.getElementById('f-lag'), W = 900, H = 240, L = 48, R = 12, T = 14, B = 34;
+  const rows = D.upwind_lag.filter(r => r.lag != null), ref = D.upwind_lag.find(r => r.lag == null).r2_log;
+  const svg = frame(fig, W, H); const x = scaleL(0, 24, L, W - R), y = scaleL(0.7, 0.9, H - B, T);
+  yAxis(svg, y, [0.7, 0.75, 0.8, 0.85, 0.9], L, W - R); xAxis(svg, x, [0, 3, 6, 12, 24], H - B, t => t + ' h old');
+  el('line', { x1: L, x2: W - R, y1: y(ref), y2: y(ref), stroke: 'var(--ink-3)', 'stroke-dasharray': '5 4', 'stroke-width': 1.5 }, svg);
+  const tref = el('text', { x: W - R, y: y(ref) - 6, class: 'lbl', 'text-anchor': 'end' }, svg); tref.textContent = 'no upwind data ' + ref.toFixed(3);
+  const pts = rows.map(r => [x(r.lag), y(r.r2_log)]);
+  el('path', { d: path(pts), fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2 }, svg);
+  rows.forEach((r, i) => { el('circle', { cx: pts[i][0], cy: pts[i][1], r: 4, fill: 'var(--accent)', stroke: 'var(--surface)', 'stroke-width': 2 }, svg); const t = el('text', { x: pts[i][0], y: pts[i][1] - 10, class: 'lbl b', 'text-anchor': 'middle' }, svg); t.textContent = r.r2_log.toFixed(3); const c = el('circle', { cx: pts[i][0], cy: pts[i][1], r: 12, fill: 'transparent' }, svg); c.addEventListener('mousemove', e => showTip(`${r.lag} h old: R² ${r.r2_log.toFixed(3)} · MAE ${r.mae}`, e.clientX, e.clientY)); c.addEventListener('mouseleave', hideTip); });
+})();
+
+// ── lead skill
+(function () {
+  const fig = document.getElementById('f-lead'), W = 900, H = 320, L = 48, R = 130, T = 14, B = 34;
+  const era = D.lead_skill.era5, real = D.lead_skill.real, clim = D.lead_skill.climatology.r2_log;
+  const svg = frame(fig, W, H); const x = scaleL(0, 168, L, W - R), y = scaleL(-0.1, 1, H - B, T);
+  yAxis(svg, y, [0, 0.2, 0.4, 0.6, 0.8, 1.0], L, W - R); xAxis(svg, x, [0, 24, 48, 72, 96, 120, 144, 168], H - B, t => t === 0 ? 'now' : (t / 24) + ' d');
+  el('line', { x1: L, x2: W - R, y1: y(0), y2: y(0), stroke: 'var(--ink-3)', 'stroke-width': 1 }, svg);
+  el('line', { x1: L, x2: W - R, y1: y(clim), y2: y(clim), stroke: 'var(--ink-3)', 'stroke-dasharray': '5 4' }, svg);
+  const series = [
+    { name: 'perfect forecast', c: 'var(--accent)', pts: era.map(r => [r.lead, r.r2_log]).concat(real.slice(5).map(r => [r.lead_h, r['perfect_fc+nowcast'][0]])) },
+    { name: 'real forecast', c: 'var(--dirty)', pts: [[1, era[0].r2_log], [6, era[2].r2_log]].concat(real.map(r => [r.lead_h, r['real_fc+nowcast'][0]])) },
+    { name: 'persistence', c: 'var(--ink-3)', pts: era.map(r => [r.lead, Math.max(-0.1, r.persistence_r2_log)]) },
+  ];
+  const ends = [];
+  series.forEach(s => { const p = s.pts.map(q => [x(q[0]), y(q[1])]); el('path', { d: path(p), fill: 'none', stroke: s.c, 'stroke-width': 2, 'stroke-linejoin': 'round' }, svg); p.forEach((q, i) => { const c = el('circle', { cx: q[0], cy: q[1], r: 9, fill: 'transparent' }, svg); c.addEventListener('mousemove', e => showTip(`${s.name} · ${s.pts[i][0]} h: R² ${s.pts[i][1].toFixed(3)}`, e.clientX, e.clientY)); c.addEventListener('mouseleave', hideTip); }); ends.push({ y: p[p.length - 1][1], t: s.name + ' ' + s.pts[s.pts.length - 1][1].toFixed(2), c: s.c }); });
+  ends.push({ y: y(clim), t: 'climatology ' + clim.toFixed(2) });
+  ends.sort((a, b) => a.y - b.y); for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 13) ends[i].y = ends[i - 1].y + 13;
+  ends.forEach(e => { const t = el('text', { x: W - R + 8, y: e.y + 4, class: 'lbl b' }, svg); t.textContent = e.t; });
+})();
+
+// ── outlook
+(function () {
+  const o = D.outlook, fig = document.getElementById('f-outlook'), W = 900, H = 320, L = 44, R = 12, T = 28, B = 30;
+  const t = o.hours.map(h => new Date(h.replace(' ', 'T'))), now = new Date(o.last_obs.replace(' ', 'T')), n = t.length;
+  const iNow = t.findIndex(d => d.getTime() >= now.getTime());
+  const issued = new Date(o.issued.replace(' ', 'T'));
+  document.getElementById('outlook-st').textContent = `Issued ${issued.toLocaleString('en-GB', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })} Beijing time · last reading ${Math.round(o.last_obs_value)} µg/m³ · south group ${Math.round(o.upwind_now.c_south_PM25)} · north-west ${Math.round(o.upwind_now.c_northwest_PM25)}`;
+  const days = Object.entries(o.daily); const peak = days.reduce((a, b) => b[1] > a[1] ? b : a);
+  const wdir = o.weather.wind_direction_100m, wsp = o.weather.wind_speed_100m, blh = o.weather.boundary_layer_height;
+  const fut = t.map((d, i) => i).filter(i => i > iNow);
+  const meanDir = fut.reduce((a, i) => a + wdir[i], 0) / fut.length, meanBlh = fut.reduce((a, i) => a + blh[i], 0) / fut.length, meanWs = fut.reduce((a, i) => a + wsp[i], 0) / fut.length;
+  const compass = d => ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(d / 45) % 8];
+  document.getElementById('outlook-p').innerHTML = `As of ${now.toLocaleString('en-GB', { weekday: 'long', hour: '2-digit', minute: '2-digit' })}, Beijing is at <strong>${Math.round(o.last_obs_value)} µg/m³</strong>. The forecast week averages a ${meanWs.toFixed(1)} m/s wind from the ${compass(meanDir)} at 100 m with a boundary layer around ${Math.round(meanBlh / 50) * 50} m; the model expects daily means of ${days.map(([k, v]) => `${new Date(k).toLocaleDateString('en-GB', { weekday: 'short' })} ${Math.round(v)}`).join(', ')}, peaking on ${new Date(peak[0]).toLocaleDateString('en-GB', { weekday: 'long' })}. Skill beyond two days is the weather forecast's, so read the second half of the week as a tendency, not a number.`;
+  const svg = frame(fig, W, H);
+  const obs = o.observed, wm = o.weather_model, fc = o.forecast;
+  const ymax = Math.max(...obs.filter(v => v != null), ...fc, 20) * 1.15;
+  const x = scaleL(0, n - 1, L, W - R), y = scaleL(0, ymax, H - B, T);
+  yAxis(svg, y, niceTicks(0, ymax, 5), L, W - R);
+  const dayTicks = []; t.forEach((d, i) => { if (d.getHours() === 0) dayTicks.push(i); });
+  xAxis(svg, x, dayTicks, H - B, i => t[i].toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' }));
+  el('rect', { x: x(iNow), y: T, width: x(n - 1) - x(iNow), height: H - T - B, fill: 'var(--accent-soft)', opacity: .35 }, svg);
+  el('line', { x1: x(iNow), x2: x(iNow), y1: T, y2: H - B, stroke: 'var(--ink-3)', 'stroke-dasharray': '3 3' }, svg);
+  const tn = el('text', { x: x(iNow) + 5, y: T + 12, class: 'lbl' }, svg); tn.textContent = 'now';
+  const seg = []; let cur = []; obs.forEach((v, i) => { if (v == null) { if (cur.length) seg.push(cur); cur = []; } else cur.push([x(i), y(v)]); }); if (cur.length) seg.push(cur);
+  seg.forEach(s => el('path', { d: path(s), fill: 'none', stroke: 'var(--ink)', 'stroke-width': 1.5, 'stroke-opacity': .85 }, svg));
+  el('path', { d: path(wm.map((v, i) => [x(i), y(v)]).slice(0, iNow + 1)), fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2 }, svg);
+  el('path', { d: path(fc.map((v, i) => [x(i), y(v)]).slice(iNow)), fill: 'none', stroke: 'var(--dirty)', 'stroke-width': 2.5 }, svg);
+  days.forEach(([k, v]) => { const i0 = t.findIndex(d => d.toDateString() === new Date(k + 'T12:00').toDateString() && d.getHours() === 12); if (i0 < 0) return; const tx = el('text', { x: x(i0), y: T - 6, class: 'lbl b', 'text-anchor': 'middle' }, svg); tx.textContent = Math.round(v); });
+  const cross = el('line', { y1: T, y2: H - B, stroke: 'var(--ink-3)', opacity: 0 }, svg);
+  const hit = el('rect', { x: L, y: T, width: W - L - R, height: H - T - B, fill: 'transparent' }, svg);
+  hit.addEventListener('mousemove', e => { const r = svg.getBoundingClientRect(); const i = Math.round(Math.min(n - 1, Math.max(0, x.inv((e.clientX - r.left) / r.width * W)))); cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.setAttribute('opacity', .6); showTip(`${t[i].toLocaleString('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit' })}<br>${obs[i] != null ? 'measured ' + fmt(obs[i]) + ' · ' : ''}${i > iNow ? 'forecast ' + fmt(fc[i]) : 'weather model ' + fmt(wm[i])}<br>wind ${wsp[i]} m/s ${compass(wdir[i])} · BLH ${Math.round(blh[i])} m`, e.clientX, e.clientY); });
+  hit.addEventListener('mouseleave', () => { cross.setAttribute('opacity', 0); hideTip(); });
+})();
+</script>

@@ -25,6 +25,10 @@ PAGES = {
     "/beijing": ("Beijing — heat and air quality",
                  "Beijing's summers against its own record, and PM2.5 from the city's "
                  "monitoring network on both the US EPA and Chinese scales. Updated daily."),
+    "/beijing/forecast": ("Beijing — the week ahead",
+                          "A seven-day PM2.5 forecast for Beijing from the weather forecast, "
+                          "computed in the browser from a model trained on twelve years of the "
+                          "city's readings, with what it learned about wind, rain and season."),
 }
 
 SOCIAL_ALT = {
@@ -35,6 +39,8 @@ SOCIAL_ALT = {
                "since the 1990s",
     "/beijing": "Beijing's annual mean PM2.5 from 2014 to today, falling from far above "
                 "China's own standard to close to it, and still far above the WHO guideline",
+    "/beijing/forecast": "Beijing's annual mean PM2.5 from 2014 to today, falling from far above "
+                         "China's own standard to close to it, and still far above the WHO guideline",
 }
 
 
@@ -112,6 +118,7 @@ def document(fragment, path=None, stamp="", image="social.png", head_extra="", b
 
 
 def emit(out_dir, name, text, **kw):
+    os.makedirs(os.path.dirname(os.path.join(out_dir, name)) or out_dir, exist_ok=True)
     with open(os.path.join(out_dir, name), "w", encoding="utf-8") as f:
         f.write(document(text, **kw))
 
