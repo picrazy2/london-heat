@@ -1260,10 +1260,12 @@ window.WX = (function () {
         "<div class='fc-conc tnum'>" + Math.round(dy.mean) + "<small> µg/m³</small></div>" +
         (cf ? "<div class='fc-conf tnum'><span class='fc-range'>likely " + Math.round(cf.lo) + "–" + Math.round(cf.hi) + "</span>" +
           "<span class='fc-sure' title='How often, at this lead, the day stayed in the forecast category over 2024–26'>" + Math.round(cf.p * 100) + "% sure</span></div>" : "") +
-        // The indicators the model leans on: 100 m wind (arrow points where it
-        // blows, the letter says where it comes from), the daily mean lid, rain.
+        // The indicators the model leans on: 100 m wind, the daily mean lid, rain.
+        // The glyph points down and is rotated by the direction the wind comes
+        // FROM, so a north wind points south — where it blows — and the letter
+        // names its origin, as a wind rose does.
         "<div class='fc-wx'>" +
-          "<span class='fc-wind' title='Wind at 100 m, daily mean'><svg viewBox='0 0 12 12' width='11' height='11' aria-hidden='true' style='transform:rotate(" + Math.round(dy.dir + 180) + "deg)'>" +
+          "<span class='fc-wind' title='Wind at 100 m, daily mean'><svg viewBox='0 0 12 12' width='11' height='11' aria-hidden='true' style='transform:rotate(" + Math.round(dy.dir) + "deg)'>" +
             "<path d='M6 1 L6 11 M2.5 7.5 L6 11 L9.5 7.5' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>" +
             compass(dy.dir) + " " + dy.ws.toFixed(1) + "<small> m/s</small></span>" +
           "<span title='Boundary-layer height, daily mean: the depth of air the city\'s emissions are mixed into'>lid " + Math.round(dy.blh) + "<small> m</small></span>" +
