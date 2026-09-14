@@ -346,6 +346,11 @@ def main():
           .replace("__TOPBAR__", design.topbar(f"through {fmt_short(ldn_last)}", "/london")))
     render.emit(SITE, "london.html", t, path="/london", stamp=stamp, image="social.png")
 
+    # The forecast card carries an empirical likely range and a confidence per
+    # day, from the error distribution of the real-forecast evaluation in ml/.
+    analysis = json.loads(read("data", "pm25_analysis.json"))
+    air["intervals"] = analysis["intervals"]
+
     # ── /beijing ──
     t = read("templates", "beijing.tmpl.html")
     t = (t.replace("__TEMP_CSS__", temp_css).replace("__AIR_CSS__", air_css)
@@ -363,8 +368,7 @@ def main():
     # The page carries the breakpoint tables and the emissions baseline the
     # browser-side model needs, the analysis figures, and nothing else of the
     # air payload: the forecast is computed live, the analysis is baked.
-    air_min = {"scales": air["scales"], "level365": air["level365"]}
-    analysis = json.loads(read("data", "pm25_analysis.json"))
+    air_min = {"scales": air["scales"], "level365": air["level365"], "intervals": analysis["intervals"]}
     t = read("templates", "forecast.tmpl.html")
     t = (t.replace("__AIR_CSS__", air_css).replace("__FORECAST_CSS__", fc_css)
           .replace("__PM25MODEL_JS__", model_js).replace("__FORECAST_JS__", fc_js).replace("__ANALYSIS_JS__", analysis_js)

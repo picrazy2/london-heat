@@ -68,3 +68,21 @@ for d in (1, 2, 3, 5, 7):
     ok = p.notna() & a.notna() & F["r_last"].notna()
     pdm, adm = p[ok].resample("D").mean(), a[ok].resample("D").mean()
     print(f"  {d}d ahead: daily R2 {r2_score(adm, pdm):.3f}  MAE {np.abs(adm - pdm).mean():.1f}   |  hit rate for 'day > 35 ug/m3': {((pdm > 35) == (adm > 35)).mean():.2f}")
+
+# ── error distribution of daily means by lead, for confidence on the page ──
+# log(actual / forecast) for every test day at each lead, as percentiles. The
+# page turns a forecast into a likely range and a probability that the day's
+# AQI verdict holds by pushing the forecast through these.
+pct = list(range(5, 96, 5))
+intervals = {}
+for d in range(1, 8):
+    L = 24 * d; Xf = forecast_frame(d)
+    w_fc = pd.Series(mw.predict(Xf[cols_w], num_iteration=mw.best_iteration), index=Xf.index)
+    F = train_lead.resid_frame(df, resid, wpred, np.full(len(df), L))[cols_r].loc[te]; F["w_now"] = w_fc
+    p = np.expm1(w_fc + mr.predict(F, num_iteration=mr.best_iteration)); a = df["pm25"][te]
+    ok = p.notna() & a.notna() & F["r_last"].notna()
+    pdm, adm = p[ok].resample("D").mean(), a[ok].resample("D").mean()
+    e = np.log(adm / pdm).dropna()
+    intervals[d] = {"n": int(len(e)), "pct": pct, "log_err": [round(float(np.percentile(e, q)), 4) for q in pct]}
+    print(f"  {d}d: n {len(e)}  80% range of actual/forecast: x{np.exp(np.percentile(e, 10)):.2f} – x{np.exp(np.percentile(e, 90)):.2f}")
+json.dump(intervals, open(train.OUT / "intervals.json", "w"))

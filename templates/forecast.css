@@ -8,7 +8,11 @@
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .fc-day .fc-conc { font-size:12.5px; margin-top:4px; }
 .fc-day .fc-conc small { color:var(--ink-faint); font-size:10.5px; }
-.fc-day .fc-wx { font-size:10.5px; color:var(--ink-faint); margin-top:5px; line-height:1.35; }
+.fc-day .fc-wx { font-size:11px; color:var(--ink-muted); margin-top:6px; line-height:1.4;
+  display:flex; flex-direction:column; align-items:center; gap:1px; font-variant-numeric:tabular-nums; }
+.fc-day .fc-wx small { font-size:9.5px; color:var(--ink-faint); }
+.fc-day .fc-wind { display:inline-flex; align-items:center; gap:4px; color:var(--ink); font-weight:600; }
+.fc-day .fc-wind svg { color:var(--accent); flex:none; }
 .fc-why { font-size:13.5px; line-height:1.5; color:var(--ink-muted); margin-top:12px; }
 .fc-why b { color:var(--ink); font-weight:640; }
 .fc-daylab { font-weight:640; fill:var(--ink); }
@@ -17,3 +21,7 @@
 .fc-key i { display:inline-block; width:16px; height:3px; border-radius:2px; }
 .fc-more { display:inline-block; margin-top:10px; font-size:13px; font-weight:600; color:var(--accent); text-decoration:none; }
 .fc-more:hover { text-decoration:underline; }
+.fc-day .fc-conf { margin-top:6px; padding-top:6px; border-top:1px solid var(--separator);
+  display:flex; flex-direction:column; gap:1px; font-size:10.5px; line-height:1.3; }
+.fc-day .fc-range { color:var(--ink-muted); }
+.fc-day .fc-sure { color:var(--ink); font-weight:640; }

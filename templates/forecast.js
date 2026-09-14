@@ -133,19 +133,46 @@
     into.innerHTML = ""; into.appendChild(svg);
   }
 
+  /* ── confidence ──────────────────────────────────────────────────────────
+     The error distribution of daily means at each lead, measured on 2024-26
+     against the forecasts actually issued (ml/eval_realfc.py). A forecast is
+     pushed through its lead's percentiles: the 10th-90th give the likely range,
+     and the share of percentiles that land in the forecast's own AQI category
+     is how sure the verdict is. Today borrows the one-day distribution. */
+  function confidence(dy, k) {
+    var I = A.intervals && A.intervals[String(Math.max(1, Math.min(7, k)))];
+    if (!I) return null;
+    var cat = aqi(dy.mean).cat, inCat = 0, lo = null, hi = null;
+    I.log_err.forEach(function (e, j) {
+      var v = dy.mean * Math.exp(e);
+      if (I.pct[j] === 10) lo = v; if (I.pct[j] === 90) hi = v;
+      if (aqi(v).cat === cat) inCat++;
+    });
+    return { lo: lo, hi: hi, p: inCat / I.log_err.length, cat: cat };
+  }
+
   /* ── the day tiles ───────────────────────────────────────────────────── */
   function tiles(into) {
     into.innerHTML = "";
-    R.days.forEach(function (dy) {
-      var r = aqi(dy.mean), d = parseT(R.t[dy.i0]);
+    R.days.forEach(function (dy, k) {
+      var r = aqi(dy.mean), d = parseT(R.t[dy.i0]), cf = confidence(dy, k);
       var tile = h("div", "fc-day");
       tile.style.setProperty("--tint", catToken(r.cat)); tile.style.setProperty("--tint-ink", catInk(r.cat));
       tile.innerHTML = "<div class='fc-dow'>" + (dy.today ? "Today" : DAY[d.getUTCDay()]) + "</div>" +
         "<div class='fc-idx tnum'>" + r.i + "</div>" +
         "<div class='fc-cat'>" + catName(r.cat) + "</div>" +
         "<div class='fc-conc tnum'>" + Math.round(dy.mean) + "<small> µg/m³</small></div>" +
-        (FULL ? "<div class='fc-wx'>" + dy.ws.toFixed(1) + " m/s " + compass(dy.dir) + " · lid " + Math.round(dy.blh) + " m" +
-          (dy.rain > 0.2 ? " · " + dy.rain.toFixed(1) + " mm" : "") + "</div>" : "");
+        (cf ? "<div class='fc-conf tnum'><span class='fc-range'>likely " + Math.round(cf.lo) + "–" + Math.round(cf.hi) + "</span>" +
+          "<span class='fc-sure' title='How often, at this lead, the day stayed in the forecast category over 2024–26'>" + Math.round(cf.p * 100) + "% sure</span></div>" : "") +
+        // The indicators the model leans on: 100 m wind (arrow points where it
+        // blows, the letter says where it comes from), the daily mean lid, rain.
+        "<div class='fc-wx'>" +
+          "<span class='fc-wind' title='Wind at 100 m, daily mean'><svg viewBox='0 0 12 12' width='11' height='11' aria-hidden='true' style='transform:rotate(" + Math.round(dy.dir + 180) + "deg)'>" +
+            "<path d='M6 1 L6 11 M2.5 7.5 L6 11 L9.5 7.5' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>" +
+            compass(dy.dir) + " " + dy.ws.toFixed(1) + "<small> m/s</small></span>" +
+          "<span title='Boundary-layer height, daily mean: the depth of air the city\'s emissions are mixed into'>lid " + Math.round(dy.blh) + "<small> m</small></span>" +
+          (dy.rain > 0.2 ? "<span title='Precipitation'>rain " + dy.rain.toFixed(1) + "<small> mm</small></span>" : "") +
+        "</div>";
       into.appendChild(tile);
     });
   }
