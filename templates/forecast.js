@@ -130,9 +130,9 @@
         (q.rain > 0.05 ? "<div class='fc-hr tnum'>" + q.rain.toFixed(1) + "</div>" : "<div class='fc-hr'></div>");
       row.appendChild(col);
     }
-    var lab = h("div", "fc-strip-lab");
-    lab.innerHTML = "<div>&nbsp;</div><div>PM2.5</div><div>wind</div><div>RH</div><div>lid</div><div>rain</div>";
-    wrap.appendChild(lab); wrap.appendChild(row);
+    var lab = h("div", "fc-h fc-lab");
+    lab.innerHTML = "<div class='fc-hh'>&nbsp;</div><div class='fc-hv'>PM2.5</div><div class='fc-hw'>wind</div><div class='fc-hm'>RH</div><div class='fc-hl'>lid</div><div class='fc-hr'>rain</div>";
+    row.insertBefore(lab, row.firstChild); wrap.appendChild(row);
     into.innerHTML = ""; into.appendChild(wrap);
     row.addEventListener("pointerdown", function (ev) {
       var c = ev.target.closest(".fc-h"); if (!c) return;

@@ -537,56 +537,73 @@
      One year at a time, twelve stacked bars: how many days of each month
      fell in each band. Where the yearly chart shows the trend, this shows
      the season — and, for the running year, where it stands so far. */
-  var BANDS_YEAR = null;
+  var BANDS_YEAR = null, BANDS_MODE = "year", BANDS_MONTH = 0;
   function renderMonthBands() {
     var host = document.getElementById("aqMonthBands"); if (!host) return;
-    var sel = document.getElementById("aqMonthYear");
+    var selY = document.getElementById("aqMonthYear"), selM = document.getElementById("aqMonthPick"), selMode = document.getElementById("aqMonthMode");
     var years = [];
     DAYS.forEach(function (r) { if (r.v != null && years.indexOf(r.y) < 0) years.push(r.y); });
     years.sort(function (a, b) { return a - b; });
-    if (!sel.options.length) {
-      years.slice().reverse().forEach(function (y) { var o = document.createElement("option"); o.value = y; o.textContent = y; sel.appendChild(o); });
-      BANDS_YEAR = +param("mbyear", years[years.length - 1]); if (years.indexOf(BANDS_YEAR) < 0) BANDS_YEAR = years[years.length - 1];
-      sel.value = BANDS_YEAR;
-      sel.addEventListener("change", function () { BANDS_YEAR = +sel.value; setParam("mbyear", sel.value, String(years[years.length - 1])); renderMonthBands(); });
+    var lastY = years[years.length - 1];
+    if (!selY.options.length) {
+      years.slice().reverse().forEach(function (y) { var o = document.createElement("option"); o.value = y; o.textContent = y; selY.appendChild(o); });
+      MABBR.forEach(function (mn, i) { var o = document.createElement("option"); o.value = i; o.textContent = mn; selM.appendChild(o); });
+      BANDS_YEAR = +param("mbyear", lastY); if (years.indexOf(BANDS_YEAR) < 0) BANDS_YEAR = lastY;
+      BANDS_MODE = param("mbmode", "year") === "month" ? "month" : "year";
+      BANDS_MONTH = Math.max(0, Math.min(11, +param("mbmonth", new Date().getMonth())));
+      selY.value = BANDS_YEAR; selM.value = BANDS_MONTH; selMode.value = BANDS_MODE;
+      selY.addEventListener("change", function () { BANDS_YEAR = +selY.value; setParam("mbyear", selY.value, String(lastY)); renderMonthBands(); });
+      selM.addEventListener("change", function () { BANDS_MONTH = +selM.value; setParam("mbmonth", selM.value, String(new Date().getMonth())); renderMonthBands(); });
+      selMode.addEventListener("change", function () { BANDS_MODE = selMode.value; setParam("mbmode", BANDS_MODE, "year"); renderMonthBands(); });
     }
-    var y = BANDS_YEAR;
-    var months = []; for (var mth = 0; mth < 12; mth++) months.push({ m: mth, d: [] });
-    DAYS.forEach(function (r) { if (r.y === y && r.v != null) months[r.m].d.push(r.v); });
+    var byMonth = BANDS_MODE === "month";
+    document.getElementById("aqMonthPickWrap").hidden = !byMonth;
+    selY.parentNode.hidden = byMonth;
+    document.getElementById("aqMonthTitle").textContent = byMonth ? "Every " + MABBR[BANDS_MONTH] + ", year by year" : "Every day of one year, month by month";
+
+    // The bars: twelve months of one year, or one month of every year.
+    var bars = byMonth
+      ? years.map(function (y) { return { key: y, lab: String(y).slice(2), full: MABBR[BANDS_MONTH] + " " + y, d: [] }; })
+      : MABBR.map(function (mn, i) { return { key: i, lab: mn, full: mn + " " + BANDS_YEAR, d: [] }; });
+    DAYS.forEach(function (r) {
+      if (r.v == null) return;
+      if (byMonth) { if (r.m === BANDS_MONTH) bars[years.indexOf(r.y)].d.push(r.v); }
+      else if (r.y === BANDS_YEAR) bars[r.m].d.push(r.v);
+    });
     var W = 940, H = 260, m = { t: 14, r: 20, b: 28, l: 36 };
     var pw = W - m.l - m.r, ph = H - m.t - m.b;
-    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, class: "chart chart-in w" + W, role: "img", "aria-label": "Days per month of " + y + " in each air quality category" });
-    var bw = Math.max(10, pw / 12 - 10);
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, class: "chart chart-in w" + W, role: "img", "aria-label": "Days in each air quality category" });
+    var bw = Math.max(10, pw / bars.length - 10);
     var y0 = function (v) { return m.t + ph - v / 31 * ph; };
     [0, 10, 20, 31].forEach(function (g) {
       svg.appendChild(el("line", { class: "gridline", x1: m.l, x2: m.l + pw, y1: y0(g), y2: y0(g) }));
       svg.appendChild(txt(el("text", { class: "tick", x: m.l - 6, y: y0(g) + 3, "text-anchor": "end" }), g));
     });
-    months.forEach(function (mo, i) {
+    bars.forEach(function (b, i) {
       var counts = [0, 0, 0, 0, 0, 0];
-      mo.d.forEach(function (c) { var k = catOf(c); if (k != null) counts[k]++; });
-      var x = m.l + (i + .5) / 12 * pw - bw / 2, acc = 0;
+      b.d.forEach(function (c) { var k = catOf(c); if (k != null) counts[k]++; });
+      var x = m.l + (i + .5) / bars.length * pw - bw / 2, acc = 0;
       counts.forEach(function (n, k) {
         if (!n) return;
         var rect = el("rect", { x: x, y: y0(acc + n), width: bw, height: y0(acc) - y0(acc + n), fill: catToken(k), class: "bar", rx: 1 });
-        var f = function (ev) { showTip(ev, "<span class='k'>" + MABBR[i] + " " + y + "</span><br><b>" + n + "</b> of " + mo.d.length + " days " + catName(k)); };
+        var f = function (ev) { showTip(ev, "<span class='k'>" + b.full + "</span><br><b>" + n + "</b> of " + b.d.length + " days " + catName(k)); };
         rect.addEventListener("pointermove", f); rect.addEventListener("pointerdown", f); rect.addEventListener("pointerleave", hideTip);
         svg.appendChild(rect); acc += n;
       });
-      svg.appendChild(txt(el("text", { class: "tick", x: x + bw / 2, y: H - 8, "text-anchor": "middle" }), MABBR[i]));
+      svg.appendChild(txt(el("text", { class: "tick", x: x + bw / 2, y: H - 8, "text-anchor": "middle" }), b.lab));
     });
     host.innerHTML = ""; host.appendChild(svg);
     var S = A.scales[SCALE];
     document.getElementById("aqMonthBandKey").innerHTML = S.cats.map(function (c, k) {
       return "<span><i style='background:" + catToken(k) + "'></i>" + (SCALE === "cn" && c.zh ? c.zh + " " + c.name : c.name) + "</span>";
     }).join("");
-    var have = months.filter(function (mo) { return mo.d.length; });
-    var goodShare = function (mo) { return mo.d.filter(function (c) { return catOf(c) === 0; }).length / mo.d.length; };
-    var badN = function (mo) { return mo.d.filter(function (c) { return catOf(c) >= 2; }).length; };
+    var have = bars.filter(function (b) { return b.d.length; });
+    var goodShare = function (b) { return b.d.filter(function (c) { return catOf(c) === 0; }).length / b.d.length; };
+    var badN = function (b) { return b.d.filter(function (c) { return catOf(c) >= 2; }).length; };
     var best = have.reduce(function (a, b) { return goodShare(b) > goodShare(a) ? b : a; });
     var worst = have.reduce(function (a, b) { return badN(b) > badN(a) ? b : a; });
-    document.getElementById("aqMonthBandsCap").innerHTML = "In " + y + " the best month was <b>" + MABBR[best.m] + "</b> (" +
-      Math.round(goodShare(best) * 100) + "% of days in the best band) and the worst <b>" + MABBR[worst.m] + "</b> (" +
+    document.getElementById("aqMonthBandsCap").innerHTML = (byMonth ? "Across the record, the best " + MABBR[BANDS_MONTH] + " was <b>" + best.key + "</b>" : "In " + BANDS_YEAR + " the best month was <b>" + best.lab + "</b>") +
+      " (" + Math.round(goodShare(best) * 100) + "% of days in the best band) and the worst <b>" + (byMonth ? worst.key : worst.lab) + "</b> (" +
       badN(worst) + " days at " + catName(2).toLowerCase() + " or worse).";
   }
 

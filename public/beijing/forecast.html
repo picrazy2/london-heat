@@ -15,14 +15,14 @@
 <meta property="og:title" content="Beijing — the week ahead">
 <meta property="og:description" content="A seven-day PM2.5 forecast for Beijing from the weather forecast, computed in the browser from a model trained on twelve years of the city&#x27;s readings, with what it learned about wind, rain and season.">
 <meta property="og:url" content="https://weather.akguo.com/beijing/forecast">
-<meta property="og:image" content="https://weather.akguo.com/social-beijing.png?v=20260917">
+<meta property="og:image" content="https://weather.akguo.com/social-beijing.png?v=20260821">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Beijing&#x27;s annual mean PM2.5 from 2014 to today, falling from far above China&#x27;s own standard to close to it, and still far above the WHO guideline">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Beijing — the week ahead">
 <meta name="twitter:description" content="A seven-day PM2.5 forecast for Beijing from the weather forecast, computed in the browser from a model trained on twelve years of the city&#x27;s readings, with what it learned about wind, rain and season.">
-<meta name="twitter:image" content="https://weather.akguo.com/social-beijing.png?v=20260917">
+<meta name="twitter:image" content="https://weather.akguo.com/social-beijing.png?v=20260821">
 <title>Beijing — the week ahead</title>
 <script>
 (function(){try{var t=localStorage.getItem('theme');
@@ -680,15 +680,20 @@ window.WX = (function () {
    lid, rain. The row labels are a sticky first column so they stay put while
    the hours scroll under them. */
 .fc-strip { display:flex; margin-top:12px; border-radius:var(--r-sm); background:var(--surface-2); overflow:hidden; }
-.fc-strip-lab { flex:none; display:grid; grid-template-rows:repeat(6,auto); padding:8px 4px 8px 8px; font-size:9px;
-  color:var(--ink-faint); font-weight:640; letter-spacing:.02em; text-transform:uppercase; gap:0; align-content:start; }
-.fc-strip-lab div { height:22px; line-height:22px; }
-.fc-strip-lab div:nth-child(2) { height:28px; line-height:28px; }
 .fc-strip-row { display:flex; overflow-x:auto; scroll-snap-type:x proximity; scrollbar-width:thin; padding:8px 8px 8px 0;
-  -webkit-overflow-scrolling:touch; touch-action:pan-x pan-y; }
+  -webkit-overflow-scrolling:touch; touch-action:pan-x pan-y; width:100%; }
+/* The row labels: a column of the same grid, stuck to the left edge, so its
+   rows are the hours' rows by construction. */
+.fc-h.fc-lab { position:sticky; left:0; z-index:2; flex-basis:44px; background:var(--surface-2); justify-items:start; padding-left:8px;
+  font-size:9px; color:var(--ink-faint); font-weight:640; letter-spacing:.02em; text-transform:uppercase; border-radius:0;
+  box-shadow:4px 0 6px -4px rgba(0,0,0,.12); }
+.fc-h.fc-lab > div { justify-content:flex-start; }
+.fc-h.fc-lab .fc-hv { background:none; color:var(--ink-faint); width:auto; font-size:9px; font-weight:640; }
+.fc-h.fc-lab .fc-hw, .fc-h.fc-lab .fc-hr { color:var(--ink-faint); font-weight:640; font-size:9px; }
 .fc-h { flex:0 0 40px; scroll-snap-align:start; display:grid; grid-template-rows:repeat(6,auto); justify-items:center;
   font-size:11px; color:var(--ink-muted); cursor:default; border-radius:8px; }
-.fc-h > div { height:22px; display:flex; align-items:center; justify-content:center; }
+.fc-h > div { height:22px; display:flex; align-items:center; justify-content:center; box-sizing:border-box; }
+.fc-h > .fc-hv { height:28px; }
 .fc-h .fc-hh { font-size:10.5px; color:var(--ink-faint); font-variant-numeric:tabular-nums; }
 .fc-h.now .fc-hh { color:var(--accent); font-weight:700; }
 .fc-h.now { background:var(--accent-soft); }
@@ -749,8 +754,12 @@ window.WX = (function () {
    On a phone, and always in the installed app, the page is a dashboard: the
    essay-length hero and the captions go, the numbers stay. */
 @media (max-width:640px), (display-mode:standalone) {
-  .dash .hero, .dash .aq-card .cap, .dash #aqSource, .dash .mapnote, .dash .fc-key { display:none; }
+  .dash .hero, .dash .aq-card .cap, .dash #aqSource, .dash .mapnote, .dash .fc-key, .dash section .lede { display:none; }
   .dash .otherscale { display:none; }
+  /* a card's title takes the full line when a control shares its row */
+  .dash .aq-card .card-head { flex-wrap:wrap; gap:6px 10px; }
+  .dash .aq-card .card-head h3 { flex:1 1 60%; }
+  .dash .aq-card .card-head .sub { font-size:11.5px; }
 }
 
 /* ── charts on a phone ──
@@ -1453,9 +1462,9 @@ svg.chart rect[fill="transparent"], svg.chart .scrub { touch-action:pan-y; }
         (q.rain > 0.05 ? "<div class='fc-hr tnum'>" + q.rain.toFixed(1) + "</div>" : "<div class='fc-hr'></div>");
       row.appendChild(col);
     }
-    var lab = h("div", "fc-strip-lab");
-    lab.innerHTML = "<div>&nbsp;</div><div>PM2.5</div><div>wind</div><div>RH</div><div>lid</div><div>rain</div>";
-    wrap.appendChild(lab); wrap.appendChild(row);
+    var lab = h("div", "fc-h fc-lab");
+    lab.innerHTML = "<div class='fc-hh'>&nbsp;</div><div class='fc-hv'>PM2.5</div><div class='fc-hw'>wind</div><div class='fc-hm'>RH</div><div class='fc-hl'>lid</div><div class='fc-hr'>rain</div>";
+    row.insertBefore(lab, row.firstChild); wrap.appendChild(row);
     into.innerHTML = ""; into.appendChild(wrap);
     row.addEventListener("pointerdown", function (ev) {
       var c = ev.target.closest(".fc-h"); if (!c) return;

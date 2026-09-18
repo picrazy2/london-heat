@@ -81,8 +81,13 @@
     </div>
 
     <div class="aq-card">
-      <div class="card-head"><h3>Every day of one year, month by month</h3>
-        <label class="picker compact"><span class="sr-only">Year</span><select id="aqMonthYear"></select></label></div>
+      <div class="card-head"><h3 id="aqMonthTitle">Every day of one year, month by month</h3>
+        <span class="fc-head-btns">
+          <label class="picker compact"><span class="sr-only">How to slice</span>
+            <select id="aqMonthMode"><option value="year">Months of a year</option><option value="month">A month across years</option></select></label>
+          <label class="picker compact"><span class="sr-only">Year</span><select id="aqMonthYear"></select></label>
+          <label class="picker compact" id="aqMonthPickWrap" hidden><span class="sr-only">Month</span><select id="aqMonthPick"></select></label>
+        </span></div>
       <div id="aqMonthBands" style="margin-top:12px"></div>
       <div class="bandkey" id="aqMonthBandKey"></div>
       <p class="cap" id="aqMonthBandsCap"></p>
