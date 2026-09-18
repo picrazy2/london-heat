@@ -47,14 +47,18 @@
 
     __FORECAST_HTML__
 
-    <div class="grid-2" style="align-items:start">
-      <div class="aq-card" style="padding-bottom:18px">
-        <div class="card-head"><h3>Across the city, this hour</h3>
-          <span class="sub" id="aqMapSub"></span></div>
-        <div id="aqMap" style="margin-top:12px"></div>
-        <p class="mapnote" id="aqMapNote"></p>
-      </div>
-      <div class="list stations" id="aqStations"></div>
+    <div class="aq-card" style="padding-bottom:18px">
+      <div class="card-head"><h3>The region, this hour</h3>
+        <div class="fc-head-btns">
+          <span class="sub" id="aqMapSub"></span>
+          <div class="seg" id="aqMapZoom" role="radiogroup" aria-label="Map extent" style="grid-template-columns:repeat(2,1fr)">
+            <span class="thumb" aria-hidden="true"></span>
+            <button role="radio" data-zoom="region" aria-checked="true">Region</button>
+            <button role="radio" data-zoom="city" aria-checked="false">City</button>
+          </div>
+        </div></div>
+      <div id="aqMap" style="margin-top:12px"></div>
+      <p class="mapnote" id="aqMapNote"></p>
     </div>
   </section>
 

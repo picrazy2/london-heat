@@ -32,6 +32,18 @@ const OPEN_METEO =
   `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=${[...SURF, ...LEV].join(",")}` +
   "&timezone=Asia%2FShanghai&wind_speed_unit=ms&past_days=7&forecast_days=7&models=best_match";
 
+// The cities the model reads, with a name the map can label and where to put
+// it (the prefectural seat). The same set as ml/fetch_cities.py.
+const CITY = {
+  "天津": ["Tianjin", 39.08, 117.20], "石家庄": ["Shijiazhuang", 38.04, 114.51], "唐山": ["Tangshan", 39.63, 118.18],
+  "秦皇岛": ["Qinhuangdao", 39.94, 119.60], "邯郸": ["Handan", 36.62, 114.54], "保定": ["Baoding", 38.87, 115.46],
+  "张家口": ["Zhangjiakou", 40.77, 114.89], "承德": ["Chengde", 40.95, 117.94], "廊坊": ["Langfang", 39.54, 116.68],
+  "沧州": ["Cangzhou", 38.30, 116.84], "衡水": ["Hengshui", 37.74, 115.67], "邢台": ["Xingtai", 37.07, 114.50],
+  "太原": ["Taiyuan", 37.87, 112.55], "呼和浩特": ["Hohhot", 40.84, 111.75], "包头": ["Baotou", 40.66, 109.84],
+  "鄂尔多斯": ["Ordos", 39.61, 109.78], "乌兰察布": ["Ulanqab", 40.99, 113.13], "锡林郭勒盟": ["Xilinhot", 43.93, 116.05],
+  "济南": ["Jinan", 36.65, 117.12], "沈阳": ["Shenyang", 41.80, 123.43], "大同": ["Datong", 40.08, 113.30],
+};
+
 // The same grouping as ml/dataset.py CITY_GROUPS. South is the Hebei plain the
 // south wind blows in from; north-west is the steppe the dust comes from.
 const GROUPS = {
@@ -99,7 +111,13 @@ async function upwind() {
         }
       }
       if (rec.c_south_PM25 !== null) {
-        best = { time: `${d.toISOString().slice(0, 10)}T${String(hr).padStart(2, "0")}:00`, ...rec };
+        const cities = [];
+        for (const [zh, [en, lat, lon]] of Object.entries(CITY)) {
+          if (idx[zh] === undefined) continue;
+          const v = num(p[idx[zh]]); if (v === null) continue;
+          cities.push({ name: zh, en, lat, lon, pm25: v, pm10: pm10 ? num(pm10[idx[zh]]) : null });
+        }
+        best = { time: `${d.toISOString().slice(0, 10)}T${String(hr).padStart(2, "0")}:00`, ...rec, cities };
       }
     }
     if (best) return best;

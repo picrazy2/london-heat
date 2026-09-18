@@ -137,3 +137,6 @@
   svg.chart.w900 .fc-daylab { font-size:22px; }
 }
 svg.chart rect[fill="transparent"], svg.chart .scrub { touch-action:pan-y; }
+svg.chart, .fc-strip, .fc-days, .heat, .tip { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+svg.chart * { -webkit-tap-highlight-color:transparent; }
+.aq-card, .now { -webkit-tap-highlight-color:transparent; }

@@ -198,9 +198,10 @@ def build_air(args):
               "site, both of which measure something other than the city's air. "
               "Concentrations are in µg/m³ and every index on this page is computed from "
               "them here, so the two scales are judging identical numbers.")
-    map_note = ("Circle area is the station's reading this hour, coloured by the band it falls "
-                "in on the selected scale. Positions are the published station "
-                "coordinates. Basemap © OpenStreetMap contributors, © CARTO.")
+    map_note = ("Beijing's stations are the small circles inside the municipal boundary; the "
+                "labelled circles are the surrounding cities' means this hour — the air the wind "
+                "brings, and what the forecast model reads. Colour is the band on the selected "
+                "scale. Basemap © OpenStreetMap contributors.")
     return air_page.payload(hourly, live, source, map_note), hourly
 
 
@@ -352,6 +353,7 @@ def main():
     analysis = json.loads(read("data", "pm25_analysis.json"))
     air["intervals"] = analysis["intervals"]
     air["intervals_h"] = analysis["intervals_h"]
+    air["boundary"] = json.loads(read("data", "beijing_boundary.json"))["rings"]
 
     # ── /beijing ──
     t = read("templates", "beijing.tmpl.html")

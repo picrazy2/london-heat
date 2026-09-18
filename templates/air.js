@@ -121,6 +121,8 @@
     tip.style.left = x + "px"; tip.style.top = y + "px";
   }
   function hideTip() { tip.style.opacity = 0; }
+  document.addEventListener("pointerdown", function (ev) { if (!ev.target.closest("svg.chart, .fc-strip-row, .heat")) hideTip(); }, true);
+  window.addEventListener("scroll", hideTip, { passive: true });
 
   /* ── the index, from the concentration ────────────────────────────────── */
   function aqi(conc, scale) {
@@ -294,7 +296,7 @@
       showTip(ev, "<span class='k'>" + A.recent.t[i] + "</span><br><b>" + t[i].toFixed(1) +
         "</b> µg/m³ · AQI <b>" + rr.i + "</b> " + catName(rr.cat));
     });
-    over.addEventListener("pointerleave", hideTip);
+    over.addEventListener("pointerleave", function (ev) { if (ev.pointerType !== "touch") hideTip(); });
     svg.appendChild(over);
     host.innerHTML = ""; host.appendChild(svg);
   }
@@ -302,6 +304,7 @@
   /* ── the station list ─────────────────────────────────────────────────── */
   function renderStations() {
     var host = document.getElementById("aqStations");
+    if (!host) return;
     var st = (LIVE && LIVE.stations || []).slice()
       .filter(function (s) { return s.pm25_24h != null || s.pm25 != null; });
     if (!st.length) { host.innerHTML = "<div class='row'><span class='footnote'>Station feed unavailable.</span></div>"; return; }
@@ -321,6 +324,34 @@
 
   /* ── the map ──────────────────────────────────────────────────────────── */
   var map = null, layer = null, tiles = null, tileStyle = null, waitingForLeaflet = false;
+  var regionLayer = null, boundaryLayer = null, REGION = null, MAP_EXTENT = "region";
+  // The extents. The city is Beijing's stations; the region is everything the
+  // forecast model reads, from Shijiazhuang to Xilinhot.
+  var CITY_BOUNDS = [[39.45, 115.45], [40.95, 117.5]], REGION_BOUNDS = [[36.5, 109.5], [44.2, 120]];
+  function fitExtent(animate) {
+    if (!map) return;
+    map.fitBounds(MAP_EXTENT === "city" ? CITY_BOUNDS : REGION_BOUNDS, { padding: [8, 8], animate: !!animate, maxZoom: MAP_EXTENT === "city" ? 10 : 7 });
+  }
+  function renderRegion() {
+    if (!map || typeof L === "undefined") return;
+    if (regionLayer) map.removeLayer(regionLayer);
+    regionLayer = L.layerGroup().addTo(map);
+    if (!boundaryLayer && A.boundary) {
+      boundaryLayer = L.polygon(A.boundary.map(function (ring) { return ring.map(function (p) { return [p[1], p[0]]; }); }),
+        { color: cssVar("--accent"), weight: 1.5, opacity: .7, fill: true, fillColor: cssVar("--accent"), fillOpacity: .05, interactive: false }).addTo(map);
+      boundaryLayer.bringToBack();
+    }
+    (REGION && REGION.cities || []).forEach(function (c) {
+      if (c.pm25 == null) return;
+      var r = aqi(c.pm25);
+      L.circleMarker([c.lat, c.lon], { radius: Math.min(26, 9 + Math.sqrt(c.pm25) * 1.4), fillColor: catColor(r.cat), fillOpacity: .8, color: cssVar("--surface-1"), weight: 2 })
+        .bindPopup("<div class='pn'>" + c.en + " <span class='zh'>" + c.name + "</span></div><div class='pv'>PM2.5 <b>" + Math.round(c.pm25) + "</b> µg/m³ · " + A.scales[SCALE].name + " AQI <b>" + r.i + "</b> " + catName(r.cat) +
+          (c.pm10 != null ? "<br>PM10 <b>" + Math.round(c.pm10) + "</b>" + (c.pm10 > 150 && c.pm10 > 3 * c.pm25 ? " · dust" : "") : "") + "</div>")
+        .addTo(regionLayer);
+      // The label: the city and its number, so the map reads without tapping.
+      L.marker([c.lat, c.lon], { interactive: false, icon: L.divIcon({ className: "city-lab", html: "<b>" + Math.round(c.pm25) + "</b><span>" + c.en + "</span>", iconSize: [80, 30], iconAnchor: [40, 7] }) }).addTo(regionLayer);
+    });
+  }
 
   function isDark() {
     var t = document.documentElement.getAttribute("data-theme");
@@ -357,11 +388,12 @@
       return;
     }
     var st = (LIVE && LIVE.stations || []).filter(function (s) { return s.lat && s.lon; });
-    document.getElementById("aqMapSub").textContent = st.length + " monitoring stations";
+    document.getElementById("aqMapSub").textContent = st.length + " stations · " + ((REGION && REGION.cities) ? REGION.cities.length + " cities" : "");
     if (!map) {
       map = L.map("aqMap", { zoomControl: true, scrollWheelZoom: false, attributionControl: true })
-        .setView([40.02, 116.45], 8);
+        .setView([39.9, 115.5], 7);
       setBasemap();
+      segment("aqMapZoom", function (d) { MAP_EXTENT = d.zoom; fitExtent(true); });
       // A light basemap under a dark page is the one thing that gives away a
       // map bolted onto a themed site, so the tiles follow the theme — both the
       // explicit toggle, which mutates data-theme, and the system setting.
@@ -379,10 +411,10 @@
       var r = aqi(c);
       // Area, not radius, carries the value — a radius-encoded circle at twice
       // the number looks four times as big, which overstates it.
-      var rad = 7 + Math.sqrt(Math.max(0, c)) * 1.5;
+      var rad = 4 + Math.sqrt(Math.max(0, c)) * 0.9;
       L.circleMarker([s.lat, s.lon], {
-        radius: Math.min(30, rad), fillColor: catColor(r.cat), fillOpacity: .72,
-        color: cssVar("--surface-1"), weight: 1.5,
+        radius: Math.min(16, rad), fillColor: catColor(r.cat), fillOpacity: .78,
+        color: cssVar("--surface-1"), weight: 1,
       }).bindPopup("<div class='pn'>" + (s.en || s.name) + "</div>" +
         (s.en && s.name !== s.en ? "<div class='zh'>" + s.name + "</div>" : "") +
         "<div class='pv'>PM2.5 <b>" + c.toFixed(0) + "</b> µg/m³ this hour · " +
@@ -390,9 +422,11 @@
         (s.pm25_24h != null ? " · 24 h mean " + s.pm25_24h.toFixed(0) : "") + "</div>")
         .addTo(layer);
     });
-    var b = L.latLngBounds(st.map(function (s) { return [s.lat, s.lon]; }));
-    map.fitBounds(b.pad(0.15));
+    renderRegion();
+    fitExtent(false);
   }
+  // The region's readings arrive with the forecast module's fetch.
+  window.addEventListener("wx:forecast", function (e) { REGION = e.detail && e.detail.upwind; if (VIEW === "now") renderMap(); });
 
   /* ── the long trend ───────────────────────────────────────────────────── */
   function renderAnnual() {
@@ -425,7 +459,7 @@
           "<span style='opacity:.75'>US AQI " + us.i + " · China AQI " + cn.i + "</span>");
       });
       rect.addEventListener("pointermove", moveTip); rect.addEventListener("pointerdown", moveTip);
-      rect.addEventListener("pointerleave", hideTip);
+      rect.addEventListener("pointerleave", function (ev) { if (ev.pointerType !== "touch") hideTip(); });
       svg.appendChild(rect);
       svg.appendChild(txt(el("text", { class: "tick", x: x(i), y: H - 8, "text-anchor": "middle" }),
         String(yr.y).slice(2)));
@@ -500,7 +534,7 @@
             Math.round(n / yr.d.length * 100) + "% of the year</span>");
         });
         rect.addEventListener("pointermove", moveTip); rect.addEventListener("pointerdown", moveTip);
-        rect.addEventListener("pointerleave", hideTip);
+        rect.addEventListener("pointerleave", function (ev) { if (ev.pointerType !== "touch") hideTip(); });
         svg.appendChild(rect);
         acc += n;
       });
@@ -591,7 +625,7 @@
         if (!n) return;
         var rect = el("rect", { x: x, y: y0(acc + n), width: bw, height: y0(acc) - y0(acc + n), fill: catToken(k), class: "bar", rx: 1 });
         var f = function (ev) { showTip(ev, "<span class='k'>" + b.full + "</span><br><b>" + n + "</b> of " + b.d.length + " days " + catName(k)); };
-        rect.addEventListener("pointermove", f); rect.addEventListener("pointerdown", f); rect.addEventListener("pointerleave", hideTip);
+        rect.addEventListener("pointermove", f); rect.addEventListener("pointerdown", f); rect.addEventListener("pointerleave", function (ev) { if (ev.pointerType !== "touch") hideTip(); });
         svg.appendChild(rect); acc += n;
       });
       svg.appendChild(txt(el("text", { class: "tick", x: x + bw / 2, y: H - 8, "text-anchor": "middle" }), b.lab));
@@ -655,7 +689,7 @@
             Mg.part.through : "") + "</span>");
       });
       c.addEventListener("pointermove", moveTip); c.addEventListener("pointerdown", moveTip);
-      c.addEventListener("pointerleave", hideTip);
+      c.addEventListener("pointerleave", function (ev) { if (ev.pointerType !== "touch") hideTip(); });
     });
   }
 
@@ -685,7 +719,7 @@
           "</b> µg/m³ · AQI <b>" + r.i + "</b>");
       });
       rect.addEventListener("pointermove", moveTip); rect.addEventListener("pointerdown", moveTip);
-      rect.addEventListener("pointerleave", hideTip);
+      rect.addEventListener("pointerleave", function (ev) { if (ev.pointerType !== "touch") hideTip(); });
       svg.appendChild(rect);
     });
     labels.forEach(function (l, i) {
@@ -761,7 +795,7 @@
           "%</b> against the day\'s own average");
       });
       rect.addEventListener("pointermove", moveTip); rect.addEventListener("pointerdown", moveTip);
-      rect.addEventListener("pointerleave", hideTip);
+      rect.addEventListener("pointerleave", function (ev) { if (ev.pointerType !== "touch") hideTip(); });
       svg.appendChild(rect);
     });
     labels.forEach(function (l, i) {
@@ -1050,7 +1084,7 @@
           "<span style='opacity:.7'>" + catName(r.cat) + "</span>");
       });
       rect.addEventListener("pointermove", moveTip); rect.addEventListener("pointerdown", moveTip);
-      rect.addEventListener("pointerleave", hideTip);
+      rect.addEventListener("pointerleave", function (ev) { if (ev.pointerType !== "touch") hideTip(); });
       svg.appendChild(rect);
       if (i % 3 === 0) svg.appendChild(txt(el("text", { class: "tick", x: x(i) + bw / 2,
         y: H - 9, "text-anchor": "middle" }), i * BIN));

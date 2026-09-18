@@ -41,10 +41,14 @@
   function scrub(svg, onIndex) {
     var over = svg.querySelector(".scrub");
     over.style.touchAction = "pan-y";
-    var f = function (ev) { onIndex(ev); };
+    var f = function (ev) { if (ev.pointerType === "mouse" && ev.type === "pointermove" && ev.buttons === 0 && false) return; onIndex(ev); };
     over.addEventListener("pointermove", f); over.addEventListener("pointerdown", f);
-    over.addEventListener("pointerleave", hideTip); over.addEventListener("pointerup", function () { setTimeout(hideTip, 1500); });
+    // A mouse leaving hides the tip; a finger lifting leaves it, so it can be
+    // read without a finger over it. A tap elsewhere or a scroll clears it.
+    over.addEventListener("pointerleave", function (ev) { if (ev.pointerType !== "touch") hideTip(); });
   }
+  document.addEventListener("pointerdown", function (ev) { if (!ev.target.closest("svg.chart, .fc-strip-row")) hideTip(); }, true);
+  window.addEventListener("scroll", hideTip, { passive: true });
 
   /* The scale follows the air module's toggle when the two share a page, and
      the query string otherwise. */
@@ -164,7 +168,6 @@
       var q = hs[+c.dataset.i], r = q.v != null ? aqi(q.v) : null;
       showTip(ev, "<span class='k'>" + fmtT(q.t) + "</span><br>" + (q.past ? "measured" : "forecast") + " <b>" + (q.v != null ? Math.round(q.v) : "–") + "</b> µg/m³" + (r ? " · AQI " + r.i + " " + catName(r.cat) : "") +
         "<br><span class='k'>" + (q.ws || 0).toFixed(1) + " m/s from " + compass(q.dir || 0) + " at 100 m · lid " + Math.round(q.blh || 0) + " m · RH " + Math.round(q.rh || 0) + "% · " + Math.round(q.temp || 0) + " °C" + (q.rain > 0.05 ? " · rain " + q.rain.toFixed(1) + " mm" : "") + "</span>", row);
-      setTimeout(hideTip, 2500);
     });
     // Start scrolled so "now" sits a few columns in from the left.
     if (opts.snapNow !== false) requestAnimationFrame(function () { var nowEl = row.querySelector(".now"); if (nowEl) row.scrollLeft = Math.max(0, nowEl.offsetLeft - 3 * nowEl.offsetWidth); });
@@ -287,6 +290,7 @@
   function run(inp) {
     if (!inp.forecast) { fail("The weather forecast is unavailable right now."); return; }
     INPUT = inp;
+    window.dispatchEvent(new CustomEvent("wx:forecast", { detail: inp }));
     R = O.outlook(PM25, MODEL, { level365: A.level365, scales: A.scales, intervals: A.intervals, intervals_h: A.intervals_h }, inp);
     render();
     var want = window.WX && window.WX.param("day", ""); if (want && R.byDay[want]) openDay(want);

@@ -21,7 +21,7 @@
   }
   function showTip(ev, html) { tip.innerHTML = html; tip.style.opacity = 1; moveTip(ev); }
   function hideTip() { tip.style.opacity = 0; }
-  function hover(node, html) { var f = function (ev) { showTip(ev, html); }; node.addEventListener("pointermove", f); node.addEventListener("pointerdown", f); node.addEventListener("pointerleave", hideTip); }
+  function hover(node, html) { var f = function (ev) { showTip(ev, html); }; node.addEventListener("pointermove", f); node.addEventListener("pointerdown", f); node.addEventListener("pointerleave", function (ev) { if (ev.pointerType !== "touch") hideTip(); }); }
   function lin(d0, d1, r0, r1) { var f = function (v) { return r0 + (v - d0) / (d1 - d0) * (r1 - r0); }; f.inv = function (p) { return d0 + (p - r0) / (r1 - r0) * (d1 - d0); }; return f; }
   function ticks(lo, hi, n) { var span = hi - lo, p = Math.pow(10, Math.floor(Math.log10(span / n))), s = [1, 2, 2.5, 5, 10].map(function (m) { return m * p; }).filter(function (s) { return span / s <= n; })[0] || p * 10, out = []; for (var v = Math.ceil(lo / s) * s; v <= hi + 1e-9; v += s) out.push(+v.toFixed(6)); return out; }
   function path(pts) { return pts.map(function (p, i) { return (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1); }).join(""); }

@@ -566,6 +566,12 @@ window.WX = (function () {
 .dark-tiles .leaflet-tile { filter:invert(1) hue-rotate(180deg) saturate(.25) brightness(.75) contrast(.9); }
 .mapnote { font-size:12px; color:var(--ink-faint); margin-top:8px; }
 
+/* the city labels on the region map */
+.city-lab { background:none; border:0; text-align:center; pointer-events:none; line-height:1.1; white-space:nowrap; }
+.city-lab b { display:block; font-size:12px; font-weight:760; color:var(--ink); text-shadow:0 0 3px var(--surface-1), 0 0 3px var(--surface-1), 0 0 6px var(--surface-1); font-variant-numeric:tabular-nums; }
+.city-lab span { font-size:10px; font-weight:600; color:var(--ink-muted); text-shadow:0 0 3px var(--surface-1), 0 0 3px var(--surface-1); }
+#aqMap { height:clamp(340px,56vh,560px); }
+
 /* ── station list ── */
 .stations { max-height:330px; overflow:auto; }
 .stations .row { padding:10px 16px; }
@@ -782,6 +788,9 @@ window.WX = (function () {
   svg.chart.w900 .fc-daylab { font-size:22px; }
 }
 svg.chart rect[fill="transparent"], svg.chart .scrub { touch-action:pan-y; }
+svg.chart, .fc-strip, .fc-days, .heat, .tip { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+svg.chart * { -webkit-tap-highlight-color:transparent; }
+.aq-card, .now { -webkit-tap-highlight-color:transparent; }
 
   .an { display:flex; flex-direction:column; gap:clamp(18px,3vw,26px); }
   .an h2 { margin-top:clamp(10px,2vw,18px); }
@@ -1398,10 +1407,14 @@ svg.chart rect[fill="transparent"], svg.chart .scrub { touch-action:pan-y; }
   function scrub(svg, onIndex) {
     var over = svg.querySelector(".scrub");
     over.style.touchAction = "pan-y";
-    var f = function (ev) { onIndex(ev); };
+    var f = function (ev) { if (ev.pointerType === "mouse" && ev.type === "pointermove" && ev.buttons === 0 && false) return; onIndex(ev); };
     over.addEventListener("pointermove", f); over.addEventListener("pointerdown", f);
-    over.addEventListener("pointerleave", hideTip); over.addEventListener("pointerup", function () { setTimeout(hideTip, 1500); });
+    // A mouse leaving hides the tip; a finger lifting leaves it, so it can be
+    // read without a finger over it. A tap elsewhere or a scroll clears it.
+    over.addEventListener("pointerleave", function (ev) { if (ev.pointerType !== "touch") hideTip(); });
   }
+  document.addEventListener("pointerdown", function (ev) { if (!ev.target.closest("svg.chart, .fc-strip-row")) hideTip(); }, true);
+  window.addEventListener("scroll", hideTip, { passive: true });
 
   /* The scale follows the air module's toggle when the two share a page, and
      the query string otherwise. */
@@ -1521,7 +1534,6 @@ svg.chart rect[fill="transparent"], svg.chart .scrub { touch-action:pan-y; }
       var q = hs[+c.dataset.i], r = q.v != null ? aqi(q.v) : null;
       showTip(ev, "<span class='k'>" + fmtT(q.t) + "</span><br>" + (q.past ? "measured" : "forecast") + " <b>" + (q.v != null ? Math.round(q.v) : "–") + "</b> µg/m³" + (r ? " · AQI " + r.i + " " + catName(r.cat) : "") +
         "<br><span class='k'>" + (q.ws || 0).toFixed(1) + " m/s from " + compass(q.dir || 0) + " at 100 m · lid " + Math.round(q.blh || 0) + " m · RH " + Math.round(q.rh || 0) + "% · " + Math.round(q.temp || 0) + " °C" + (q.rain > 0.05 ? " · rain " + q.rain.toFixed(1) + " mm" : "") + "</span>", row);
-      setTimeout(hideTip, 2500);
     });
     // Start scrolled so "now" sits a few columns in from the left.
     if (opts.snapNow !== false) requestAnimationFrame(function () { var nowEl = row.querySelector(".now"); if (nowEl) row.scrollLeft = Math.max(0, nowEl.offsetLeft - 3 * nowEl.offsetWidth); });
@@ -1644,6 +1656,7 @@ svg.chart rect[fill="transparent"], svg.chart .scrub { touch-action:pan-y; }
   function run(inp) {
     if (!inp.forecast) { fail("The weather forecast is unavailable right now."); return; }
     INPUT = inp;
+    window.dispatchEvent(new CustomEvent("wx:forecast", { detail: inp }));
     R = O.outlook(PM25, MODEL, { level365: A.level365, scales: A.scales, intervals: A.intervals, intervals_h: A.intervals_h }, inp);
     render();
     var want = window.WX && window.WX.param("day", ""); if (want && R.byDay[want]) openDay(want);
@@ -1687,7 +1700,7 @@ svg.chart rect[fill="transparent"], svg.chart .scrub { touch-action:pan-y; }
   }
   function showTip(ev, html) { tip.innerHTML = html; tip.style.opacity = 1; moveTip(ev); }
   function hideTip() { tip.style.opacity = 0; }
-  function hover(node, html) { var f = function (ev) { showTip(ev, html); }; node.addEventListener("pointermove", f); node.addEventListener("pointerdown", f); node.addEventListener("pointerleave", hideTip); }
+  function hover(node, html) { var f = function (ev) { showTip(ev, html); }; node.addEventListener("pointermove", f); node.addEventListener("pointerdown", f); node.addEventListener("pointerleave", function (ev) { if (ev.pointerType !== "touch") hideTip(); }); }
   function lin(d0, d1, r0, r1) { var f = function (v) { return r0 + (v - d0) / (d1 - d0) * (r1 - r0); }; f.inv = function (p) { return d0 + (p - r0) / (r1 - r0) * (d1 - d0); }; return f; }
   function ticks(lo, hi, n) { var span = hi - lo, p = Math.pow(10, Math.floor(Math.log10(span / n))), s = [1, 2, 2.5, 5, 10].map(function (m) { return m * p; }).filter(function (s) { return span / s <= n; })[0] || p * 10, out = []; for (var v = Math.ceil(lo / s) * s; v <= hi + 1e-9; v += s) out.push(+v.toFixed(6)); return out; }
   function path(pts) { return pts.map(function (p, i) { return (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1); }).join(""); }
