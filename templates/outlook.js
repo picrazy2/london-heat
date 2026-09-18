@@ -41,6 +41,18 @@
     return { lo: lo, hi: hi, p: inCat / I.log_err.length };
   }
 
+  /* The 80% band for an hour `lead` hours past the last reading: the 10th and
+     90th percentiles of actual/forecast at that lead (ml/intervals_hourly.py),
+     interpolated between the leads measured. */
+  function bandFactors(meta, lead) {
+    var I = meta.intervals_h; if (!I) return null;
+    var L = I.leads, E = I.log_err, i10 = I.pct.indexOf(10), i90 = I.pct.indexOf(90);
+    if (lead <= L[0]) return [Math.exp(E[0][i10]), Math.exp(E[0][i90])];
+    if (lead >= L[L.length - 1]) { var e = E[E.length - 1]; return [Math.exp(e[i10]), Math.exp(e[i90])]; }
+    for (var k = 1; k < L.length; k++) if (lead <= L[k]) { var f = (lead - L[k - 1]) / (L[k] - L[k - 1]); return [Math.exp(E[k - 1][i10] + f * (E[k][i10] - E[k - 1][i10])), Math.exp(E[k - 1][i90] + f * (E[k][i90] - E[k - 1][i90]))]; }
+    return null;
+  }
+
   function outlook(PM25, model, meta, inp) {
     var raw = inp.forecast, n = raw.time.length;
     var obs = raw.time.map(function (s) { var v = inp.obs && inp.obs[s.slice(0, 13) + ":00"]; return v == null ? null : v; });
@@ -49,8 +61,10 @@
     // Per hour, everything a strip or a tooltip wants.
     var hours = [];
     for (var i = 0; i < n; i++) {
+      var bf = i > iNow ? bandFactors(meta, i - iNow) : null;
       hours.push({ i: i, t: t[i], d: dateOf(t[i]), obs: obs[i], w: run.w[i], fc: run.fc[i], past: i <= iNow,
         v: i <= iNow && obs[i] != null ? obs[i] : run.fc[i],
+        lo: bf ? run.fc[i] * bf[0] : null, hi: bf ? run.fc[i] * bf[1] : null,
         ws: F.e_wind_speed_100m[i], dir: raw.wind_direction_100m[i], ws10: F.e_wind_speed_10m[i], dir10: raw.wind_direction_10m[i],
         vn: F.e_v_north100[i], blh: F.e_boundary_layer_height[i], rh: F.e_relative_humidity_2m[i], rain: F.e_precipitation[i],
         temp: F.e_temperature_2m[i], cloud: F.e_cloud_cover[i], inv: F.s_inv925[i] });
@@ -122,5 +136,5 @@
              day: day, mean: d.mean, aqi: a.i, cat: a.cat, catName: cat, cn: cn.i, conf: d.conf, why: why(d, S) };
   }
 
-  return { outlook: outlook, compose: compose, aqi: aqi, catName: catName, confidence: confidence, why: why, compass: compass, dateOf: dateOf, DAY: DAY, DAYL: DAYL, MON: MON };
+  return { outlook: outlook, compose: compose, bandFactors: bandFactors, aqi: aqi, catName: catName, confidence: confidence, why: why, compass: compass, dateOf: dateOf, DAY: DAY, DAYL: DAYL, MON: MON };
 });

@@ -66,8 +66,8 @@
     var n = opts.last != null ? opts.last + 1 : hs.length;
     var W = opts.w || (nar ? 420 : 900), H = opts.h || (nar ? 200 : (FULL ? 260 : 220)), m = { t: 24, r: 8, b: 22, l: 30 };
     var pw = W - m.l - m.r, ph = H - m.t - m.b;
-    var vals = []; for (var i = first; i < n; i++) if (hs[i].v != null) vals.push(hs[i].v);
-    var max = Math.max(20, Math.max.apply(null, vals) * 1.18);
+    var vals = []; for (var i = first; i < n; i++) { if (hs[i].v != null) vals.push(hs[i].v); if (hs[i].hi != null) vals.push(Math.min(hs[i].hi, hs[i].fc * 2.2)); }
+    var max = Math.max(20, Math.max.apply(null, vals) * 1.12);
     var x = function (i) { return m.l + (i - first) / Math.max(1, n - 1 - first) * pw; };
     var y = function (v) { return m.t + ph - v / max * ph; };
     var svg = el("svg", { viewBox: "0 0 " + W + " " + H, class: "chart chart-in", role: "img", "aria-label": "Beijing PM2.5, measured over the past days and forecast for the coming week" });
@@ -95,7 +95,13 @@
       for (var i = from; i <= to; i++) { var v = get(hs[i]); if (v == null || isNaN(v)) { pen = false; continue; } d += (pen ? " L" : " M") + " " + x(i).toFixed(1) + " " + y(Math.min(v, max)).toFixed(1); pen = true; }
       var p = el("path", { d: d.trim(), fill: "none", "stroke-linejoin": "round", "stroke-linecap": "round" }); for (var k in attrs) p.setAttribute(k, attrs[k]); return p;
     }
-    var split = Math.min(iNow, n - 1);
+    // The 80% band: where the measured value landed, at this lead, eight times in ten.
+    var split = Math.min(iNow, n - 1), bd = "", top = [], bot = [];
+    for (var i = Math.max(first, split); i < n; i++) { var q = hs[i]; if (q.lo == null) continue; top.push([x(i), y(Math.min(q.hi, max))]); bot.push([x(i), y(q.lo)]); }
+    if (top.length > 1) {
+      bd = top.map(function (p, k) { return (k ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1); }).join("") + bot.reverse().map(function (p) { return "L" + p[0].toFixed(1) + " " + p[1].toFixed(1); }).join("") + "Z";
+      svg.appendChild(el("path", { d: bd, fill: "var(--accent)", "fill-opacity": ".13", stroke: "none" }));
+    }
     if (split >= first) {
       svg.appendChild(path(function (q) { return q.w; }, first, split, { stroke: "var(--accent)", "stroke-width": 1.5, "stroke-opacity": ".55" }));
       svg.appendChild(path(function (q) { return q.obs; }, first, split, { stroke: "var(--ink)", "stroke-width": 2 }));
@@ -110,7 +116,7 @@
       cross.setAttribute("x1", x(i)); cross.setAttribute("x2", x(i)); cross.setAttribute("opacity", .7);
       var q = hs[i], s = "<span class='k'>" + fmtT(q.t) + "</span><br>";
       if (q.past && q.obs != null) { var ro = aqi(q.obs); s += "measured <b>" + q.obs.toFixed(0) + "</b> · AQI " + ro.i + " " + catName(ro.cat) + "<br>weather model " + q.w.toFixed(0); }
-      else { var rf = aqi(q.fc); s += "forecast <b>" + q.fc.toFixed(0) + "</b> µg/m³ · AQI " + rf.i + " " + catName(rf.cat); }
+      else { var rf = aqi(q.fc); s += "forecast <b>" + q.fc.toFixed(0) + "</b> µg/m³ · AQI " + rf.i + " " + catName(rf.cat) + (q.lo != null ? "<br><span class='k'>likely " + Math.round(q.lo) + "–" + Math.round(q.hi) + " (80%)</span>" : ""); }
       s += "<br><span class='k'>" + (q.ws || 0).toFixed(1) + " m/s from " + compass(q.dir || 0) + " · lid " + Math.round(q.blh || 0) + " m · RH " + Math.round(q.rh || 0) + "%" + (q.rain > 0.05 ? " · rain " + q.rain.toFixed(1) + " mm" : "") + "</span>";
       showTip(ev, s, svg);
     });
@@ -267,7 +273,7 @@
   function run(inp) {
     if (!inp.forecast) { fail("The weather forecast is unavailable right now."); return; }
     INPUT = inp;
-    R = O.outlook(PM25, MODEL, { level365: A.level365, scales: A.scales, intervals: A.intervals }, inp);
+    R = O.outlook(PM25, MODEL, { level365: A.level365, scales: A.scales, intervals: A.intervals, intervals_h: A.intervals_h }, inp);
     render();
     var want = window.WX && window.WX.param("day", ""); if (want && R.byDay[want]) openDay(want);
   }

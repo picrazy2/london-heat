@@ -351,6 +351,7 @@ def main():
     # day, from the error distribution of the real-forecast evaluation in ml/.
     analysis = json.loads(read("data", "pm25_analysis.json"))
     air["intervals"] = analysis["intervals"]
+    air["intervals_h"] = analysis["intervals_h"]
 
     # ── /beijing ──
     t = read("templates", "beijing.tmpl.html")
@@ -378,7 +379,7 @@ def main():
     # The page carries the breakpoint tables and the emissions baseline the
     # browser-side model needs, the analysis figures, and nothing else of the
     # air payload: the forecast is computed live, the analysis is baked.
-    air_min = {"scales": air["scales"], "level365": air["level365"], "intervals": analysis["intervals"]}
+    air_min = {"scales": air["scales"], "level365": air["level365"], "intervals": analysis["intervals"], "intervals_h": analysis["intervals_h"]}
     t = read("templates", "forecast.tmpl.html")
     t = (t.replace("__AIR_CSS__", air_css).replace("__FORECAST_CSS__", fc_css)
           .replace("__PM25MODEL_JS__", model_js).replace("__FORECAST_JS__", fc_js).replace("__ANALYSIS_JS__", analysis_js)
@@ -394,7 +395,7 @@ def main():
     os.makedirs(os.path.join(SITE, "model"), exist_ok=True)
     shutil.copyfile(P("data", "pm25_model.json"), os.path.join(SITE, "model", "pm25.json"))
     with open(os.path.join(SITE, "model", "meta.json"), "w") as f:
-        json.dump({"level365": air["level365"], "scales": air["scales"], "intervals": analysis["intervals"],
+        json.dump({"level365": air["level365"], "scales": air["scales"], "intervals": analysis["intervals"], "intervals_h": analysis["intervals_h"],
                    "built": datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(timespec="minutes")}, f, separators=(",", ":"))
 
     # ── / ──

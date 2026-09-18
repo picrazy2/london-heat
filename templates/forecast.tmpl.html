@@ -37,7 +37,8 @@ __FORECAST_CSS__
       <div id="fcChart"></div>
       <div class="fc-key"><span><i style="background:var(--ink)"></i>measured</span>
         <span><i style="background:var(--accent);opacity:.55"></i>what the weather alone explains</span>
-        <span><i style="background:var(--accent)"></i>forecast, corrected from the latest readings</span></div>
+        <span><i style="background:var(--accent)"></i>forecast, corrected from the latest readings</span>
+        <span><i style="background:var(--accent);opacity:.2;height:10px"></i>80% likely range</span></div>
       <div id="fcStrip"></div>
       <div class="fc-days" id="fcDays"></div>
       <p class="fc-why" id="fcWhy"></p>
@@ -46,7 +47,9 @@ __FORECAST_CSS__
         80% of the time when the forecast said this, at this many days out, over 2024 – September 2026 against the
         forecasts actually issued — a factor of about ×0.64 to ×1.67 one day ahead, widening to ×0.5 to ×2.7 at seven.
         "Sure" is the share of that error distribution that keeps the day inside the forecast's own AQI category:
-        a forecast sitting mid-band is surer than one near an edge, and every day is less sure the further out it is.</p>
+        a forecast sitting mid-band is surer than one near an edge, and every day is less sure the further out it is.
+        The shaded band on the chart is the same idea hour by hour — the 10th to 90th percentile of where the measured
+        hour landed at that lead: ×0.86–1.14 one hour out, ×0.6–1.6 at twelve, ×0.5–1.9 at two days, ×0.4–2.8 at seven.</p>
       <p class="cap">The forecast run is Open-Meteo's best-match model for central Beijing; the readings
         are the CNEMC city mean via its mirror; the upwind cities are the same publication. Everything
         is fetched fresh, so the page is never more than about ten minutes behind the network.</p>

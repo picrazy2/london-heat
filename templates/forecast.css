@@ -120,6 +120,8 @@
   /* a card's title takes the full line when a control shares its row */
   .dash .aq-card .card-head { flex-wrap:wrap; gap:6px 10px; }
   .dash .aq-card .card-head h3 { flex:1 1 60%; }
+  .dash #fcRoot .card-head { flex-wrap:nowrap; }
+  .dash #fcRoot .card-head .sub { display:none; }
   .dash .aq-card .card-head .sub { font-size:11.5px; }
 }
 
