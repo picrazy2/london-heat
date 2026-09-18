@@ -102,7 +102,7 @@
 .fc-stat .s { font-size:11px; color:var(--ink-muted); margin-top:1px; }
 .fc-sh-strip { margin-top:6px; }
 .fc-sh-chart { margin-top:12px; }
-.fc-sh-chart svg.chart text { font-size:11px; }
+.fc-sh-chart svg.chart text, .now-today svg.chart text { font-size:11px; }
 .fc-sh-why { font-size:13.5px; line-height:1.5; color:var(--ink); margin:14px 0 6px; }
 
 /* ── the bell ── */

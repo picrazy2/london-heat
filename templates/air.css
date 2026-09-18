@@ -7,7 +7,11 @@
 .aq { display:flex; flex-direction:column; gap:clamp(18px,3vw,26px); }
 
 /* ── the live hero ── */
-.now { border-radius:var(--r-lg); padding:clamp(18px,3vw,26px); }
+.now { border-radius:var(--r-lg); padding:clamp(18px,3vw,26px); display:grid; gap:clamp(14px,3vw,26px);
+  grid-template-columns:minmax(0,1fr) minmax(0,1.3fr); align-items:center; }
+@media (max-width:760px) { .now { grid-template-columns:1fr; } }
+.now-today:empty { display:none; }
+.now-today .today-lab { font-size:11.5px; font-weight:640; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.03em; margin-bottom:2px; }
 .now .idx { display:flex; align-items:baseline; gap:12px; }
 .now .idx .n { font-size:clamp(60px,11vw,96px); color:var(--tint); }
 .now .idx .of { font-size:14px; color:var(--ink-muted); font-weight:600; }

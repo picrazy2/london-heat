@@ -79,7 +79,7 @@
     if (iNow >= first && iNow < n - 1) {
       svg.appendChild(el("rect", { x: x(iNow), y: m.t, width: x(n - 1) - x(iNow), height: ph, fill: "var(--accent-soft)", "fill-opacity": ".55" }));
       svg.appendChild(el("line", { x1: x(iNow), x2: x(iNow), y1: m.t, y2: m.t + ph, stroke: "var(--ink-faint)", "stroke-dasharray": "3 3" }));
-      svg.appendChild(txt(el("text", { class: "tick", x: x(iNow) + 4, y: m.t + 10 }), "now"));
+      if (!opts.nowDot) svg.appendChild(txt(el("text", { class: "tick", x: x(iNow) + 4, y: m.t + 10 }), "now"));
     }
     if (opts.hours) {
       // One day: the hours along the bottom, the clean and dirty stretches above.
@@ -107,6 +107,12 @@
       svg.appendChild(path(function (q) { return q.obs; }, first, split, { stroke: "var(--ink)", "stroke-width": 2 }));
     }
     svg.appendChild(path(function (q) { return q.fc; }, Math.max(first, split), n - 1, { stroke: "var(--accent)", "stroke-width": 2.5 }));
+    if (opts.nowDot && iNow >= first && iNow < n && hs[iNow].v != null) {
+      // The reading now, as a dot with its value — the chart's anchor.
+      var nv = hs[iNow].v, nr = aqi(nv);
+      svg.appendChild(el("circle", { cx: x(iNow), cy: y(Math.min(nv, max)), r: 5, fill: catToken(nr.cat), stroke: "var(--surface-1)", "stroke-width": 2 }));
+      svg.appendChild(txt(el("text", { class: "tick fc-daylab", x: x(iNow), y: y(Math.min(nv, max)) - 9, "text-anchor": "middle" }), Math.round(nv) + " now"));
+    }
     var cross = el("line", { y1: m.t, y2: m.t + ph, stroke: "var(--ink-faint)", opacity: 0 }); svg.appendChild(cross);
     svg.appendChild(el("rect", { class: "scrub", x: m.l, y: m.t, width: pw, height: ph, fill: "transparent", style: "cursor:crosshair" }));
     into.innerHTML = ""; into.appendChild(svg);
@@ -261,8 +267,16 @@
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeSheet(); });
 
   /* ── render everything ───────────────────────────────────────────────── */
+  function today(into) {
+    var iNow = R.iNow; if (iNow < 0) return;
+    var dy = R.byDay[R.t[iNow].slice(0, 10)]; if (!dy) return;
+    var hs = dy.hours;
+    into.innerHTML = "<div class='today-lab'>Today, hour by hour</div><div class='today-chart'></div>";
+    chart(into.querySelector(".today-chart"), { first: hs[0].i, last: hs[hs.length - 1].i, w: 520, h: narrow() ? 170 : 190, narrow: false, hours: dy, nowDot: true });
+  }
   function render() {
     var c = document.getElementById("fcChart"); if (c) chart(c);
+    var td = document.getElementById("fcToday"); if (td) today(td);
     var s = document.getElementById("fcStrip"); if (s) strip(s, Math.max(0, R.iNow - 24), R.hours.length - 1);
     var d = document.getElementById("fcDays"); if (d) tiles(d);
     var w = document.getElementById("fcWhy"); if (w) w.innerHTML = why();
@@ -288,5 +302,5 @@
   setInterval(function () { if (MODEL && !document.hidden) refresh().catch(function () {}); }, 10 * 60 * 1000);
   document.addEventListener("visibilitychange", function () { if (!document.hidden && MODEL) refresh().catch(function () {}); });
   var sc = document.getElementById("aqScale"); if (sc) sc.addEventListener("click", function () { setTimeout(function () { if (R) render(); }, 0); });
-  var rt; window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(function () { if (R) { var c = document.getElementById("fcChart"); if (c) chart(c); } }, 150); });
+  var rt; window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(function () { if (R) { var c = document.getElementById("fcChart"); if (c) chart(c); var td = document.getElementById("fcToday"); if (td) today(td); } }, 150); });
 })();
