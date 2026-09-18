@@ -3556,7 +3556,8 @@ svg.chart * { -webkit-tap-highlight-color:transparent; }
     tip.style.left = x + "px"; tip.style.top = (y - 10 < hh + 8 ? y + hh + 24 : y - 10) + "px";
   }
   function showTip(ev, html, anchor) { tip.innerHTML = html; tip.style.opacity = 1; moveTip(ev, anchor); }
-  function hideTip() { tip.style.opacity = 0; }
+  var CROSSES = [];
+  function hideTip() { tip.style.opacity = 0; CROSSES.forEach(function (c) { if (c.isConnected) c.setAttribute("opacity", 0); }); CROSSES = CROSSES.filter(function (c) { return c.isConnected; }); }
   function scrub(svg, onIndex) {
     var over = svg.querySelector(".scrub");
     over.style.touchAction = "pan-y";
@@ -3610,7 +3611,12 @@ svg.chart * { -webkit-tap-highlight-color:transparent; }
       var dyy = opts.hours;
       if (dyy.best) { var b0 = first + dyy.best.from, b1 = first + dyy.best.to - 1; if (b1 < n) { svg.appendChild(el("rect", { x: x(b0), y: m.t, width: x(b1) - x(b0), height: ph, fill: "var(--positive)", "fill-opacity": ".10" })); svg.appendChild(txt(el("text", { class: "tick", x: (x(b0) + x(b1)) / 2, y: m.t - 8, "text-anchor": "middle" }), "cleanest")); } }
     } else {
-      for (var i = first; i < n; i++) { var d = hs[i].d; if (d.getUTCHours() === 0 && n - i >= 12) svg.appendChild(txt(el("text", { class: "tick", x: x(i), y: H - 6, "text-anchor": "middle" }), DAY[d.getUTCDay()] + (FULL && !nar ? " " + d.getUTCDate() : ""))); }
+      for (var i = first; i < n; i++) {
+        var d = hs[i].d; if (d.getUTCHours() !== 0 || i === first) continue;
+        // A hairline at every midnight, so a day's start and end can be read off the chart.
+        svg.appendChild(el("line", { x1: x(i), x2: x(i), y1: m.t, y2: m.t + ph, stroke: "var(--ink-faint)", "stroke-opacity": ".55", "stroke-width": .8 }));
+        if (n - i >= 12) svg.appendChild(txt(el("text", { class: "tick", x: x(i) + 3, y: H - 6 }), DAY[d.getUTCDay()] + (FULL && !nar ? " " + d.getUTCDate() : "")));
+      }
       R.days.forEach(function (dy) { if (dy.past) return; var mid = dy.hours[Math.floor(dy.hours.length / 2)].i; if (mid < first + 4 || mid >= n) return; svg.appendChild(txt(el("text", { class: "tick fc-daylab", x: x(mid), y: m.t - 8, "text-anchor": "middle" }), Math.round(dy.mean))); });
     }
     function path(get, from, to, attrs) {
@@ -3649,7 +3655,8 @@ svg.chart * { -webkit-tap-highlight-color:transparent; }
       s += "<br><span class='k'>" + (q.ws || 0).toFixed(1) + " m/s from " + compass(q.dir || 0) + " · lid " + Math.round(q.blh || 0) + " m · RH " + Math.round(q.rh || 0) + "%" + (q.rain > 0.05 ? " · rain " + q.rain.toFixed(1) + " mm" : "") + "</span>";
       showTip(ev, s, svg);
     });
-    svg.querySelector(".scrub").addEventListener("pointerleave", function () { cross.setAttribute("opacity", 0); });
+    svg.querySelector(".scrub").addEventListener("pointerleave", function (ev) { if (ev.pointerType !== "touch") cross.setAttribute("opacity", 0); });
+    CROSSES.push(cross);
   }
 
   /* ── the hourly strip ─────────────────────────────────────────────────
