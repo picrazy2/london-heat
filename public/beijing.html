@@ -881,6 +881,8 @@ window.WX = (function () {
 .fc-stat .v svg { color:var(--accent); }
 .fc-stat .s { font-size:11px; color:var(--ink-muted); margin-top:1px; }
 .fc-sh-strip { margin-top:6px; }
+.fc-sh-chart { margin-top:12px; }
+.fc-sh-chart svg.chart text { font-size:11px; }
 .fc-sh-why { font-size:13.5px; line-height:1.5; color:var(--ink); margin:14px 0 6px; }
 
 /* ── the bell ── */
@@ -3503,10 +3505,12 @@ svg.chart rect[fill="transparent"], svg.chart .scrub { touch-action:pan-y; }
   var R = null, MODEL = null, INPUT = null;
 
   /* ── the chart ───────────────────────────────────────────────────────── */
-  function chart(into) {
-    var hs = R.hours, n = hs.length, iNow = R.iNow, nar = narrow();
-    var first = FULL ? 0 : Math.max(0, iNow - (nar ? 24 : 72));
-    var W = nar ? 420 : 900, H = nar ? 200 : (FULL ? 260 : 220), m = { t: 24, r: 8, b: 22, l: 30 };
+  function chart(into, opts) {
+    opts = opts || {};
+    var hs = R.hours, iNow = R.iNow, nar = opts.narrow != null ? opts.narrow : narrow();
+    var first = opts.first != null ? opts.first : (FULL ? 0 : Math.max(0, iNow - (nar ? 24 : 72)));
+    var n = opts.last != null ? opts.last + 1 : hs.length;
+    var W = opts.w || (nar ? 420 : 900), H = opts.h || (nar ? 200 : (FULL ? 260 : 220)), m = { t: 24, r: 8, b: 22, l: 30 };
     var pw = W - m.l - m.r, ph = H - m.t - m.b;
     var vals = []; for (var i = first; i < n; i++) if (hs[i].v != null) vals.push(hs[i].v);
     var max = Math.max(20, Math.max.apply(null, vals) * 1.18);
@@ -3517,21 +3521,32 @@ svg.chart rect[fill="transparent"], svg.chart .scrub { touch-action:pan-y; }
     S.bp.forEach(function (b) { var hi = Math.min(b[1], max); if (hi <= prev) return; svg.appendChild(el("rect", { x: m.l, y: y(hi), width: pw, height: Math.max(0, y(prev) - y(hi)), fill: catToken(b[4]), "fill-opacity": ".13" })); prev = hi; });
     var gstep = [5, 10, 20, 25, 50, 100, 200].filter(function (s) { return max / s <= 5; })[0] || 250;
     for (var g = 0; g <= max; g += gstep) { svg.appendChild(el("line", { class: "gridline", x1: m.l, x2: m.l + pw, y1: y(g), y2: y(g) })); svg.appendChild(txt(el("text", { class: "tick", x: m.l - 5, y: y(g) + 3, "text-anchor": "end" }), g)); }
+    if (iNow < first && n - 1 > first) svg.appendChild(el("rect", { x: x(first), y: m.t, width: x(n - 1) - x(first), height: ph, fill: "var(--accent-soft)", "fill-opacity": ".55" }));
     if (iNow >= first && iNow < n - 1) {
       svg.appendChild(el("rect", { x: x(iNow), y: m.t, width: x(n - 1) - x(iNow), height: ph, fill: "var(--accent-soft)", "fill-opacity": ".55" }));
       svg.appendChild(el("line", { x1: x(iNow), x2: x(iNow), y1: m.t, y2: m.t + ph, stroke: "var(--ink-faint)", "stroke-dasharray": "3 3" }));
       svg.appendChild(txt(el("text", { class: "tick", x: x(iNow) + 4, y: m.t + 10 }), "now"));
     }
-    for (var i = first; i < n; i++) { var d = hs[i].d; if (d.getUTCHours() === 0 && n - i >= 12) svg.appendChild(txt(el("text", { class: "tick", x: x(i), y: H - 6, "text-anchor": "middle" }), DAY[d.getUTCDay()] + (FULL && !nar ? " " + d.getUTCDate() : ""))); }
-    R.days.forEach(function (dy) { if (dy.past) return; var mid = dy.hours[Math.floor(dy.hours.length / 2)].i; if (mid < first + 4) return; svg.appendChild(txt(el("text", { class: "tick fc-daylab", x: x(mid), y: m.t - 8, "text-anchor": "middle" }), Math.round(dy.mean))); });
+    if (opts.hours) {
+      // One day: the hours along the bottom, the clean and dirty stretches above.
+      for (var i = first; i < n; i++) { var hh = hs[i].d.getUTCHours(); if (hh % (nar ? 6 : 3) === 0) svg.appendChild(txt(el("text", { class: "tick", x: x(i), y: H - 6, "text-anchor": "middle" }), String(hh).padStart(2, "0"))); }
+      var dyy = opts.hours;
+      if (dyy.best) { var b0 = first + dyy.best.from, b1 = first + dyy.best.to - 1; if (b1 < n) { svg.appendChild(el("rect", { x: x(b0), y: m.t, width: x(b1) - x(b0), height: ph, fill: "var(--positive)", "fill-opacity": ".10" })); svg.appendChild(txt(el("text", { class: "tick", x: (x(b0) + x(b1)) / 2, y: m.t - 8, "text-anchor": "middle" }), "cleanest")); } }
+    } else {
+      for (var i = first; i < n; i++) { var d = hs[i].d; if (d.getUTCHours() === 0 && n - i >= 12) svg.appendChild(txt(el("text", { class: "tick", x: x(i), y: H - 6, "text-anchor": "middle" }), DAY[d.getUTCDay()] + (FULL && !nar ? " " + d.getUTCDate() : ""))); }
+      R.days.forEach(function (dy) { if (dy.past) return; var mid = dy.hours[Math.floor(dy.hours.length / 2)].i; if (mid < first + 4 || mid >= n) return; svg.appendChild(txt(el("text", { class: "tick fc-daylab", x: x(mid), y: m.t - 8, "text-anchor": "middle" }), Math.round(dy.mean))); });
+    }
     function path(get, from, to, attrs) {
       var d = "", pen = false;
       for (var i = from; i <= to; i++) { var v = get(hs[i]); if (v == null || isNaN(v)) { pen = false; continue; } d += (pen ? " L" : " M") + " " + x(i).toFixed(1) + " " + y(Math.min(v, max)).toFixed(1); pen = true; }
       var p = el("path", { d: d.trim(), fill: "none", "stroke-linejoin": "round", "stroke-linecap": "round" }); for (var k in attrs) p.setAttribute(k, attrs[k]); return p;
     }
-    svg.appendChild(path(function (q) { return q.w; }, first, iNow, { stroke: "var(--accent)", "stroke-width": 1.5, "stroke-opacity": ".55" }));
-    svg.appendChild(path(function (q) { return q.obs; }, first, iNow, { stroke: "var(--ink)", "stroke-width": 2 }));
-    svg.appendChild(path(function (q) { return q.fc; }, iNow, n - 1, { stroke: "var(--accent)", "stroke-width": 2.5 }));
+    var split = Math.min(iNow, n - 1);
+    if (split >= first) {
+      svg.appendChild(path(function (q) { return q.w; }, first, split, { stroke: "var(--accent)", "stroke-width": 1.5, "stroke-opacity": ".55" }));
+      svg.appendChild(path(function (q) { return q.obs; }, first, split, { stroke: "var(--ink)", "stroke-width": 2 }));
+    }
+    svg.appendChild(path(function (q) { return q.fc; }, Math.max(first, split), n - 1, { stroke: "var(--accent)", "stroke-width": 2.5 }));
     var cross = el("line", { y1: m.t, y2: m.t + ph, stroke: "var(--ink-faint)", opacity: 0 }); svg.appendChild(cross);
     svg.appendChild(el("rect", { class: "scrub", x: m.l, y: m.t, width: pw, height: ph, fill: "transparent", style: "cursor:crosshair" }));
     into.innerHTML = ""; into.appendChild(svg);
@@ -3647,6 +3662,7 @@ svg.chart rect[fill="transparent"], svg.chart .scrub { touch-action:pan-y; }
         "<div class='fc-sh-conc'>PM2.5 <b>" + Math.round(dy.mean) + "</b> µg/m³ daily mean · US " + us.i + " · China " + cn.i + "</div>" +
         (cf ? "<div class='fc-sh-conf'>Likely <b>" + Math.round(cf.lo) + "–" + Math.round(cf.hi) + "</b> µg/m³ · <b>" + Math.round(cf.p * 100) + "%</b> sure of the verdict, " + dy.lead + (dy.lead === 1 ? " day" : " days") + " out</div>" : "") +
       "</div>" +
+      "<div class='fc-sh-chart'></div>" +
       "<div class='fc-sh-grid'>" +
         stat("Cleanest", dy.best ? dy.best.from + "–" + dy.best.to + "h" : "–", dy.best ? Math.round(dy.best.v) + " µg/m³" : "") +
         stat("Worst", dy.evening != null && dy.worst && dy.evening > dy.worst.v ? "evening" : dy.worst ? dy.worst.from + "–" + dy.worst.to + "h" : "–", dy.worst ? Math.round(Math.max(dy.worst.v, dy.evening || 0)) + " µg/m³" : "") +
@@ -3661,6 +3677,7 @@ svg.chart rect[fill="transparent"], svg.chart .scrub { touch-action:pan-y; }
     "</div>";
     document.body.appendChild(sheet);
     var hs = dy.hours; strip(sheet.querySelector(".fc-sh-strip"), hs[0].i, hs[hs.length - 1].i, { compact: true, snapNow: false });
+    chart(sheet.querySelector(".fc-sh-chart"), { first: hs[0].i, last: hs[hs.length - 1].i, w: 520, h: 180, narrow: false, hours: dy });
     document.body.style.overflow = "hidden";
     var panel = sheet.querySelector(".fc-sheet");
     requestAnimationFrame(function () { sheet.classList.add("on"); });

@@ -3,7 +3,8 @@
 # runs the same model, and pushes tomorrow's air to every subscribed device.
 #
 #   cd worker && wrangler deploy
-#   wrangler secret put VAPID_PRIVATE_KEY      (the public half is in src/index.js and templates/push.js)
+#   wrangler secret put VAPID_PRIVATE_KEY      (the public half is below and in templates/push.js)
+#   wrangler secret put TRIGGER_KEY            (lets GET /?send=<key> fire the outlook now)
 #
 # Deploy with the personal account: the shell's CLOUDFLARE_API_TOKEN is a work
 # token, so `env -u CLOUDFLARE_API_TOKEN -u CLOUDFLARE_ACCOUNT_ID wrangler …`.

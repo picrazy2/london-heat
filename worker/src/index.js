@@ -7,8 +7,8 @@
  * its verdict on the US scale, the clean and dirty hours, and the weather
  * behind it. Tapping opens the page on tomorrow's detail card.
  *
- * GET /?key=<VAPID_PRIVATE_KEY prefix> sends now, for testing. GET / alone
- * returns what the notification would say without sending it.
+ * GET / returns what tonight's notification would say, without sending it.
+ * GET /?send=<TRIGGER_KEY> sends it now, to every subscribed device.
  */
 import PM25 from "../../templates/pm25model.js";
 import { outlook, compose } from "../../templates/outlook.js";
@@ -64,8 +64,8 @@ export default {
     const url = new URL(request.url);
     let msg;
     try { msg = await build(env); } catch (e) { return new Response(JSON.stringify({ error: String(e) }), { status: 500, headers: { "content-type": "application/json" } }); }
-    const key = url.searchParams.get("key");
-    if (key && env.VAPID_PRIVATE_KEY && env.VAPID_PRIVATE_KEY.startsWith(key) && key.length >= 8) {
+    const key = url.searchParams.get("send");
+    if (key && env.TRIGGER_KEY && key === env.TRIGGER_KEY) {
       const r = await sendAll(env, msg);
       return new Response(JSON.stringify({ sent: true, ...r, message: msg }), { headers: { "content-type": "application/json" } });
     }
