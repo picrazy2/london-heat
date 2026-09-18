@@ -198,7 +198,7 @@ def build_air(args):
               "site, both of which measure something other than the city's air. "
               "Concentrations are in µg/m³ and every index on this page is computed from "
               "them here, so the two scales are judging identical numbers.")
-    map_note = ("Circle area is the station's 24-hour mean, coloured by the band it falls "
+    map_note = ("Circle area is the station's reading this hour, coloured by the band it falls "
                 "in on the selected scale. Positions are the published station "
                 "coordinates. Basemap © OpenStreetMap contributors, © CARTO.")
     return air_page.payload(hourly, live, source, map_note), hourly

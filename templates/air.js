@@ -305,11 +305,14 @@
     var st = (LIVE && LIVE.stations || []).slice()
       .filter(function (s) { return s.pm25_24h != null || s.pm25 != null; });
     if (!st.length) { host.innerHTML = "<div class='row'><span class='footnote'>Station feed unavailable.</span></div>"; return; }
-    st.sort(function (a, b) { return (b.pm25_24h != null ? b.pm25_24h : b.pm25) - (a.pm25_24h != null ? a.pm25_24h : a.pm25); });
+    // This hour's reading, like the headline; the 24-hour mean rides along
+    // as a title, so the two numbers the network publishes are both there.
+    var val = function (s) { return s.pm25 != null ? s.pm25 : s.pm25_24h; };
+    st.sort(function (a, b) { return val(b) - val(a); });
     host.innerHTML = st.map(function (s) {
-      var c = s.pm25_24h != null ? s.pm25_24h : s.pm25;
+      var c = val(s);
       var r = aqi(c);
-      return "<div class='row'><span class='dotv' style='background:" + catToken(r.cat) + "'>" +
+      return "<div class='row' title='" + (s.pm25_24h != null ? "24 h mean " + s.pm25_24h.toFixed(0) + " µg/m³" : "") + "'><span class='dotv' style='background:" + catToken(r.cat) + "'>" +
         r.i + "</span><span class='grow'><span class='nm'>" + (s.en || s.name) + "</span>" +
         (s.en && s.name !== s.en ? " <span class='zh'>" + s.name + "</span>" : "") +
         "</span><span class='val tnum'>" + c.toFixed(0) + "<small> µg/m³</small></span></div>";
@@ -371,7 +374,7 @@
     layer = L.layerGroup().addTo(map);
     if (!st.length) return;
     st.forEach(function (s) {
-      var c = s.pm25_24h != null ? s.pm25_24h : s.pm25;
+      var c = s.pm25 != null ? s.pm25 : s.pm25_24h;
       if (c == null) return;
       var r = aqi(c);
       // Area, not radius, carries the value — a radius-encoded circle at twice
@@ -382,8 +385,9 @@
         color: cssVar("--surface-1"), weight: 1.5,
       }).bindPopup("<div class='pn'>" + (s.en || s.name) + "</div>" +
         (s.en && s.name !== s.en ? "<div class='zh'>" + s.name + "</div>" : "") +
-        "<div class='pv'>PM2.5 <b>" + c.toFixed(0) + "</b> µg/m³ · " +
-        A.scales[SCALE].name + " AQI <b>" + r.i + "</b><br>" + catName(r.cat) + "</div>")
+        "<div class='pv'>PM2.5 <b>" + c.toFixed(0) + "</b> µg/m³ this hour · " +
+        A.scales[SCALE].name + " AQI <b>" + r.i + "</b><br>" + catName(r.cat) +
+        (s.pm25_24h != null ? " · 24 h mean " + s.pm25_24h.toFixed(0) : "") + "</div>")
         .addTo(layer);
     });
     var b = L.latLngBounds(st.map(function (s) { return [s.lat, s.lon]; }));
