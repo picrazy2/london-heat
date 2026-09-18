@@ -3429,6 +3429,8 @@ svg.chart * { -webkit-tap-highlight-color:transparent; }
     return null;
   }
 
+  function nextDate(s) { var d = dateOf(s + "T00"); d.setUTCDate(d.getUTCDate() + 1); return d.toISOString().slice(0, 10); }
+
   function outlook(PM25, model, meta, inp) {
     var raw = inp.forecast, n = raw.time.length;
     var obs = raw.time.map(function (s) { var v = inp.obs && inp.obs[s.slice(0, 13) + ":00"]; return v == null ? null : v; });
@@ -3478,7 +3480,11 @@ svg.chart * { -webkit-tap-highlight-color:transparent; }
         if (best == null || mv < best.v) best = { from: s, to: s + 3, v: mv }; if (worst == null || mv > worst.v) worst = { from: s, to: s + 3, v: mv };
       }
       d.best = best; d.worst = worst;
+      // The evening: 20:00 to 02:00 the next morning, because the dusk build-up
+      // peaks after midnight as often as before it.
       var eve = hs.filter(function (h) { var hh = h.d.getUTCHours(); return hh >= 20 && ok(h.v); });
+      var nextDay = byDay[nextDate(d.date)];
+      if (nextDay) nextDay.hours.forEach(function (h) { if (h.d.getUTCHours() <= 2 && ok(h.v)) eve.push(h); });
       d.evening = eve.length ? eve.reduce(function (a, h) { return a + h.v; }, 0) / eve.length : null;
     });
     return { t: t, hours: hours, days: days, iNow: iNow, obs: obs, raw: raw, up: inp.upwind, fetched: inp.fetched, byDay: byDay };
