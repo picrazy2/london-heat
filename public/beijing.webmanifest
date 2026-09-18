@@ -1,0 +1,24 @@
+{
+ "name": "Beijing Air",
+ "short_name": "Beijing Air",
+ "start_url": "/beijing?topic=air&app=1",
+ "display": "standalone",
+ "background_color": "#f4f3f7",
+ "theme_color": "#5e5ce6",
+ "icons": [
+  {
+   "src": "/favicon.svg",
+   "type": "image/svg+xml",
+   "sizes": "any",
+   "purpose": "any"
+  },
+  {
+   "src": "/apple-touch-icon.png",
+   "type": "image/png",
+   "sizes": "180x180"
+  }
+ ],
+ "id": "/beijing",
+ "scope": "/",
+ "description": "Beijing PM2.5 now, hour by hour, and the week ahead."
+}

@@ -1,0 +1,28 @@
+# The nightly outlook. A scheduled Worker, because Pages Functions cannot run
+# on a timer: at 22:00 Beijing time it fetches the same inputs the page does,
+# runs the same model, and pushes tomorrow's air to every subscribed device.
+#
+#   cd worker && wrangler deploy
+#   wrangler secret put VAPID_PRIVATE_KEY      (the public half is in src/index.js and templates/push.js)
+#
+# Deploy with the personal account: the shell's CLOUDFLARE_API_TOKEN is a work
+# token, so `env -u CLOUDFLARE_API_TOKEN -u CLOUDFLARE_ACCOUNT_ID wrangler …`.
+name = "weather-push"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+account_id = "d147a8ba11789f7ec3c30e10cb263373"
+
+[triggers]
+crons = ["0 14 * * *"]          # 14:00 UTC = 22:00 Asia/Shanghai, no DST there
+
+[[kv_namespaces]]
+binding = "PUSH_SUBS"
+id = "e4ac7582b70e43c595b408d9d9a32dc5"
+
+[vars]
+SITE = "https://weather.akguo.com"
+VAPID_PUBLIC_KEY = "BJEEBcgoGsqwByDlu46m0dK89GoxOS9b-1QWj6QO9OOgjWZ2rLx99NGgakudNtAM8VenI3d9v6h9g1TfwJuA2OY"
+VAPID_SUBJECT = "mailto:alexanderguo99@gmail.com"
+
+[observability]
+enabled = true

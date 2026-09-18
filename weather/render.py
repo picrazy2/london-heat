@@ -89,7 +89,7 @@ def social(path, stamp, image="social.png"):
     return "\n".join(tags) + "\n"
 
 
-def document(fragment, path=None, stamp="", image="social.png", head_extra="", body_extra=""):
+def document(fragment, path=None, stamp="", image="social.png", head_extra="", body_extra="", manifest="/site.webmanifest", app_title=None):
     """Wrap a fragment in a document: skeleton, stylesheet, chrome, scripts."""
     i = fragment.find("</style>")
     if i == -1:
@@ -108,7 +108,10 @@ def document(fragment, path=None, stamp="", image="social.png", head_extra="", b
         '<!doctype html>\n<html lang="en">\n<head>\n'
         '<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
-        f'{HEAD_ICONS}{social(path, stamp, image)}{title_html}'
+        f'{HEAD_ICONS.replace("/site.webmanifest", manifest)}'
+        + (f'<meta name="apple-mobile-web-app-capable" content="yes">\n<meta name="apple-mobile-web-app-title" content="{esc(app_title)}">\n'
+           f'<meta name="apple-mobile-web-app-status-bar-style" content="default">\n<meta name="mobile-web-app-capable" content="yes">\n' if app_title else "")
+        + f'{social(path, stamp, image)}{title_html}'
         f'<script>{design.THEME_BOOT}</script>\n'
         f'<script>{design.CHROME_JS}</script>\n'
         f'<style>{design.css()}{page_css}</style>\n{head_extra}'

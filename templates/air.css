@@ -7,12 +7,7 @@
 .aq { display:flex; flex-direction:column; gap:clamp(18px,3vw,26px); }
 
 /* ── the live hero ── */
-.now {
-  display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);
-  gap:clamp(18px,3vw,30px); align-items:center;
-  border-radius:var(--r-lg); padding:clamp(20px,3vw,30px);
-}
-@media (max-width:760px) { .now { grid-template-columns:1fr; } }
+.now { border-radius:var(--r-lg); padding:clamp(18px,3vw,26px); }
 .now .idx { display:flex; align-items:baseline; gap:12px; }
 .now .idx .n { font-size:clamp(60px,11vw,96px); color:var(--tint); }
 .now .idx .of { font-size:14px; color:var(--ink-muted); font-weight:600; }
@@ -63,7 +58,10 @@
 .leaflet-popup-content .pn { font-weight:680; font-size:14px; }
 .leaflet-popup-content .pv { font-variant-numeric:tabular-nums; }
 .leaflet-popup-close-button { color:var(--ink-faint) !important; }
-[data-theme="dark"] .leaflet-tile, :root:not([data-theme="light"]) .leaflet-tile { filter:none; }
+/* OSM's tiles are light; in the dark theme they are inverted and desaturated
+   so the station circles keep their contrast against a quiet ground. */
+.leaflet-tile { filter:saturate(.35) contrast(.9) brightness(1.03); }
+.dark-tiles .leaflet-tile { filter:invert(1) hue-rotate(180deg) saturate(.25) brightness(.75) contrast(.9); }
 .mapnote { font-size:12px; color:var(--ink-faint); margin-top:8px; }
 
 /* ── station list ── */

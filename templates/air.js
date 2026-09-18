@@ -113,7 +113,13 @@
     return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   }
   function showTip(ev, html) { tip.innerHTML = html; tip.style.opacity = 1; moveTip(ev); }
-  function moveTip(ev) { tip.style.left = ev.clientX + "px"; tip.style.top = (ev.clientY - 12) + "px"; }
+  function moveTip(ev) {
+    // Clamped to the viewport, and lifted clear of a finger on a touch screen.
+    var w = tip.offsetWidth || 160, x = Math.max(w / 2 + 6, Math.min(window.innerWidth - w / 2 - 6, ev.clientX));
+    var y = ev.pointerType === "touch" ? ev.clientY - 48 : ev.clientY - 12;
+    if (y - (tip.offsetHeight || 40) < 4) y = ev.clientY + (tip.offsetHeight || 40) + 28;
+    tip.style.left = x + "px"; tip.style.top = y + "px";
+  }
   function hideTip() { tip.style.opacity = 0; }
 
   /* ── the index, from the concentration ────────────────────────────────── */
@@ -146,6 +152,7 @@
      its second band while China's is still in its first. */
   var RULER_MAX = 250;                     // above this both scales agree it is bad
   function ruler(conc) {
+    if (!document.getElementById("aqRuler")) return;
     var host = document.getElementById("aqRuler");
     var pct = conc == null ? null : Math.min(100, conc / RULER_MAX * 100);
     var html = "";
@@ -179,7 +186,12 @@
   var LIVE = A.live || null;
 
   function renderNow() {
-    var conc = LIVE && LIVE.city != null ? LIVE.city : null;
+    // The headline is this hour's reading — what the air is doing now. The
+    // 24-hour mean, which is what both indices are formally defined on, is
+    // shown beside it; on a day like a north-wind clear-out the two differ by
+    // a factor of five and the current hour is the one a reader is breathing.
+    var conc = LIVE && LIVE.hour != null ? LIVE.hour : (LIVE && LIVE.city != null ? LIVE.city : null);
+    var mean24 = LIVE && LIVE.city != null ? LIVE.city : null;
     var host = document.getElementById("aqNow");
     var r = aqi(conc);
     var other = SCALE === "us" ? "cn" : "us";
@@ -194,14 +206,16 @@
       : "Live feed unavailable";
     host.style.setProperty("--tint", r ? catToken(r.cat) : "var(--ink-muted)");
 
+    var r24 = aqi(mean24);
     document.getElementById("aqConc").innerHTML = conc == null ? "" :
-      "PM2.5 <b>" + conc.toFixed(1) + "</b> µg/m³, averaged over the last 24 hours" +
-      (LIVE.hour != null ? " · <b>" + LIVE.hour.toFixed(0) + "</b> µg/m³ this hour" : "");
+      "PM2.5 <b>" + conc.toFixed(0) + "</b> µg/m³ this hour" +
+      (mean24 != null && r24 ? " · 24 h mean <b>" + mean24.toFixed(0) + "</b>, AQI " + r24.i + " " + catName(r24.cat) : "");
     document.getElementById("aqStamp").textContent = LIVE && LIVE.time
       ? LIVE.time + " Beijing time · " + (LIVE.n || 0) + " stations"
       : "";
 
     var o = document.getElementById("aqOther");
+    if (!o) { ruler(conc); return; }
     if (ro && r) {
       o.hidden = false;
       o.style.setProperty("--other-tint", catColor(ro.cat));
@@ -228,6 +242,7 @@
   /* ── the recent hourly trace ──────────────────────────────────────────── */
   function renderRecent() {
     var host = document.getElementById("aqRecent");
+    if (!host) return;   // the hourly strip in the forecast card took this over
     var t = A.recent && A.recent.v || [];
     if (!t.length) { host.innerHTML = "<p class='footnote'>No recent data.</p>"; return; }
     var W = 460, H = 130, m = { t: 10, r: 8, b: 20, l: 30 };
@@ -235,7 +250,7 @@
     var max = Math.max(20, Math.max.apply(null, t.filter(function (v) { return v != null; })) * 1.15);
     var x = function (i) { return m.l + i / Math.max(1, t.length - 1) * pw; };
     var y = function (v) { return m.t + ph - v / max * ph; };
-    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, class: "chart chart-in",
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, class: "chart chart-in w" + W,
       role: "img", "aria-label": "Beijing city-mean PM2.5 for the last three days" });
 
     // Category bands behind the trace: the reader sees which verdict the air was
@@ -270,7 +285,7 @@
 
     var over = el("rect", { x: m.l, y: m.t, width: pw, height: ph, fill: "transparent",
       style: "cursor:crosshair" });
-    over.addEventListener("mousemove", function (ev) {
+    over.addEventListener("pointermove", function (ev) {
       var rect = svg.getBoundingClientRect();
       var i = Math.round(((ev.clientX - rect.left) / rect.width * W - m.l) / pw * (t.length - 1));
       i = Math.max(0, Math.min(t.length - 1, i));
@@ -279,7 +294,7 @@
       showTip(ev, "<span class='k'>" + A.recent.t[i] + "</span><br><b>" + t[i].toFixed(1) +
         "</b> µg/m³ · AQI <b>" + rr.i + "</b> " + catName(rr.cat));
     });
-    over.addEventListener("mouseleave", hideTip);
+    over.addEventListener("pointerleave", hideTip);
     svg.appendChild(over);
     host.innerHTML = ""; host.appendChild(svg);
   }
@@ -311,14 +326,18 @@
   }
 
   function setBasemap() {
+    // CARTO's basemaps went behind an API key in 2026; OpenStreetMap's own
+    // tiles are the keyless option. Dark mode is a CSS filter on the tiles
+    // (see air.css), since there is no keyless dark raster basemap.
     if (!map) return;
-    var want = isDark() ? "dark_nolabels" : "light_nolabels";
+    var want = isDark() ? "dark" : "light";
     if (want === tileStyle) return;
     tileStyle = want;
-    if (tiles) map.removeLayer(tiles);
-    tiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/" + want + "/{z}/{x}/{y}{r}.png", {
-      subdomains: "abcd", maxZoom: 14, minZoom: 6,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    map.getContainer().classList.toggle("dark-tiles", want === "dark");
+    if (tiles) return;
+    tiles = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 14, minZoom: 6,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(map);
     tiles.bringToBack();
   }
@@ -381,7 +400,7 @@
     var x = function (i) { return m.l + (i + .5) / Y.length * pw; };
     var y = function (v) { return m.t + ph - v / max * ph; };
     var bw = Math.max(8, pw / Y.length - 8);
-    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, class: "chart chart-in",
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, class: "chart chart-in w" + W,
       role: "img", "aria-label": "Beijing annual mean PM2.5 by year" });
 
     for (var g = 0; g <= max; g += 20) {
@@ -401,8 +420,8 @@
           "</span><br><b>" + yr.mean.toFixed(1) + "</b> µg/m³ annual mean<br>" +
           "<span style='opacity:.75'>US AQI " + us.i + " · China AQI " + cn.i + "</span>");
       });
-      rect.addEventListener("mousemove", moveTip);
-      rect.addEventListener("mouseleave", hideTip);
+      rect.addEventListener("pointermove", moveTip); rect.addEventListener("pointerdown", moveTip);
+      rect.addEventListener("pointerleave", hideTip);
       svg.appendChild(rect);
       svg.appendChild(txt(el("text", { class: "tick", x: x(i), y: H - 8, "text-anchor": "middle" }),
         String(yr.y).slice(2)));
@@ -449,7 +468,7 @@
     var years = FULL_YEARS.map(function (y) { return { y: y, d: grouped[y] || [] }; });
     var W = 940, H = 300, m = { t: 14, r: 20, b: 28, l: 36 };
     var pw = W - m.l - m.r, ph = H - m.t - m.b;
-    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, class: "chart chart-in",
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, class: "chart chart-in w" + W,
       role: "img", "aria-label": "Days per year in each air quality category" });
     var bw = Math.max(10, pw / years.length - 8);
 
@@ -476,8 +495,8 @@
             catName(k) + "<br><span style='opacity:.7'>" +
             Math.round(n / yr.d.length * 100) + "% of the year</span>");
         });
-        rect.addEventListener("mousemove", moveTip);
-        rect.addEventListener("mouseleave", hideTip);
+        rect.addEventListener("pointermove", moveTip); rect.addEventListener("pointerdown", moveTip);
+        rect.addEventListener("pointerleave", hideTip);
         svg.appendChild(rect);
         acc += n;
       });
@@ -512,6 +531,63 @@
       catName(3).toLowerCase() + " or worse went from <b>" + badN(f) + "</b> to <b>" +
       badN(l) + "</b>. Switch the scale and the same days are re-judged — the air does " +
       "not change, the verdict does.";
+  }
+
+  /* ── the same bands, month by month ──
+     One year at a time, twelve stacked bars: how many days of each month
+     fell in each band. Where the yearly chart shows the trend, this shows
+     the season — and, for the running year, where it stands so far. */
+  var BANDS_YEAR = null;
+  function renderMonthBands() {
+    var host = document.getElementById("aqMonthBands"); if (!host) return;
+    var sel = document.getElementById("aqMonthYear");
+    var years = [];
+    DAYS.forEach(function (r) { if (r.v != null && years.indexOf(r.y) < 0) years.push(r.y); });
+    years.sort(function (a, b) { return a - b; });
+    if (!sel.options.length) {
+      years.slice().reverse().forEach(function (y) { var o = document.createElement("option"); o.value = y; o.textContent = y; sel.appendChild(o); });
+      BANDS_YEAR = +param("mbyear", years[years.length - 1]); if (years.indexOf(BANDS_YEAR) < 0) BANDS_YEAR = years[years.length - 1];
+      sel.value = BANDS_YEAR;
+      sel.addEventListener("change", function () { BANDS_YEAR = +sel.value; setParam("mbyear", sel.value, String(years[years.length - 1])); renderMonthBands(); });
+    }
+    var y = BANDS_YEAR;
+    var months = []; for (var mth = 0; mth < 12; mth++) months.push({ m: mth, d: [] });
+    DAYS.forEach(function (r) { if (r.y === y && r.v != null) months[r.m].d.push(r.v); });
+    var W = 940, H = 260, m = { t: 14, r: 20, b: 28, l: 36 };
+    var pw = W - m.l - m.r, ph = H - m.t - m.b;
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, class: "chart chart-in w" + W, role: "img", "aria-label": "Days per month of " + y + " in each air quality category" });
+    var bw = Math.max(10, pw / 12 - 10);
+    var y0 = function (v) { return m.t + ph - v / 31 * ph; };
+    [0, 10, 20, 31].forEach(function (g) {
+      svg.appendChild(el("line", { class: "gridline", x1: m.l, x2: m.l + pw, y1: y0(g), y2: y0(g) }));
+      svg.appendChild(txt(el("text", { class: "tick", x: m.l - 6, y: y0(g) + 3, "text-anchor": "end" }), g));
+    });
+    months.forEach(function (mo, i) {
+      var counts = [0, 0, 0, 0, 0, 0];
+      mo.d.forEach(function (c) { var k = catOf(c); if (k != null) counts[k]++; });
+      var x = m.l + (i + .5) / 12 * pw - bw / 2, acc = 0;
+      counts.forEach(function (n, k) {
+        if (!n) return;
+        var rect = el("rect", { x: x, y: y0(acc + n), width: bw, height: y0(acc) - y0(acc + n), fill: catToken(k), class: "bar", rx: 1 });
+        var f = function (ev) { showTip(ev, "<span class='k'>" + MABBR[i] + " " + y + "</span><br><b>" + n + "</b> of " + mo.d.length + " days " + catName(k)); };
+        rect.addEventListener("pointermove", f); rect.addEventListener("pointerdown", f); rect.addEventListener("pointerleave", hideTip);
+        svg.appendChild(rect); acc += n;
+      });
+      svg.appendChild(txt(el("text", { class: "tick", x: x + bw / 2, y: H - 8, "text-anchor": "middle" }), MABBR[i]));
+    });
+    host.innerHTML = ""; host.appendChild(svg);
+    var S = A.scales[SCALE];
+    document.getElementById("aqMonthBandKey").innerHTML = S.cats.map(function (c, k) {
+      return "<span><i style='background:" + catToken(k) + "'></i>" + (SCALE === "cn" && c.zh ? c.zh + " " + c.name : c.name) + "</span>";
+    }).join("");
+    var have = months.filter(function (mo) { return mo.d.length; });
+    var goodShare = function (mo) { return mo.d.filter(function (c) { return catOf(c) === 0; }).length / mo.d.length; };
+    var badN = function (mo) { return mo.d.filter(function (c) { return catOf(c) >= 2; }).length; };
+    var best = have.reduce(function (a, b) { return goodShare(b) > goodShare(a) ? b : a; });
+    var worst = have.reduce(function (a, b) { return badN(b) > badN(a) ? b : a; });
+    document.getElementById("aqMonthBandsCap").innerHTML = "In " + y + " the best month was <b>" + MABBR[best.m] + "</b> (" +
+      Math.round(goodShare(best) * 100) + "% of days in the best band) and the worst <b>" + MABBR[worst.m] + "</b> (" +
+      badN(worst) + " days at " + catName(2).toLowerCase() + " or worse).";
   }
 
   function renderHeat() {
@@ -557,8 +633,8 @@
           (c.classList.contains("part") ? " · " + Mg.part.days + " days, to " +
             Mg.part.through : "") + "</span>");
       });
-      c.addEventListener("mousemove", moveTip);
-      c.addEventListener("mouseleave", hideTip);
+      c.addEventListener("pointermove", moveTip); c.addEventListener("pointerdown", moveTip);
+      c.addEventListener("pointerleave", hideTip);
     });
   }
 
@@ -572,7 +648,7 @@
     var x = function (i) { return m.l + (i + .5) / values.length * pw; };
     var y = function (v) { return m.t + ph - v / max * ph; };
     var bw = Math.max(4, pw / values.length - 4);
-    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, class: "chart chart-in",
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, class: "chart chart-in w" + W,
       role: "img", "aria-label": ariaLabel });
     for (var g = 0; g <= max; g += max > 80 ? 25 : 10) {
       svg.appendChild(el("line", { class: "gridline", x1: m.l, x2: m.l + pw, y1: y(g), y2: y(g) }));
@@ -587,8 +663,8 @@
         showTip(ev, "<span class='k'>" + labels[i] + "</span><br><b>" + v.toFixed(1) +
           "</b> µg/m³ · AQI <b>" + r.i + "</b>");
       });
-      rect.addEventListener("mousemove", moveTip);
-      rect.addEventListener("mouseleave", hideTip);
+      rect.addEventListener("pointermove", moveTip); rect.addEventListener("pointerdown", moveTip);
+      rect.addEventListener("pointerleave", hideTip);
       svg.appendChild(rect);
     });
     labels.forEach(function (l, i) {
@@ -644,7 +720,7 @@
     var x = function (i) { return m.l + (i + .5) / values.length * pw; };
     var y = function (v) { return m.t + ph / 2 - v / span * (ph / 2); };
     var bw = Math.max(4, pw / values.length - 4);
-    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, class: "chart chart-in",
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, class: "chart chart-in w" + W,
       role: "img", "aria-label": ariaLabel });
     var stepG = span > 20 ? 20 : (span > 8 ? 10 : 5);
     for (var g = -Math.floor(span / stepG) * stepG; g <= span; g += stepG) {
@@ -663,8 +739,8 @@
         showTip(ev, "<span class=\'k\'>" + labels[i] + "</span><br><b>" + sign(v) +
           "%</b> against the day\'s own average");
       });
-      rect.addEventListener("mousemove", moveTip);
-      rect.addEventListener("mouseleave", hideTip);
+      rect.addEventListener("pointermove", moveTip); rect.addEventListener("pointerdown", moveTip);
+      rect.addEventListener("pointerleave", hideTip);
       svg.appendChild(rect);
     });
     labels.forEach(function (l, i) {
@@ -709,7 +785,7 @@
     var max = Math.max(20, Math.ceil(top / 25) * 25);
     var x = function (i) { return m.l + (span < 2 ? .5 : i / (span - 1)) * pw; };
     var y = function (v) { return m.t + ph - Math.min(v, max) / max * ph; };
-    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, class: "chart chart-in",
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, class: "chart chart-in w" + W,
       role: "img", "aria-label": "Daily mean PM2.5, " + xlab });
 
     // Category bands behind the trace, on whichever scale is selected — the same
@@ -790,8 +866,8 @@
           rule.setAttribute("visibility", "visible");
           showTip(ev, "<span class='k'>" + labelFor(i) + "</span><br>" + rows.join("<br>"));
         });
-        r2.addEventListener("mousemove", moveTip);
-        r2.addEventListener("mouseleave", function () {
+        r2.addEventListener("pointermove", moveTip); r2.addEventListener("pointerdown", moveTip);
+        r2.addEventListener("pointerleave", function () {
           rule.setAttribute("visibility", "hidden"); hideTip();
         });
         hit.appendChild(r2);
@@ -939,7 +1015,7 @@
     var x = function (i) { return m.l + i / NB * pw; };
     var y = function (v) { return m.t + ph - v / max * ph; };
     var bw = pw / NB - 2;
-    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, class: "chart chart-in",
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, class: "chart chart-in w" + W,
       role: "img", "aria-label": "Distribution of daily mean PM2.5 in Beijing" });
     bins.forEach(function (n, i) {
       var mid = i * BIN + BIN / 2;
@@ -952,8 +1028,8 @@
           (n / all.length * 100).toFixed(1) + "% of the record<br>" +
           "<span style='opacity:.7'>" + catName(r.cat) + "</span>");
       });
-      rect.addEventListener("mousemove", moveTip);
-      rect.addEventListener("mouseleave", hideTip);
+      rect.addEventListener("pointermove", moveTip); rect.addEventListener("pointerdown", moveTip);
+      rect.addEventListener("pointerleave", hideTip);
       svg.appendChild(rect);
       if (i % 3 === 0) svg.appendChild(txt(el("text", { class: "tick", x: x(i) + bw / 2,
         y: H - 9, "text-anchor": "middle" }), i * BIN));
@@ -1003,7 +1079,7 @@
   var VIEW = "now";
   function renderView() {
     if (VIEW === "now") { renderNow(); renderRecent(); renderStations(); renderMap(); }
-    if (VIEW === "trend") { renderAnnual(); renderBands(); renderHeat(); }
+    if (VIEW === "trend") { renderAnnual(); renderBands(); renderMonthBands(); renderHeat(); }
     if (VIEW === "rhythm") renderRhythm();
     if (VIEW === "history") renderHistory();
   }
@@ -1119,6 +1195,7 @@
         });
         LIVE = b;
         if (VIEW === "now") { renderNow(); renderStations(); renderMap(); }
+        window.dispatchEvent(new CustomEvent("wx:live", { detail: b }));
       })
       .catch(function () {});
   }

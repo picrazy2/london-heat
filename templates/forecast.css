@@ -1,18 +1,29 @@
 /* ── The PM2.5 outlook ──────────────────────────────────────────────────── */
-.fc-days { display:grid; grid-template-columns:repeat(auto-fit,minmax(78px,1fr)); gap:8px; margin-top:12px; }
-.fc-day { border-radius:var(--r-sm); padding:10px 8px 9px; text-align:center;
-  background:var(--surface-2); border-top:4px solid var(--tint); }
+
+/* the day tiles: one row that scrolls sideways on a phone, a grid on a desk */
+.fc-days { display:flex; gap:8px; margin-top:12px; overflow-x:auto; scroll-snap-type:x proximity;
+  padding-bottom:4px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+.fc-days::-webkit-scrollbar { display:none; }
+@media (min-width:700px) { .fc-days { display:grid; grid-template-columns:repeat(auto-fit,minmax(88px,1fr)); overflow:visible; } }
+.fc-day { flex:0 0 96px; scroll-snap-align:start; border:0; font:inherit; color:inherit; cursor:pointer; text-align:center;
+  border-radius:var(--r-sm); padding:10px 8px 9px; background:var(--surface-2); border-top:4px solid var(--tint);
+  display:flex; flex-direction:column; align-items:center; }
+.fc-day:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
 .fc-day .fc-dow { font-size:11.5px; font-weight:640; color:var(--ink-muted); }
 .fc-day .fc-idx { font-size:24px; font-weight:700; letter-spacing:-.02em; color:var(--tint); line-height:1.1; margin-top:4px; }
-.fc-day .fc-cat { font-size:10.5px; font-weight:640; color:var(--ink-muted); margin-top:2px;
+.fc-day .fc-cat { font-size:10.5px; font-weight:640; color:var(--ink-muted); margin-top:2px; max-width:100%;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .fc-day .fc-conc { font-size:12.5px; margin-top:4px; }
 .fc-day .fc-conc small { color:var(--ink-faint); font-size:10.5px; }
+.fc-day .fc-conf { margin-top:6px; padding-top:6px; border-top:1px solid var(--separator); width:100%;
+  display:flex; flex-direction:column; gap:1px; font-size:10.5px; line-height:1.3; }
+.fc-day .fc-range { color:var(--ink-muted); }
+.fc-day .fc-sure { color:var(--ink); font-weight:640; }
 .fc-day .fc-wx { font-size:11px; color:var(--ink-muted); margin-top:6px; line-height:1.4;
   display:flex; flex-direction:column; align-items:center; gap:1px; font-variant-numeric:tabular-nums; }
 .fc-day .fc-wx small { font-size:9.5px; color:var(--ink-faint); }
-.fc-day .fc-wind { display:inline-flex; align-items:center; gap:4px; color:var(--ink); font-weight:600; }
-.fc-day .fc-wind svg { color:var(--accent); flex:none; }
+.fc-wind { display:inline-flex; align-items:center; gap:4px; color:var(--ink); font-weight:600; }
+.fc-wind svg { color:var(--accent); flex:none; }
 .fc-why { font-size:13.5px; line-height:1.5; color:var(--ink-muted); margin-top:12px; }
 .fc-why b { color:var(--ink); font-weight:640; }
 .fc-daylab { font-weight:640; fill:var(--ink); }
@@ -21,7 +32,95 @@
 .fc-key i { display:inline-block; width:16px; height:3px; border-radius:2px; }
 .fc-more { display:inline-block; margin-top:10px; font-size:13px; font-weight:600; color:var(--accent); text-decoration:none; }
 .fc-more:hover { text-decoration:underline; }
-.fc-day .fc-conf { margin-top:6px; padding-top:6px; border-top:1px solid var(--separator);
-  display:flex; flex-direction:column; gap:1px; font-size:10.5px; line-height:1.3; }
-.fc-day .fc-range { color:var(--ink-muted); }
-.fc-day .fc-sure { color:var(--ink); font-weight:640; }
+.fc-head-btns { display:flex; align-items:center; gap:6px; }
+
+/* ── the hourly strip ──
+   Six rows: hour, PM2.5 (a coloured chip), wind (arrow + speed), humidity,
+   lid, rain. The row labels are a sticky first column so they stay put while
+   the hours scroll under them. */
+.fc-strip { display:flex; margin-top:12px; border-radius:var(--r-sm); background:var(--surface-2); overflow:hidden; }
+.fc-strip-lab { flex:none; display:grid; grid-template-rows:repeat(6,auto); padding:8px 4px 8px 8px; font-size:9px;
+  color:var(--ink-faint); font-weight:640; letter-spacing:.02em; text-transform:uppercase; gap:0; align-content:start; }
+.fc-strip-lab div { height:22px; line-height:22px; }
+.fc-strip-lab div:nth-child(2) { height:28px; line-height:28px; }
+.fc-strip-row { display:flex; overflow-x:auto; scroll-snap-type:x proximity; scrollbar-width:thin; padding:8px 8px 8px 0;
+  -webkit-overflow-scrolling:touch; touch-action:pan-x pan-y; }
+.fc-h { flex:0 0 40px; scroll-snap-align:start; display:grid; grid-template-rows:repeat(6,auto); justify-items:center;
+  font-size:11px; color:var(--ink-muted); cursor:default; border-radius:8px; }
+.fc-h > div { height:22px; display:flex; align-items:center; justify-content:center; }
+.fc-h .fc-hh { font-size:10.5px; color:var(--ink-faint); font-variant-numeric:tabular-nums; }
+.fc-h.now .fc-hh { color:var(--accent); font-weight:700; }
+.fc-h.now { background:var(--accent-soft); }
+.fc-h.past .fc-hv { opacity:.75; }
+.fc-h .fc-hv { height:28px; width:32px; border-radius:7px; background:var(--tint); color:var(--tint-ink); font-weight:700;
+  font-size:12px; }
+.fc-h .fc-hw { gap:2px; color:var(--ink); font-weight:600; font-size:10.5px; }
+.fc-h .fc-hw svg { color:var(--accent); }
+.fc-h .fc-hm, .fc-h .fc-hl, .fc-h .fc-hr { font-size:10.5px; }
+.fc-h .fc-hr { color:var(--night-2); font-weight:600; }
+.fc-sep { flex:0 0 1px; background:var(--separator); position:relative; margin:0 4px; }
+.fc-sep span { position:absolute; top:0; left:4px; font-size:10px; font-weight:700; color:var(--ink); white-space:nowrap; line-height:22px; }
+.fc-strip.compact .fc-h { flex-basis:36px; }
+
+/* ── the day sheet ── */
+.fc-sheet-wrap { position:fixed; inset:0; z-index:80; display:flex; align-items:flex-end; justify-content:center; }
+.fc-scrim { position:absolute; inset:0; background:rgba(10,10,20,.35); opacity:0; transition:opacity .25s var(--ease-out); }
+.fc-sheet-wrap.on .fc-scrim { opacity:1; }
+.fc-sheet { position:relative; width:100%; max-width:560px; max-height:88dvh; overflow:auto; overscroll-behavior:contain;
+  background:var(--surface-1); border-radius:var(--r-lg) var(--r-lg) 0 0; box-shadow:var(--shadow-3);
+  padding:10px 18px calc(22px + var(--safe-bottom)); transform:translateY(100%); transition:transform .3s var(--ease-out); }
+.fc-sheet-wrap.on .fc-sheet { transform:translateY(0); }
+@media (min-width:700px) {
+  .fc-sheet-wrap { align-items:center; }
+  .fc-sheet { border-radius:var(--r-lg); max-height:86vh; transform:translateY(24px) scale(.98); opacity:0; transition:transform .25s var(--ease-out), opacity .2s; }
+  .fc-sheet-wrap.on .fc-sheet { transform:none; opacity:1; }
+  .fc-grab { display:none; }
+}
+.fc-grab { width:38px; height:5px; border-radius:3px; background:var(--border-strong); margin:2px auto 12px; }
+.fc-close { position:absolute; top:12px; right:12px; }
+.fc-sh-head { padding:4px 0 14px; border-bottom:1px solid var(--separator); }
+.fc-sh-day { font-size:13px; font-weight:640; color:var(--ink-muted); }
+.fc-sh-idx { display:flex; align-items:baseline; gap:10px; margin-top:2px; }
+.fc-sh-idx .n { font-size:64px; color:var(--tint); line-height:1; }
+.fc-sh-idx .of { font-size:13px; color:var(--ink-muted); font-weight:600; }
+.fc-sh-cat { font-size:19px; font-weight:680; letter-spacing:-.02em; color:var(--tint); margin-top:4px; }
+.fc-sh-conc { font-size:14px; color:var(--ink-muted); margin-top:8px; }
+.fc-sh-conc b { color:var(--ink); font-weight:680; }
+.fc-sh-conf { font-size:13px; color:var(--ink-muted); margin-top:4px; }
+.fc-sh-conf b { color:var(--ink); font-weight:640; }
+.fc-sh-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-top:14px; }
+@media (max-width:380px) { .fc-sh-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+.fc-stat { background:var(--surface-2); border-radius:var(--r-xs); padding:9px 10px; }
+.fc-stat .k { font-size:10px; font-weight:640; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.03em; }
+.fc-stat .v { font-size:15px; font-weight:680; color:var(--ink); margin-top:2px; display:flex; align-items:center; gap:4px; }
+.fc-stat .v svg { color:var(--accent); }
+.fc-stat .s { font-size:11px; color:var(--ink-muted); margin-top:1px; }
+.fc-sh-strip { margin-top:6px; }
+.fc-sh-why { font-size:13.5px; line-height:1.5; color:var(--ink); margin:14px 0 6px; }
+
+/* ── the bell ── */
+.fc-bell[aria-pressed="true"] { color:var(--accent); }
+.fc-bell .on-only { display:none; }
+.fc-bell[aria-pressed="true"] .on-only { display:inline; }
+.fc-bell[aria-pressed="true"] .off-only { display:none; }
+
+/* ── dashboard mode ──
+   On a phone, and always in the installed app, the page is a dashboard: the
+   essay-length hero and the captions go, the numbers stay. */
+@media (max-width:640px), (display-mode:standalone) {
+  .dash .hero, .dash .aq-card .cap, .dash #aqSource, .dash .mapnote, .dash .fc-key { display:none; }
+  .dash .otherscale { display:none; }
+}
+
+/* ── charts on a phone ──
+   The SVGs are drawn in a 900-unit-wide box and shrink to fit; at 390 px the
+   10-unit ticks would be 4 px tall. Text is scaled back up per box width,
+   and a scrubbing finger moves the crosshair without stealing the scroll. */
+@media (max-width:640px) {
+  svg.chart.w980 text, svg.chart.w940 text, svg.chart.w900 text { font-size:20px; }
+  svg.chart.w460 text { font-size:11px; }
+  svg.chart.w420 text { font-size:10px; }
+  svg.chart.w300 text { font-size:8px; }
+  svg.chart.w900 .fc-daylab { font-size:22px; }
+}
+svg.chart rect[fill="transparent"], svg.chart .scrub { touch-action:pan-y; }

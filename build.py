@@ -334,6 +334,7 @@ def main():
     air_css, air_html, air_js = read("templates", "air.css"), read("templates", "air.html"), read("templates", "air.js")
     fc_css, fc_html, fc_js = read("templates", "forecast.css"), read("templates", "forecast.html"), read("templates", "forecast.js")
     model_js, analysis_js = read("templates", "pm25model.js"), read("templates", "analysis.js")
+    outlook_js, push_js = read("templates", "outlook.js"), read("templates", "push.js")
     air_html = air_html.replace("__FORECAST_HTML__", fc_html)
 
     # ── /london ──
@@ -357,12 +358,21 @@ def main():
           .replace("__TEMP_HTML__", temp_html).replace("__AIR_HTML__", air_html)
           .replace("__TEMP_JS__", temp_js).replace("__AIR_JS__", air_js)
           .replace("__FORECAST_CSS__", fc_css).replace("__PM25MODEL_JS__", model_js).replace("__FORECAST_JS__", fc_js)
+          .replace("__OUTLOOK_JS__", outlook_js).replace("__PUSH_JS__", push_js)
           .replace("__TEMP_DATA__", render.j(bjt)).replace("__AIR_DATA__", render.j(air))
           .replace("__TOPBAR__", design.topbar(f"through {fmt_short(bj_rec.cur_date)}", "/beijing")))
     render.emit(SITE, "beijing.html", t, path="/beijing", stamp=stamp,
-                image="social-beijing.png",
+                image="social-beijing.png", manifest="/beijing.webmanifest", app_title="Beijing Air",
                 head_extra='<link rel="stylesheet" href="/vendor/leaflet/leaflet.css">\n',
                 body_extra='<script defer src="/vendor/leaflet/leaflet.js"></script>\n')
+    # The installable app opens on the air dashboard; the service worker is
+    # what receives the nightly push.
+    with open(os.path.join(SITE, "beijing.webmanifest"), "w") as f:
+        json.dump({**render.MANIFEST, "name": "Beijing Air", "short_name": "Beijing Air", "id": "/beijing",
+                   "start_url": "/beijing?topic=air&app=1", "scope": "/", "description": "Beijing PM2.5 now, hour by hour, and the week ahead."}, f, indent=1)
+    with open(os.path.join(SITE, "sw.js"), "w") as f:
+        f.write(read("templates", "sw.js"))
+    shutil.copyfile(os.path.join(SITE, "apple-touch-icon.png"), os.path.join(SITE, "badge.png")) if os.path.exists(os.path.join(SITE, "apple-touch-icon.png")) else None
 
     # ── /beijing/forecast ──
     # The page carries the breakpoint tables and the emissions baseline the
@@ -372,14 +382,20 @@ def main():
     t = read("templates", "forecast.tmpl.html")
     t = (t.replace("__AIR_CSS__", air_css).replace("__FORECAST_CSS__", fc_css)
           .replace("__PM25MODEL_JS__", model_js).replace("__FORECAST_JS__", fc_js).replace("__ANALYSIS_JS__", analysis_js)
+          .replace("__OUTLOOK_JS__", outlook_js).replace("__PUSH_JS__", push_js)
           .replace("__AIR_MIN__", render.j(air_min)).replace("__ANALYSIS_DATA__", render.j(analysis))
           .replace("__TOPBAR__", design.topbar("recomputed hourly", "/beijing")))
     render.emit(SITE, os.path.join("beijing", "forecast.html"), t, path="/beijing/forecast", stamp=stamp,
                 image="social-beijing.png")
     # The model's trees, served as a static file the page fetches once and
     # caches for a day; it only changes when ml/export_model.py is re-run.
+    # meta.json carries what else the model needs to run outside the page —
+    # the push worker recomputes the outlook every night from these two files.
     os.makedirs(os.path.join(SITE, "model"), exist_ok=True)
     shutil.copyfile(P("data", "pm25_model.json"), os.path.join(SITE, "model", "pm25.json"))
+    with open(os.path.join(SITE, "model", "meta.json"), "w") as f:
+        json.dump({"level365": air["level365"], "scales": air["scales"], "intervals": analysis["intervals"],
+                   "built": datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(timespec="minutes")}, f, separators=(",", ":"))
 
     # ── / ──
     render.emit(SITE, "index.html", home_page(ldn_rec, ldn, bj_rec, air, hourly),
@@ -408,7 +424,9 @@ def main():
                 "  Referrer-Policy: strict-origin-when-cross-origin\n"
                 "  Cache-Control: public, max-age=300, must-revalidate\n\n"
                 "/vendor/*\n  Cache-Control: public, max-age=31536000, immutable\n\n"
-                "/model/*\n  Cache-Control: public, max-age=86400\n\n"
+                "/model/pm25.json\n  Cache-Control: public, max-age=86400\n\n"
+                "/model/meta.json\n  Cache-Control: public, max-age=600\n\n"
+                "/sw.js\n  Cache-Control: no-cache\n\n"
                 "/*.png\n  Cache-Control: public, max-age=86400\n\n"
                 "/favicon.svg\n  Cache-Control: public, max-age=86400\n")
     with open(os.path.join(SITE, "robots.txt"), "w") as f:

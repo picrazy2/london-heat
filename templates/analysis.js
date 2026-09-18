@@ -14,17 +14,18 @@
   function el(n, a) { var e = document.createElementNS(NS, n); for (var k in a) e.setAttribute(k, a[k]); return e; }
   function txt(e, s) { e.textContent = s; return e; }
   function moveTip(ev) {
-    var w = tip.offsetWidth, hh = tip.offsetHeight;
-    tip.style.left = Math.min(ev.clientX + 14, window.innerWidth - w - 8) + "px";
-    tip.style.top = (ev.clientY - hh - 14 < 8 ? ev.clientY + 18 : ev.clientY - hh - 14) + "px";
+    var w = tip.offsetWidth, hh = tip.offsetHeight, x = Math.max(w / 2 + 6, Math.min(window.innerWidth - w / 2 - 6, ev.clientX));
+    var y = ev.pointerType === "touch" ? ev.clientY - 48 : ev.clientY - 12;
+    if (y - hh < 4) y = ev.clientY + hh + 28;
+    tip.style.left = x + "px"; tip.style.top = y + "px";
   }
   function showTip(ev, html) { tip.innerHTML = html; tip.style.opacity = 1; moveTip(ev); }
   function hideTip() { tip.style.opacity = 0; }
-  function hover(node, html) { node.addEventListener("mousemove", function (ev) { showTip(ev, html); }); node.addEventListener("mouseleave", hideTip); }
+  function hover(node, html) { var f = function (ev) { showTip(ev, html); }; node.addEventListener("pointermove", f); node.addEventListener("pointerdown", f); node.addEventListener("pointerleave", hideTip); }
   function lin(d0, d1, r0, r1) { var f = function (v) { return r0 + (v - d0) / (d1 - d0) * (r1 - r0); }; f.inv = function (p) { return d0 + (p - r0) / (r1 - r0) * (d1 - d0); }; return f; }
   function ticks(lo, hi, n) { var span = hi - lo, p = Math.pow(10, Math.floor(Math.log10(span / n))), s = [1, 2, 2.5, 5, 10].map(function (m) { return m * p; }).filter(function (s) { return span / s <= n; })[0] || p * 10, out = []; for (var v = Math.ceil(lo / s) * s; v <= hi + 1e-9; v += s) out.push(+v.toFixed(6)); return out; }
   function path(pts) { return pts.map(function (p, i) { return (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1); }).join(""); }
-  function svgIn(id, W, H, label) { var host = document.getElementById(id); if (!host) return null; var s = el("svg", { viewBox: "0 0 " + W + " " + H, class: "chart chart-in", role: "img", "aria-label": label }); host.innerHTML = ""; host.appendChild(s); return s; }
+  function svgIn(id, W, H, label) { var host = document.getElementById(id); if (!host) return null; var s = el("svg", { viewBox: "0 0 " + W + " " + H, class: "chart chart-in w" + W, role: "img", "aria-label": label }); host.innerHTML = ""; host.appendChild(s); return s; }
   function yAxis(svg, y, tk, x0, x1, unit) { tk.forEach(function (t, i) { svg.appendChild(el("line", { class: "gridline", x1: x0, x2: x1, y1: y(t), y2: y(t) })); svg.appendChild(txt(el("text", { class: "tick", x: x0 - 5, y: y(t) + 3, "text-anchor": "end" }), (Math.abs(t) < 1 && t !== 0 ? t.toFixed(2) : t) + (unit && i === tk.length - 1 ? unit : ""))); }); }
   function xLab(svg, x, v, y0, s) { svg.appendChild(txt(el("text", { class: "tick", x: x(v), y: y0, "text-anchor": "middle" }), s)); }
   function endLabels(svg, ends, x0) {
@@ -108,8 +109,8 @@
     endLabels(svg, ends, W - R);
     var cross = el("line", { y1: T, y2: H - B, stroke: "var(--ink-faint)", opacity: 0 }); svg.appendChild(cross);
     var hit = el("rect", { x: L, y: T, width: W - L - R, height: H - T - B, fill: "transparent" });
-    hit.addEventListener("mousemove", function (ev) { var r = svg.getBoundingClientRect(); var l = Math.round(x.inv((ev.clientX - r.left) / r.width * W)), i = l + 24; if (i < 0 || i >= lags.length) return; cross.setAttribute("x1", x(l)); cross.setAttribute("x2", x(l)); cross.setAttribute("opacity", .6); showTip(ev, "<span class='k'>" + (l > 0 ? "+" : "") + l + " h</span><br>" + series.map(function (s) { return s.name.replace(/ \(.*\)/, "") + " <b>" + Math.round(s.v[i]) + "</b>"; }).join("<br>")); });
-    hit.addEventListener("mouseleave", function () { cross.setAttribute("opacity", 0); hideTip(); });
+    hit.addEventListener("pointermove", function (ev) { var r = svg.getBoundingClientRect(); var l = Math.round(x.inv((ev.clientX - r.left) / r.width * W)), i = l + 24; if (i < 0 || i >= lags.length) return; cross.setAttribute("x1", x(l)); cross.setAttribute("x2", x(l)); cross.setAttribute("opacity", .6); showTip(ev, "<span class='k'>" + (l > 0 ? "+" : "") + l + " h</span><br>" + series.map(function (s) { return s.name.replace(/ \(.*\)/, "") + " <b>" + Math.round(s.v[i]) + "</b>"; }).join("<br>")); });
+    hit.addEventListener("pointerleave", function () { cross.setAttribute("opacity", 0); hideTip(); });
     svg.appendChild(hit);
   })();
 
@@ -160,7 +161,7 @@
       card.innerHTML = "<div class='card-head'><h3>" + title + "</h3></div><div class='an-svg'></div>";
       host.appendChild(card);
       var W = 300, H = 150, L = 28, R = 8, T = 10, B = 22;
-      var svg = el("svg", { viewBox: "0 0 " + W + " " + H, class: "chart chart-in", role: "img", "aria-label": title }); card.querySelector(".an-svg").appendChild(svg);
+      var svg = el("svg", { viewBox: "0 0 " + W + " " + H, class: "chart chart-in w" + W, role: "img", "aria-label": title }); card.querySelector(".an-svg").appendChild(svg);
       var xs = logx ? grid.map(Math.log10) : grid, x = lin(xs[0], xs[xs.length - 1], L, W - R), y = lin(0, 80, H - B, T);
       yAxis(svg, y, [0, 20, 40, 60, 80], L, W - R);
       var tks = grid.length > 5 ? grid.filter(function (_, i) { return i % Math.ceil(grid.length / 5) === 0 || i === grid.length - 1; }) : grid;

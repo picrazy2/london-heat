@@ -35,15 +35,13 @@
   <section data-view="now" class="stack">
     <div class="now glass-card" id="aqNow">
       <div>
-        <div class="lab footnote" style="font-weight:600">Beijing, city average</div>
+        <div class="lab footnote" style="font-weight:600">Beijing, city average, this hour</div>
         <div class="idx"><span class="n display" id="aqNum">–</span>
           <span class="of" id="aqScaleName">AQI</span></div>
         <div class="cat" id="aqCat">Loading…</div>
         <div class="conc" id="aqConc"></div>
         <div class="stamp" id="aqStamp"></div>
-        <div class="otherscale" id="aqOther" hidden></div>
       </div>
-      <div class="ruler" id="aqRuler"></div>
     </div>
 
     __FORECAST_HTML__
@@ -55,14 +53,7 @@
         <div id="aqMap" style="margin-top:12px"></div>
         <p class="mapnote" id="aqMapNote"></p>
       </div>
-      <div class="stack">
-        <div class="aq-card">
-          <div class="card-head"><h3>The last three days</h3>
-            <span class="sub">hourly city mean</span></div>
-          <div id="aqRecent" style="margin-top:10px"></div>
-        </div>
-        <div class="list stations" id="aqStations"></div>
-      </div>
+      <div class="list stations" id="aqStations"></div>
     </div>
   </section>
 
@@ -87,6 +78,14 @@
       <div id="aqBands" style="margin-top:12px"></div>
       <div class="bandkey" id="aqBandKey"></div>
       <p class="cap" id="aqBandsCap"></p>
+    </div>
+
+    <div class="aq-card">
+      <div class="card-head"><h3>Every day of one year, month by month</h3>
+        <label class="picker compact"><span class="sr-only">Year</span><select id="aqMonthYear"></select></label></div>
+      <div id="aqMonthBands" style="margin-top:12px"></div>
+      <div class="bandkey" id="aqMonthBandKey"></div>
+      <p class="cap" id="aqMonthBandsCap"></p>
     </div>
 
     <div class="aq-card">
